@@ -1,0 +1,29 @@
+{
+  // Shared by every Node package and app; each one extends this and adds only what is special.
+  "compilerOptions": {
+    // Turn on every strict type check (null checks, no implicit any, …)
+    "strict": true,
+    // arr[i] and obj[key] may be undefined, so the compiler makes us handle it
+    "noUncheckedIndexedAccess": true,
+
+    // Emit JavaScript that uses ES2023 features; Node 26 supports all of them
+    "target": "ES2023",
+    // Follow Node's real ESM rules: package "exports", and relative imports ending in .js
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    // Imports used only as types must say `import type`, so they are erased predictably
+    "verbatimModuleSyntax": true,
+
+    // Emit .d.ts files so other packages get our types
+    "declaration": true,
+    // Map .d.ts back to .ts, so "go to definition" across packages opens the source
+    "declarationMap": true,
+    // Map compiled .js back to .ts, so stack traces and debuggers show TypeScript lines
+    "sourceMap": true,
+
+    // Don't type-check inside node_modules; faster, and their bugs aren't ours
+    "skipLibCheck": true,
+    // TypeScript 6 defaults this to []; load Node's globals (process, console, Buffer)
+    "types": ["node"]
+  }
+}
