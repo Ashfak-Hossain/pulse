@@ -21,6 +21,8 @@ __pycache__/
 services/*/data/raw/
 # C++
 services/roadgraph/build/
-# Private planning, progress log and learning notes
-docs/planning/
+# Private notes: plan, progress, learning notes (each member keeps their own)
+notes/
 .claude/settings.local.json
+# Local Claude instructions, kept per machine
+CLAUDE.md
