@@ -1,0 +1,9 @@
+# Node packages only; services/* are Python and C++
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# One version per shared tool; packages depend on it with "catalog:"
+catalog:
+  typescript: ~6.0.0
+  vitest: ^4.0.0
