@@ -1,0 +1,26 @@
+node_modules/
+dist/
+.next/
+build/
+.turbo/
+coverage/
+*.tsbuildinfo
+*.log
+# Every env file holds secrets; only the template is shared
+.env*
+!.env.example
+CLAUDE.local.md
+.DS_Store
+# Python
+.venv/
+__pycache__/
+*.pyc
+# ML artifacts are stored outside git (see services/*/README.md)
+*.onnx
+*.safetensors
+services/*/data/raw/
+# C++
+services/roadgraph/build/
+# Private planning, progress log and learning notes
+docs/planning/
+.claude/settings.local.json
