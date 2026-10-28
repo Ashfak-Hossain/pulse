@@ -65,5 +65,6 @@ Further context (read on demand, not every session):
 ## Working style for Claude
 
 - For multi-file features, plan first and wait for approval.
-- Explain non-obvious reasoning briefly; the team must be able to explain every line in the viva.
+- Explain non-obvious reasoning briefly.
+- Prefer official generators (`pnpm init`, `tsc --init`, Nest/Next CLIs), then trim their output to what the repo needs.
 - When a rule above blocks the obvious approach, say so instead of working around it.

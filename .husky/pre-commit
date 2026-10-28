@@ -1,0 +1,2 @@
+# Fast checks only; lint, typecheck and tests run in CI
+pnpm format:check
