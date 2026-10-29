@@ -9,9 +9,11 @@ disable-model-invocation: true
 3. Check commit messages on the branch follow Conventional Commits:
    `git log --format=%s main..HEAD`.
 4. Draft the PR from `.github/pull_request_template.md`: title = Conventional Commit summary of the
-   slice (`feat(money): add largest remainder split`), body = what / why / how tested (real
-   commands and results) / reviewers run / slice id. Under ~400 changed lines
-   (`git diff --stat main...HEAD`); if more, say so.
+   slice (`feat(money): add largest remainder split`). Body: **Summary** (1–2 sentences, slice id),
+   **Changes** (3–6 bullets, one line each), **Testing** (what ran and what it proved),
+   **Notes for reviewers** (size if over ~400 lines per `git diff --stat main...HEAD`, hand edits,
+   deferred work, setup after merge; omit if empty), **Checklist**. Keep it short: details belong
+   in the ADR or the code, not the PR body.
 5. Show the title and body and **ask before pushing** — pushing publishes to a public repo.
 6. On approval: `git push -u origin HEAD`, then `gh pr create --title … --body-file …`.
    Print the PR URL and run `gh pr checks --watch` if asked.
