@@ -25,6 +25,20 @@ Docker Compose runs the services the apps need (`infra/compose/compose.yaml`). P
 | `pnpm infra:down`  | Stop the services; data is kept                    |
 | `pnpm infra:reset` | Stop and delete all data                           |
 
+## API
+
+`pnpm --filter @pulse/api dev` starts the NestJS API on http://127.0.0.1:3000 (change with `HOST`
+and `PORT`) and restarts it on every save. `curl 127.0.0.1:3000/health` answers `{"status":"ok"}`.
+Tests: `pnpm --filter @pulse/api test` (unit) and `pnpm --filter @pulse/api test:e2e` (over HTTP).
+
+### Postman
+
+The collection lives in `postman/` as one YAML file per request (Postman Native Git), so changes
+are reviewed in pull requests like code. Postman v12: open your workspace, connect it to this repo
+folder (Local View), pick the **Pulse local** environment and send requests. From the terminal,
+with the [Postman CLI](https://learning.postman.com/docs/postman-cli/postman-cli-installation/)
+installed and the API running: `pnpm api:postman`.
+
 ## Commit messages
 
 [Conventional Commits](https://www.conventionalcommits.org), checked by commitlint on every commit:

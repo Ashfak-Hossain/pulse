@@ -16,6 +16,7 @@
     "infra:logs": "docker compose -f infra/compose/compose.yaml --profile '*' logs -f --tail 100",
     "infra:reset": "docker compose -f infra/compose/compose.yaml --profile '*' down -v",
     "infra:smoke": "sh infra/compose/smoke.sh",
+    "api:postman": "postman collection run 'postman/collections/Pulse API' -e 'postman/environments/Pulse local.environment.yaml'",
     "lint": "turbo run lint",
     "test": "turbo run test",
     "test:e2e": "turbo run test:e2e",
