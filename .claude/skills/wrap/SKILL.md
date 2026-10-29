@@ -15,7 +15,7 @@ Keep every update short and factual. Only record what was actually verified.
    problems hit and how they were solved · next step.
 4. **Learning notes:** for every new concept or module this session, make sure a note exists in
    `notes/learn/` or `notes/code/` (use the `/explain` format); add new questions to
-   `notes/viva/questions.md`.
+   `notes/viva/NN-topic.md` in the same format, and update `notes/viva/README.md`.
 5. **Decisions:** record any new decision in `notes/plan/master-plan.md` §3; if it is significant,
    suggest `/new-adr`.
 6. **Memory:** update Claude's memory only for durable facts (preferences, team, hosting, scope),
