@@ -20,6 +20,7 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "test:e2e": "turbo run test:e2e",
+    "test:int": "turbo run test:int",
     "typecheck": "turbo run typecheck",
     "prepare": "husky"
   },
