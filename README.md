@@ -25,6 +25,20 @@ Docker Compose runs the services the apps need (`infra/compose/compose.yaml`). P
 | `pnpm infra:down`  | Stop the services; data is kept                    |
 | `pnpm infra:reset` | Stop and delete all data                           |
 
+## Database
+
+`packages/db` holds the Drizzle schema and SQL migrations (ADR 0003). Migrations run as the owner
+`pulse`; the apps connect as `pulse_app`, which row-level security limits to one campus at a time.
+Compose creates `pulse_app` only on an empty volume, so after pulling this change run
+`pnpm infra:reset` once.
+
+| Command                               | Does                                                |
+| ------------------------------------- | --------------------------------------------------- |
+| `pnpm --filter @pulse/db db:migrate`  | Apply new migrations to the Compose database        |
+| `pnpm --filter @pulse/db db:generate` | Write a migration from changes in `src/schema.ts`   |
+| `pnpm --filter @pulse/db db:studio`   | Browse the tables in the browser (as the owner)     |
+| `pnpm --filter @pulse/db test:int`    | Integration tests against a fresh PostGIS container |
+
 ## API
 
 `pnpm --filter @pulse/api dev` starts the NestJS API on http://127.0.0.1:3000 (change with `HOST`
