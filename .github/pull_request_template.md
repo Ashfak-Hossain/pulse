@@ -1,24 +1,24 @@
-## Slice
+## Summary
 
-SNN — title
+<!-- One or two sentences: what this PR does and why it matters. Name the slice if there is one. -->
 
-## What changed
-
--
-
-## Why
+## Changes
 
 -
 
-## How it was tested
+## Testing
 
-<!-- Real commands and their results -->
+<!-- What you ran and what it proved. -->
 
-- [ ] `pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build`
-- [ ]
+-
 
-## Review
+## Notes for reviewers
 
-- [ ] Reviewer agents run (`/review`): code, public-safety, …
-- [ ] No secrets, `.env` files, personal data or private notes
-- [ ] Under ~400 changed lines
+<!-- Risks, migrations, hand edits, deferred work, setup after merge. Delete if none. -->
+
+## Checklist
+
+- [ ] Tests added or updated
+- [ ] Format, lint, typecheck, test and build pass
+- [ ] No secrets, `.env` files or personal data
+- [ ] Docs and ADR updated, if a behaviour or decision changed
