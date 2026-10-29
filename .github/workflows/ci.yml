@@ -37,6 +37,7 @@ jobs:
         run: pnpm exec eslint .
       - run: pnpm typecheck
       - run: pnpm test
+      - run: pnpm test:e2e
       - run: pnpm build
       # Every service sits in a profile; without '*' Compose would validate an empty file
       - name: compose file is valid

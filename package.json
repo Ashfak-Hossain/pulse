@@ -18,6 +18,7 @@
     "infra:smoke": "sh infra/compose/smoke.sh",
     "lint": "turbo run lint",
     "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e",
     "typecheck": "turbo run typecheck",
     "prepare": "husky"
   },
