@@ -22,7 +22,7 @@ Explain: $ARGUMENTS
    5. **Why we did it this way** — the decision and the alternative we rejected.
    6. **Common mistakes** — and the error message you would see.
    7. **Try it** — one command or experiment that shows it working.
-   8. **Viva** — 3 questions with short answers; also append them to `notes/viva/questions.md`.
+   8. **Viva** — 3 questions with short answers; also add them to `notes/viva/NN-topic.md` (same number as the `learn/` note; heading per question, answer in `<details>`) and list the file in `notes/viva/README.md`.
 4. Short paragraphs, tables over prose for comparisons. No copy-paste of large code blocks:
    quote at most the 5–10 lines that matter.
 5. Never write in `notes/scratch/`. If `notes/` does not exist (a teammate's machine), create
