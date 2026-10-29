@@ -1,0 +1,15 @@
+{
+  // Used by `nest build` only: compiles src (never tests) into dist
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    // A runnable app, not a library: nobody imports its types
+    "declaration": false,
+    "declarationMap": false,
+    "rootDir": "src",
+    "outDir": "dist",
+    "types": ["node"]
+  },
+  "include": ["src"],
+  "exclude": ["**/*.spec.ts"]
+}

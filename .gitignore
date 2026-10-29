@@ -26,3 +26,7 @@ notes/
 .claude/settings.local.json
 # Local Claude instructions, kept per machine
 CLAUDE.md
+
+# Postman Native Git: per-person workspace link and personal globals; the shared files are in postman/
+.postman/
+postman/globals/

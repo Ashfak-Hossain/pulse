@@ -1,0 +1,3 @@
+$kind: collection
+name: Pulse API
+description: 'Requests for the Pulse API, one folder per feature. Pick the "Pulse local" environment and start the API first: pnpm --filter @pulse/api dev'
