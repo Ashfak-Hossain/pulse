@@ -6,6 +6,7 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    labels: [dependencies]
     commit-message:
       prefix: chore
       include: scope
@@ -18,9 +19,23 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    labels: [dependencies, ci]
     commit-message:
       prefix: chore
       include: scope
     groups:
       actions:
+        patterns: ['*']
+
+  # Image tags in infra/compose (patch rebuilds and new versions)
+  - package-ecosystem: docker-compose
+    directory: /infra/compose
+    schedule:
+      interval: weekly
+    labels: [dependencies, 'area: infra']
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      images:
         patterns: ['*']
