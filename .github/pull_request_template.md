@@ -1,6 +1,6 @@
 ## Slice
 
-SNN — title (`docs/slices/SNN-name.md`)
+SNN — title
 
 ## What changed
 
