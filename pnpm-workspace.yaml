@@ -7,3 +7,4 @@ packages:
 catalog:
   typescript: ~6.0.0
   vitest: ^4.0.0
+  fast-check: ^4.10.2
