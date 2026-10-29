@@ -1,0 +1,13 @@
+{
+  // Used by the editor, ESLint and `pnpm typecheck`: checks src and test, emits nothing
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    // Nest's @Controller(), @Injectable()… are legacy (experimental) decorators
+    "experimentalDecorators": true,
+    // Writes constructor parameter types into the output, so Nest knows what to inject
+    "emitDecoratorMetadata": true,
+    "types": ["node", "vitest/globals"]
+  },
+  "include": ["src", "test", "*.ts"]
+}

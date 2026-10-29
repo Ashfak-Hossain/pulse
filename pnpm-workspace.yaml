@@ -8,3 +8,4 @@ catalog:
   typescript: ~6.0.0
   vitest: ^5.0.5
   fast-check: ^4.10.2
+  zod: ^4.6.7
