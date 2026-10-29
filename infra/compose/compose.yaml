@@ -1,0 +1,60 @@
+# Local development services, grouped by profile: core now, events and queue later.
+# `pnpm infra:up` starts them all. Credentials are throwaway local defaults, never real ones.
+
+name: pulse
+
+services:
+  postgres:
+    image: postgis/postgis:18-3.6
+    # The image is amd64-only; Apple Silicon runs it under Rosetta (ADR 0001)
+    platform: linux/amd64
+    profiles: [core]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-pulse}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pulse}
+      POSTGRES_DB: ${POSTGRES_DB:-pulse}
+    # Localhost only, so nothing is reachable from shared Wi-Fi
+    ports:
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
+    # PostgreSQL 18 images keep data in a versioned subfolder; mount the parent
+    volumes:
+      - pg-data:/var/lib/postgresql
+    healthcheck:
+      # TCP, not the socket: the temporary server the image starts while setting up the database answers on the socket only
+      test: ['CMD-SHELL', 'pg_isready -h 127.0.0.1 -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+    mem_limit: 512m
+
+  redis:
+    image: redis:8.8-alpine
+    profiles: [core]
+    # Cache only: losing it on restart is fine, so no snapshots; cap memory and evict LRU keys
+    command:
+      ['redis-server', '--maxmemory', '64mb', '--maxmemory-policy', 'allkeys-lru', '--save', '']
+    ports:
+      - '127.0.0.1:${REDIS_PORT:-6379}:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    mem_limit: 128m
+
+  mailpit:
+    image: axllent/mailpit:v1.32
+    profiles: [core]
+    ports:
+      - '127.0.0.1:${SMTP_PORT:-1025}:1025'
+      - '127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025'
+    healthcheck:
+      test: ['CMD', '/mailpit', 'readyz']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    mem_limit: 64m
+
+volumes:
+  pg-data:
