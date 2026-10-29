@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Read-only token: no job here needs to write to the repo
+permissions:
+  contents: read
+
+# A new push to a PR makes its older run pointless; runs on main always finish
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # Actions are pinned by commit SHA (a tag can be moved); Dependabot bumps SHA and comment
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # No step pushes, so keep the token out of .git/config where every script could read it
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # One step per check, so a red run names the check that failed
+      - run: pnpm format:check
+      - run: pnpm lint
+      - name: eslint (root config files)
+        run: pnpm exec eslint .
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      # Every service sits in a profile; without '*' Compose would validate an empty file
+      - name: compose file is valid
+        run: docker compose -f infra/compose/compose.yaml --profile '*' config --quiet

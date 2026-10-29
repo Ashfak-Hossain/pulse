@@ -1,5 +1,7 @@
 # Pulse
 
+[![CI](https://github.com/Ashfak-Hossain/pulse/actions/workflows/ci.yml/badge.svg)](https://github.com/Ashfak-Hossain/pulse/actions/workflows/ci.yml)
+
 Pulse is a timetable-aware commute pooling app for university campuses, piloted at AIUB: it matches students who leave campus at the same time and splits the fare fairly.
 
 ## Local services
@@ -38,6 +40,8 @@ Docker Compose runs the services the apps need (`infra/compose/compose.yaml`). P
 | `chore`    | Tooling and housekeeping                      |
 | `build`    | Build system, dependencies, Docker, Turborepo |
 | `ci`       | GitHub Actions workflows                      |
+
+CI checks the pull request title the same way, because squash merge makes it the commit on `main`.
 
 Scopes are package or app names: `money`, `db`, `api`, `worker`, `web`, `infra`. Leave the
 scope out for repo-wide changes.
