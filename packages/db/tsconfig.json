@@ -1,0 +1,8 @@
+{
+  // Used by the editor, ESLint and `pnpm typecheck`: checks src and test, emits nothing
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": ["src", "test", "*.ts"]
+}

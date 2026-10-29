@@ -9,3 +9,14 @@ catalog:
   vitest: ^5.0.5
   fast-check: ^4.10.2
   zod: ^4.6.7
+  drizzle-orm: ^0.45.4
+  pg: ^8.23.1
+
+# Install scripts run arbitrary code, so each one is denied unless a package truly needs it.
+# esbuild ships its binary as a platform package; ssh2/cpu-features are optional native speedups
+# (Testcontainers talks to the local Docker socket, not SSH); protobufjs only prints a notice.
+allowBuilds:
+  cpu-features: false
+  esbuild: false
+  protobufjs: false
+  ssh2: false

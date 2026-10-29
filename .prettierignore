@@ -4,3 +4,5 @@ pnpm-lock.yaml
 next-env.d.ts
 # Written by the Postman app (Native Git); it rewrites them in its own style on every save
 postman/
+# Written by drizzle-kit; reviewed, never hand-formatted
+packages/db/migrations/
