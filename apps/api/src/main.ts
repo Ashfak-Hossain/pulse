@@ -4,8 +4,10 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
 import type { Env } from './config/env.js';
+import { configureApp } from './app.setup.js';
 
 const app = await NestFactory.create(AppModule);
+configureApp(app);
 // Runs onModuleDestroy / onApplicationShutdown on Ctrl+C or SIGTERM: closes the database pool now,
 // and the Kafka and RabbitMQ clients later
 app.enableShutdownHooks();

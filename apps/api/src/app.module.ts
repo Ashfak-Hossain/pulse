@@ -4,6 +4,8 @@ import { DbModule } from './db/db.module.js';
 import { fileURLToPath } from 'node:url';
 import { ConfigModule } from '@nestjs/config';
 import { validateEnv } from './config/env.js';
+import { APP_FILTER } from '@nestjs/core';
+import { HttpErrorFilter } from './common/http-error.filter.js';
 
 // The repo-root .env
 const rootEnvFile = fileURLToPath(new URL('../../../.env', import.meta.url));
@@ -19,6 +21,10 @@ const rootEnvFile = fileURLToPath(new URL('../../../.env', import.meta.url));
     }),
     HealthModule,
     DbModule,
+  ],
+  providers: [
+    // Registered here, not in main.ts, so every app built from AppModule (tests too) gets it
+    { provide: APP_FILTER, useClass: HttpErrorFilter },
   ],
 })
 export class AppModule {}
