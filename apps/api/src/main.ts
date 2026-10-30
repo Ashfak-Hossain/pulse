@@ -1,13 +1,19 @@
 import 'reflect-metadata';
 import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
-
-const host = process.env.HOST ?? '127.0.0.1';
-const port = Number(process.env.PORT || 3000);
+import type { Env } from './config/env.js';
 
 const app = await NestFactory.create(AppModule);
-// Runs onModuleDestroy hooks on Ctrl+C / SIGTERM, so later Kafka and RabbitMQ clients close cleanly
+// Runs onModuleDestroy / onApplicationShutdown on Ctrl+C or SIGTERM: closes the database pool now,
+// and the Kafka and RabbitMQ clients later
 app.enableShutdownHooks();
+
+// Already validated by ConfigModule, so PORT is a number and HOST has its default
+const config: ConfigService<Env, true> = app.get(ConfigService);
+const host = config.get('HOST', { infer: true });
+const port = config.get('PORT', { infer: true });
+
 await app.listen(port, host);
 new Logger('Bootstrap').log(`API listening on http://${host}:${port}`);
