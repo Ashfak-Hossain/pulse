@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, type PipeTransform } from '@nestjs/common';
 import { type z } from 'zod';
+import type { ApiError } from '@pulse/contracts';
 
 // Validates one part of a request (body, query or params) against a Zod schema from @pulse/contracts.
 // Returns the parsed value, so controllers get defaults and coerced types, never the raw input.
@@ -13,7 +14,7 @@ export class ZodValidationPipe<T extends z.ZodType> implements PipeTransform<unk
       return result.data;
     }
 
-    throw new BadRequestException({
+    const body: ApiError = {
       statusCode: 400,
       error: 'Bad Request',
       message: 'Validation failed',
@@ -22,6 +23,7 @@ export class ZodValidationPipe<T extends z.ZodType> implements PipeTransform<unk
         code: issue.code,
         message: issue.message,
       })),
-    });
+    };
+    throw new BadRequestException(body);
   }
 }

@@ -50,6 +50,10 @@ on a bad value, or when `DATABASE_URL` is a role that row-level security does no
 process runs; `/health/ready` also checks PostgreSQL (503 when it is unreachable).
 Tests: `pnpm --filter @pulse/api test` (unit) and `pnpm --filter @pulse/api test:e2e` (over HTTP).
 
+Every error answers in one shape, `{ statusCode, error, message }` (plus `issues` when validation
+fails), described by `apiErrorSchema` in `packages/contracts`. Server errors (5xx) never show
+their real message: it goes to the log.
+
 ### Postman
 
 The collection lives in `postman/` as one YAML file per request (Postman Native Git), so changes
