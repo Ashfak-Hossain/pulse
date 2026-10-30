@@ -1,0 +1,22 @@
+$kind: http-request
+description: 'Readiness: can the API reach PostgreSQL? 200 { "status": "ok", "checks": { "database": "up" } } when it can, 503 with "down" when it cannot. The reason is only in the API log.'
+url: "{{baseUrl}}/health/ready"
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200 (503 means PostgreSQL is unreachable: pnpm infra:up)', () =>
+        pm.response.to.have.status(200),
+      );
+      pm.test('body is JSON', () => pm.response.to.be.json);
+      pm.test('database is up', () =>
+        pm.expect(pm.response.json()).to.eql({ status: 'ok', checks: { database: 'up' } }),
+      );
+      pm.test('answers within 3 s (the pool gives up connecting after 2 s)', () =>
+        pm.expect(pm.response.responseTime).to.be.below(3000),
+      );
+    language: text/javascript
+examples: .resources/Ready.resources/examples
+order: 2000

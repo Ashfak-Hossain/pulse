@@ -41,8 +41,13 @@ Compose creates `pulse_app` only on an empty volume, so after pulling this chang
 
 ## API
 
+First run: `cp .env.example .env`, `pnpm infra:up`, `pnpm --filter @pulse/db db:migrate`.
+
 `pnpm --filter @pulse/api dev` starts the NestJS API on http://127.0.0.1:3000 (change with `HOST`
-and `PORT`) and restarts it on every save. `curl 127.0.0.1:3000/health` answers `{"status":"ok"}`.
+and `PORT`) and restarts it on every save. It checks its settings at startup and refuses to start
+on a bad value, or when `DATABASE_URL` is a role that row-level security does not limit (use
+`pulse_app`, never the owner). `curl 127.0.0.1:3000/health` answers `{"status":"ok"}` while the
+process runs; `/health/ready` also checks PostgreSQL (503 when it is unreachable).
 Tests: `pnpm --filter @pulse/api test` (unit) and `pnpm --filter @pulse/api test:e2e` (over HTTP).
 
 ### Postman
