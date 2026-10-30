@@ -1,11 +1,17 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
+import { Pool, type PoolConfig } from 'pg';
 import * as schema from './schema.js';
+
+// Pool tuning only: user, host and password always come from the URL
+type PoolOptions = Pick<
+  PoolConfig,
+  'max' | 'idleTimeoutMillis' | 'connectionTimeoutMillis' | 'query_timeout' | 'statement_timeout'
+>;
 
 // One pool per process: each query borrows a connection and gives it back afterwards.
 // Passing the schema gives typed results; close with `db.$client.end()`
-export function createDb(connectionString: string) {
-  return drizzle({ client: new Pool({ connectionString }), schema });
+export function createDb(connectionString: string, poolOptions: PoolOptions = {}) {
+  return drizzle({ client: new Pool({ ...poolOptions, connectionString }), schema });
 }
 
 export type Database = ReturnType<typeof createDb>;
