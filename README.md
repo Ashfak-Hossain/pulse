@@ -4,6 +4,12 @@
 
 Pulse is a timetable-aware commute pooling app for university campuses, piloted at AIUB: it matches students who leave campus at the same time and splits the fare fairly.
 
+## Getting started
+
+New to the project? Start with the [onboarding guide](docs/onboarding/README.md): setup from a
+blank laptop, a tour of the repo, the code explained line by line, and the recipe for adding an
+endpoint.
+
 ## Local services
 
 Docker Compose runs the services the apps need (`infra/compose/compose.yaml`). Ports listen on
