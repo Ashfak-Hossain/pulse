@@ -32,23 +32,38 @@ Docker Compose runs the services the apps need (`infra/compose/compose.yaml`). P
 Compose creates `pulse_app` only on an empty volume, so after pulling this change run
 `pnpm infra:reset` once.
 
-| Command                               | Does                                                |
-| ------------------------------------- | --------------------------------------------------- |
-| `pnpm --filter @pulse/db db:migrate`  | Apply new migrations to the Compose database        |
-| `pnpm --filter @pulse/db db:generate` | Write a migration from changes in `src/schema.ts`   |
-| `pnpm --filter @pulse/db db:studio`   | Browse the tables in the browser (as the owner)     |
-| `pnpm --filter @pulse/db test:int`    | Integration tests against a fresh PostGIS container |
+| Command                               | Does                                                              |
+| ------------------------------------- | ----------------------------------------------------------------- |
+| `pnpm --filter @pulse/db db:migrate`  | Apply new migrations to the Compose database                      |
+| `pnpm --filter @pulse/db db:generate` | Write a migration from changes in `src/schema.ts`                 |
+| `pnpm --filter @pulse/db db:studio`   | Browse the tables in the browser (as the owner)                   |
+| `pnpm --filter @pulse/db test:int`    | Integration tests against a fresh PostGIS container               |
+| `pnpm infra:seed`                     | Add local sample data (AIUB and a demo campus); safe to run again |
 
 ## API
 
-First run: `cp .env.example .env`, `pnpm infra:up`, `pnpm --filter @pulse/db db:migrate`.
+First run: `cp .env.example .env`, `pnpm infra:up`, `pnpm --filter @pulse/db db:migrate`,
+`pnpm infra:seed`.
 
 `pnpm --filter @pulse/api dev` starts the NestJS API on http://127.0.0.1:3000 (change with `HOST`
 and `PORT`) and restarts it on every save. It checks its settings at startup and refuses to start
 on a bad value, or when `DATABASE_URL` is a role that row-level security does not limit (use
 `pulse_app`, never the owner). `curl 127.0.0.1:3000/health` answers `{"status":"ok"}` while the
 process runs; `/health/ready` also checks PostgreSQL (503 when it is unreachable).
-Tests: `pnpm --filter @pulse/api test` (unit) and `pnpm --filter @pulse/api test:e2e` (over HTTP).
+Tests: `pnpm --filter @pulse/api test` (unit) and `pnpm --filter @pulse/api test:e2e` (over HTTP,
+against a PostGIS container, so Docker must be running).
+
+| Endpoint              | Answers                                                                                              |
+| --------------------- | ---------------------------------------------------------------------------------------------------- |
+| `GET /health`         | `{"status":"ok"}` while the process runs                                                             |
+| `GET /health/ready`   | 200 when PostgreSQL answers, 503 when it does not                                                    |
+| `GET /campuses`       | `{ "items": [campus, …] }`, sorted by name                                                           |
+| `GET /campuses/:slug` | One campus (`id`, `name`, `slug`, `emailDomains`, `timezone`, `location: { lat, lng }`); 404 if none |
+
+There is no sign-in yet, so every route is public. Campuses are public on purpose (the app needs
+them before sign-in). A new route is public only if its data is public too; anything personal
+waits for the auth guard. Campus-scoped tables are read and written only inside `withCampus()`,
+and every list has a hard limit.
 
 Every error answers in one shape, `{ statusCode, error, message }` (plus `issues` when validation
 fails), described by `apiErrorSchema` in `packages/contracts`. Server errors (5xx) never show

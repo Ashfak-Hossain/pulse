@@ -25,6 +25,17 @@ export default defineConfig(
     files: ['*.js'],
     extends: [tseslint.configs.disableTypeChecked],
   },
+  {
+    // The test database helper loads a dev-only dependency: test code may use it, app code never
+    files: ['apps/*/src/**/*.ts', 'packages/*/src/**/*.ts'],
+    ignores: ['**/*.spec.ts', 'packages/db/src/testing.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        { paths: [{ name: '@pulse/db/testing', message: 'Test code only (test/ or *.spec.ts).' }] },
+      ],
+    },
+  },
   // Last, so it switches off every rule that would fight Prettier's formatting
   prettier,
 );

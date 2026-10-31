@@ -1,0 +1,29 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/campuses/aiub"
+  method: GET
+  headers:
+    Accept: application/json
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    content-type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "id": "b5bc33b9-f2eb-4d82-849f-d5605305415b",
+        "name": "American International University-Bangladesh",
+        "slug": "aiub",
+        "emailDomains": [
+          "aiub.edu",
+          "student.aiub.edu"
+        ],
+        "timezone": "Asia/Dhaka",
+        "location": {
+          "lat": 23.8223,
+          "lng": 90.4274
+        }
+      }
+order: 1000

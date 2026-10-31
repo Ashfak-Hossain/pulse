@@ -1,0 +1,20 @@
+$kind: http-request
+description: 'A well-formed slug that no campus has: 404 in the shared error shape.'
+url: "{{baseUrl}}/campuses/nowhere"
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 404', () => pm.response.to.have.status(404));
+      pm.test('error shape', () =>
+        pm.expect(pm.response.json()).to.eql({
+          statusCode: 404,
+          error: 'Not Found',
+          message: 'Campus not found',
+        }),
+      );
+    language: text/javascript
+examples: .resources/Unknown campus.resources/examples
+order: 3000

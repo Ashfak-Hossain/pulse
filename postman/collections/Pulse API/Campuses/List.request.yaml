@@ -1,0 +1,26 @@
+$kind: http-request
+description: 'Every campus, sorted by name, as { "items": [ ... ] }. The wrapper leaves room for a page cursor later.'
+url: "{{baseUrl}}/campuses"
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200', () => pm.response.to.have.status(200));
+      pm.test('body is { items: [...] } and nothing else', () => {
+        const body = pm.response.json();
+        pm.expect(Object.keys(body)).to.eql(['items']);
+        pm.expect(body.items).to.be.an('array');
+      });
+      pm.test('AIUB is listed (if not: pnpm infra:seed)', () =>
+        pm.expect(pm.response.json().items.map((c) => c.slug)).to.include('aiub'),
+      );
+      pm.test('sorted by name', () => {
+        const names = pm.response.json().items.map((c) => c.name);
+        // localeCompare, like PostgreSQL's collation (plain sort() compares code points)
+        pm.expect(names).to.eql([...names].sort((a, b) => a.localeCompare(b)));
+      });
+    language: text/javascript
+examples: .resources/List.resources/examples
+order: 1000
