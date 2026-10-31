@@ -1,0 +1,24 @@
+$kind: http-request
+description: 'One campus by its slug. Slugs are lowercase words joined by single hyphens (max 64); anything else answers 400 before the database is asked.'
+url: "{{baseUrl}}/campuses/aiub"
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200 (404: run pnpm infra:seed)', () => pm.response.to.have.status(200));
+      pm.test('has exactly the contract fields', () =>
+        pm.expect(Object.keys(pm.response.json()).sort()).to.eql(
+          ['emailDomains', 'id', 'location', 'name', 'slug', 'timezone'],
+        ),
+      );
+      pm.test('is AIUB, in Dhaka', () => {
+        const body = pm.response.json();
+        pm.expect(body.slug).to.equal('aiub');
+        pm.expect(body.timezone).to.equal('Asia/Dhaka');
+        pm.expect(body.location).to.eql({ lat: 23.8223, lng: 90.4274 });
+      });
+    language: text/javascript
+examples: .resources/Get AIUB.resources/examples
+order: 2000

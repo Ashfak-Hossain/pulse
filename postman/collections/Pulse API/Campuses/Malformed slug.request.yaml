@@ -1,0 +1,18 @@
+$kind: http-request
+description: 'A slug that breaks the rule (uppercase here): 400 with issues, answered by the validation pipe before the database is asked.'
+url: "{{baseUrl}}/campuses/AIUB"
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 400', () => pm.response.to.have.status(400));
+      pm.test('error shape with an issue on slug', () => {
+        const body = pm.response.json();
+        pm.expect(body.message).to.equal('Validation failed');
+        pm.expect(body.issues.map((issue) => issue.path)).to.include('slug');
+      });
+    language: text/javascript
+examples: .resources/Malformed slug.resources/examples
+order: 4000

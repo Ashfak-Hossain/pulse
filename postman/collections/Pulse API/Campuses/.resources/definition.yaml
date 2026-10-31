@@ -1,0 +1,3 @@
+$kind: collection
+description: 'Campuses (public, no sign-in). List and Get read from PostgreSQL; run pnpm infra:seed once so AIUB and the demo campus exist. Every error has the shape { statusCode, error, message, issues? }.'
+order: 2000
