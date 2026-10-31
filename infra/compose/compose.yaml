@@ -1,4 +1,4 @@
-# Local development services, grouped by profile: core now, events and queue later.
+# Local development services, grouped by profile: core and events now, queue later.
 # `pnpm infra:up` starts them all. Credentials are throwaway local defaults, never real ones.
 
 name: pulse
@@ -58,5 +58,64 @@ services:
       retries: 10
     mem_limit: 64m
 
+  kafka:
+    image: apache/kafka-native:4.4.0
+    profiles: [events]
+    environment:
+      # One process is both broker (stores records) and KRaft controller (keeps cluster
+      # metadata), so there is no ZooKeeper (ADR 0004)
+      KAFKA_NODE_ID: 1
+      # Saved in the data volume on first start; pinned so a newer image with a different
+      # default still opens an existing volume
+      CLUSTER_ID: 5L6g3nShT-eMCtK--X86sw
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      # Two doors for clients: HOST for programs on the laptop, DOCKER for containers on the
+      # Compose network. Each door tells its clients an address they can actually reach.
+      KAFKA_LISTENERS: HOST://:9092,DOCKER://:19092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: HOST://127.0.0.1:${KAFKA_PORT:-9092},DOCKER://kafka:19092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: HOST:PLAINTEXT,DOCKER:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: DOCKER
+      # A typo in a topic name must fail, not quietly create a new empty topic
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+      # One broker can keep only one copy of Kafka's internal topics; the defaults expect three
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_SHARE_COORDINATOR_STATE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_SHARE_COORDINATOR_STATE_TOPIC_MIN_ISR: 1
+      # A test's consumer starts reading at once instead of waiting 3 s for more group members
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_LOG_DIRS: /home/appuser/kraft-logs
+    ports:
+      - '127.0.0.1:${KAFKA_PORT:-9092}:9092'
+    # The image has no data folder, and a volume on a new path is owned by root, so Kafka (user
+    # appuser) could not write there. The empty home folder already belongs to appuser.
+    volumes:
+      - kafka-data:/home/appuser
+    healthcheck:
+      # The native image has no Kafka tools, so this only proves the port is listening;
+      # pnpm infra:smoke proves a real round trip
+      test: ['CMD-SHELL', 'nc -z localhost 9092']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+    mem_limit: 384m
+
+  # Kafka's command-line tools, which the native image leaves out. Starts only when run:
+  # pnpm infra:kafka kafka-topics.sh --bootstrap-server kafka:19092 --list
+  kafka-cli:
+    image: apache/kafka:4.4.0
+    profiles: [tools]
+    environment:
+      # Tools first so they run by name (kafka-topics.sh); the rest is the image's own PATH,
+      # which includes Java: recheck it when upgrading the image
+      PATH: /opt/kafka/bin:/opt/java/openjdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    command: ['kafka-topics.sh', '--bootstrap-server', 'kafka:19092', '--list']
+    mem_limit: 384m
+
 volumes:
   pg-data:
+  kafka-data:
