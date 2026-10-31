@@ -44,3 +44,61 @@ jobs:
       # Every service sits in a profile; without '*' Compose would validate an empty file
       - name: compose file is valid
         run: docker compose -f infra/compose/compose.yaml --profile '*' config --quiet
+
+  # No path filter on purpose: a required check that is skipped never reports, so GitHub would
+  # block the merge forever. The job takes about two minutes
+  migrations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      COMPOSE: docker compose -f infra/compose/compose.yaml --profile core
+      # The local defaults from compose.yaml and infra/compose/postgres/init, not secrets
+      OWNER_DATABASE_URL: postgresql://pulse:pulse@127.0.0.1:5432/pulse
+      APP_DATABASE_URL: postgresql://pulse_app:pulse_app@127.0.0.1:5432/pulse
+      # A PR compares with its target; a push to main with the commit before it
+      BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Full history: the check compares against the merge base with the target branch
+          fetch-depth: 0
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: schema drift, merged migrations, journal
+        run: pnpm --filter @pulse/db db:check "$BASE"
+      # Compose, not a service container: services start before checkout, so they could not run
+      # postgres/init (which creates pulse_app). This is the same setup as every laptop
+      - name: start postgres
+        run: $COMPOSE up -d --wait postgres
+      # First the database every laptop already has: the base branch's migrations and the seed.
+      # The scratch folder is relative because drizzle-kit mangles an absolute out path
+      - name: migrate and seed as on the base branch
+        run: |
+          mkdir -p packages/db/node_modules/.cache/base
+          git archive "$BASE" packages/db/migrations |
+            tar -x -C packages/db/node_modules/.cache/base --strip-components=2
+          DRIZZLE_OUT=node_modules/.cache/base/migrations pnpm --filter @pulse/db db:migrate
+          pnpm infra:seed
+      # Then this branch on top, twice: the second run must find nothing to do
+      - name: migrate this branch on top, twice
+        run: |
+          pnpm --filter @pulse/db db:migrate
+          pnpm --filter @pulse/db db:migrate
+      - name: seed again
+        run: pnpm infra:seed
+      - name: every journal entry applied, and pulse_app reads the campuses
+        run: |
+          applied=$($COMPOSE exec -T postgres psql "$OWNER_DATABASE_URL" \
+            -tAc 'SELECT count(*) FROM drizzle.__drizzle_migrations')
+          expected=$(node -p "require('./packages/db/migrations/meta/_journal.json').entries.length")
+          [ "$applied" = "$expected" ] || { echo "applied $applied migrations, the journal lists $expected"; exit 1; }
+          count=$($COMPOSE exec -T postgres psql "$APP_DATABASE_URL" -tAc 'SELECT count(*) FROM campus')
+          [ "$count" = 2 ] || { echo "expected 2 campuses, got '$count'"; exit 1; }
+      - name: postgres logs
+        if: failure()
+        run: $COMPOSE logs postgres
