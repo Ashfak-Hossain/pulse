@@ -51,6 +51,13 @@ pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm test:e2e &
 
 The same checks run in CI. Running them first saves a round trip.
 
+Changed anything in `packages/db`? CI's `migrations` job also checks that every schema change has
+its migration and that no merged migration was edited. Run the same check first:
+
+```sh
+git fetch origin main && pnpm --filter @pulse/db db:check
+```
+
 ## 4. Push and open the PR
 
 ```sh

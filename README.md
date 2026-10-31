@@ -38,13 +38,14 @@ Docker Compose runs the services the apps need (`infra/compose/compose.yaml`). P
 Compose creates `pulse_app` only on an empty volume, so after pulling this change run
 `pnpm infra:reset` once.
 
-| Command                               | Does                                                              |
-| ------------------------------------- | ----------------------------------------------------------------- |
-| `pnpm --filter @pulse/db db:migrate`  | Apply new migrations to the Compose database                      |
-| `pnpm --filter @pulse/db db:generate` | Write a migration from changes in `src/schema.ts`                 |
-| `pnpm --filter @pulse/db db:studio`   | Browse the tables in the browser (as the owner)                   |
-| `pnpm --filter @pulse/db test:int`    | Integration tests against a fresh PostGIS container               |
-| `pnpm infra:seed`                     | Add local sample data (AIUB and a demo campus); safe to run again |
+| Command                               | Does                                                                                                     |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `pnpm --filter @pulse/db db:migrate`  | Apply new migrations to the Compose database                                                             |
+| `pnpm --filter @pulse/db db:generate` | Write a migration from changes in `src/schema.ts`                                                        |
+| `pnpm --filter @pulse/db db:check`    | Schema and migrations agree, merged migrations untouched (CI runs it too; `git fetch origin main` first) |
+| `pnpm --filter @pulse/db db:studio`   | Browse the tables in the browser (as the owner)                                                          |
+| `pnpm --filter @pulse/db test:int`    | Integration tests against a fresh PostGIS container                                                      |
+| `pnpm infra:seed`                     | Add local sample data (AIUB and a demo campus); safe to run again                                        |
 
 ## API
 
