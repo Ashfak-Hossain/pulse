@@ -7,11 +7,11 @@ distributes one-off jobs.
 
 ## Three ways components talk
 
-| Kind                          | Used for                                                      | Technology                                    |
-| ----------------------------- | ------------------------------------------------------------- | --------------------------------------------- |
-| Request / response            | Browser to API                                                | HTTPS via Next.js, WebSocket for live updates |
-| Events (facts that happened)  | Service to service; many readers; replayable                  | Kafka 4 (KRaft) + Karapace schema registry    |
-| Jobs (work done exactly once) | Notifications, file parsing, AI calls, settlement, retraining | RabbitMQ 4 (quorum queues)                    |
+| Kind                          | Used for                                                      | Technology                                                                 |
+| ----------------------------- | ------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Request / response            | Browser to API                                                | HTTPS via Next.js, WebSocket for live updates                              |
+| Events (facts that happened)  | Service to service; many readers; replayable                  | Kafka 4 (KRaft); Zod schemas in `@pulse/events`, Karapace later (ADR 0005) |
+| Jobs (work done exactly once) | Notifications, file parsing, AI calls, settlement, retraining | RabbitMQ 4 (quorum queues)                                                 |
 
 ## Rules that hold everywhere
 
@@ -26,6 +26,7 @@ distributes one-off jobs.
 
 | Topic           | Key         | Why that key                                                |
 | --------------- | ----------- | ----------------------------------------------------------- |
+| `campuses`      | `campusId`  | A campus's lifecycle is read in order; few events           |
 | `trip-requests` | `campusId`  | One matcher instance owns each campus: no distributed locks |
 | `trips`         | `tripId`    | A trip's lifecycle is read in order                         |
 | `calendar`      | `sectionId` | Class changes per section stay in order                     |
