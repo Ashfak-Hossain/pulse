@@ -1,0 +1,11 @@
+{
+  // Used by `pnpm build` only: compiles src (never test) into dist
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    // src/topics.ts becomes dist/topics.js, not dist/src/topics.js
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src"]
+}
