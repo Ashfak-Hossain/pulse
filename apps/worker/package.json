@@ -1,0 +1,25 @@
+{
+  "name": "@pulse/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:int": "vitest run --config vitest.config.int.ts"
+  },
+  "dependencies": {
+    "@platformatic/kafka": "^2.14.0",
+    "@pulse/events": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "fast-check": "catalog:",
+    "testcontainers": "^12.2.1",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
