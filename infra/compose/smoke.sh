@@ -1,13 +1,13 @@
 #!/bin/sh
-# Proves each core and events service answers a real request, not just that its container is
-# running.
+# Proves each core, events and queue service answers a real request, not just that its container
+# is running.
 # Users and ports come from the running stack, so overrides in infra/compose/.env still pass.
 # Run after `pnpm infra:up`: `pnpm infra:smoke`. Needs curl and jq. The first run downloads the
 # Kafka CLI image (about 700 MB on disk), so it takes a while once.
 set -eu
 
 cd "$(dirname "$0")/../.."
-compose="docker compose -f infra/compose/compose.yaml --profile core --profile events"
+compose="docker compose -f infra/compose/compose.yaml --profile core --profile events --profile queue"
 
 fail() {
   echo "FAIL $1" >&2
@@ -82,3 +82,33 @@ case "$record" in
 esac
 partition=${record#Partition:}
 echo "ok  kafka     keyed record back from partition ${partition%%"$tab"*} ($topic)"
+
+# A throwaway queue per run, through the management API: publish one message to it, read it back,
+# then delete the queue (even after a failure). Proves the broker and the web UI's API both work.
+# A quorum queue, the type the job queues use
+rabbit_user=$($compose exec -T rabbitmq sh -c 'printf %s "$RABBITMQ_DEFAULT_USER"') ||
+  fail "rabbitmq: not running (is it up? pnpm infra:ps)"
+rabbit_pass=$($compose exec -T rabbitmq sh -c 'printf %s "$RABBITMQ_DEFAULT_PASS"') ||
+  fail "rabbitmq: could not read the password"
+api="http://$(published rabbitmq 15672)/api"
+# The login goes to curl on stdin, so it never shows in `ps`
+rabbit() {
+  printf 'user = "%s:%s"\n' "$rabbit_user" "$rabbit_pass" |
+    curl -fsS -K - -H 'content-type: application/json' "$@"
+}
+queue="pulse-smoke-$(date +%s)-$$"
+payload="smoke-$$"
+trap 'rabbit -X DELETE "$api/queues/%2F/$queue" >/dev/null 2>&1 || true' EXIT
+rabbit -X PUT "$api/queues/%2F/$queue" -d '{"durable":true,"arguments":{"x-queue-type":"quorum"}}' ||
+  fail "rabbitmq: could not create queue $queue"
+routed=$(rabbit -X POST "$api/exchanges/%2F/amq.default/publish" -d "{\"properties\":{},\
+\"routing_key\":\"$queue\",\"payload\":\"$payload\",\"payload_encoding\":\"string\"}") ||
+  fail "rabbitmq: publish failed"
+[ "$(printf '%s' "$routed" | jq -r '.routed')" = true ] || fail "rabbitmq: message was not routed"
+got=$(rabbit -X POST "$api/queues/%2F/$queue/get" \
+  -d '{"count":1,"ackmode":"ack_requeue_false","encoding":"auto"}') ||
+  fail "rabbitmq: get failed"
+received=$(printf '%s' "$got" | jq -r '.[0].payload')
+[ "$received" = "$payload" ] || fail "rabbitmq: expected '$payload', got '$received'"
+version=$(rabbit "$api/overview" | jq -r '.rabbitmq_version')
+echo "ok  rabbitmq  $version, message back from $queue"

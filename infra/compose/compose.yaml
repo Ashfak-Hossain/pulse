@@ -1,5 +1,6 @@
-# Local development services, grouped by profile: core and events now, queue later.
-# `pnpm infra:up` starts them all. Credentials are throwaway local defaults, never real ones.
+# Local development only (production: compose.prod.yaml). Services are grouped by profile:
+# core, events and queue start with `pnpm infra:up`; console (Kafka UI) with
+# `pnpm infra:console`; tools only when run. Credentials are throwaway local defaults.
 
 name: pulse
 
@@ -116,6 +117,55 @@ services:
     command: ['kafka-topics.sh', '--bootstrap-server', 'kafka:19092', '--list']
     mem_limit: 384m
 
+  rabbitmq:
+    # The management image includes the web UI (http://127.0.0.1:15672)
+    image: rabbitmq:4.4-management-alpine
+    profiles: [queue]
+    # RabbitMQ keeps its data under its node name, which comes from the hostname; Compose would
+    # give a random one, and a new name on the next start would ignore the old data
+    hostname: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-pulse}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-pulse}
+    ports:
+      - '127.0.0.1:${AMQP_PORT:-5672}:5672'
+      - '127.0.0.1:${RABBITMQ_UI_PORT:-15672}:15672'
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    mem_limit: 384m
+
+  # Browse topics, messages and consumer groups: http://127.0.0.1:8080
+  kafka-ui:
+    image: kafbat/kafka-ui:v1.5.0
+    profiles: [console]
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_CLUSTERS_0_NAME: pulse-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:19092
+      # Clusters come only from this file, not from edits in the UI
+      DYNAMIC_CONFIG_ENABLED: 'false'
+      # The JVM takes a quarter of the container's memory by default, too little for the UI
+      JAVA_OPTS: -XX:MaxRAMPercentage=60
+    ports:
+      - '127.0.0.1:${KAFKA_UI_PORT:-8080}:8080'
+    # So `pnpm infra:console` returns once the UI answers, not when Java starts
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:8080/actuator/health | grep -q UP']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+    mem_limit: 512m
+
 volumes:
   pg-data:
   kafka-data:
+  rabbitmq-data:

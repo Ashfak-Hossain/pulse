@@ -134,6 +134,9 @@ remove later), so the previous version still runs on the new schema.
 
 ### 4.4 Hosting options (decide by **21 Nov**, end of week 3, so the pilot can start 29 Nov)
 
+The host must be amd64: the PostGIS image has no arm64 build (ADR 0001), so arm64 VPS offers are
+out unless we build our own image.
+
 | Option                                                                                      | Cost / month                          | Pros                                          | Cons                                                           |
 | ------------------------------------------------------------------------------------------- | ------------------------------------- | --------------------------------------------- | -------------------------------------------------------------- |
 | **One VPS (4–8 GB) + Compose** (recommended)                                                | ~$12–24, or free with student credits | Same Compose as local; simplest; full control | We patch the server; one machine                               |
@@ -142,15 +145,15 @@ remove later), so the previous version still runs on the new schema.
 
 ### 4.5 Operations
 
-| Topic            | Plan                                                                                                              |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Health           | `/health` (liveness), `/health/ready` (PG, Redis, Kafka producer, RabbitMQ channel)                               |
-| Logs             | JSON to stdout; `docker compose logs`; 7-day rotation                                                             |
-| Metrics (light)  | Kafka UI and RabbitMQ management in the `console` profile (not public); admin analytics page                      |
-| Backups          | Nightly `pg_dump` to the file store (S3 bucket in production), 14 days kept; restore tested once before the pilot |
-| Secrets          | `.env` on the host, `chmod 600`, never in images                                                                  |
-| Runbook          | `docs/runbook.md` (S54): start/stop, deploy, rollback, restore, replay a DLQ, rotate secrets                      |
-| Monitoring stack | Out of scope (proposal); uptime check via a free pinger on `/api/health/ready`                                    |
+| Topic            | Plan                                                                                                                                               |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Health           | `/health` (liveness), `/health/ready` (PG, Redis, Kafka producer, RabbitMQ channel)                                                                |
+| Logs             | JSON to stdout; `docker compose logs`; 7-day rotation                                                                                              |
+| Metrics (light)  | Admin analytics page. Locally Kafka UI (`console` profile) and the RabbitMQ web UI; in production none is published (S54 decides on an SSH tunnel) |
+| Backups          | Nightly `pg_dump` to the file store (S3 bucket in production), 14 days kept; restore tested once before the pilot                                  |
+| Secrets          | `.env` on the host, `chmod 600`, never in images                                                                                                   |
+| Runbook          | `docs/runbook.md` (S54): start/stop, deploy, rollback, restore, replay a DLQ, rotate secrets                                                       |
+| Monitoring stack | Out of scope (proposal); uptime check via a free pinger on `/api/health/ready`                                                                     |
 
 ## 5. Definition of done (every slice)
 
