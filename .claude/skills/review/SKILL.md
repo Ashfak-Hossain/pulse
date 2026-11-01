@@ -13,6 +13,7 @@ description: Run the Pulse reviewer agents that match the changed files, in para
    | `security-reviewer`      | `apps/`, `packages/db`, `packages/contracts`, `.github/`, any `package.json`, `pnpm-workspace.yaml`, `infra/` |
    | `migration-reviewer`     | `packages/db/`                                                                                                |
    | `events-reviewer`        | `packages/events`, `packages/jobs`, `apps/worker`, or any diff line mentioning `outbox`                       |
+   | `diagram-reviewer`       | any changed `.md` file whose diff adds or changes a ` ```mermaid ` block                                      |
 
 3. Launch the chosen agents in parallel with the Agent tool, each with the branch name and the
    slice id.
