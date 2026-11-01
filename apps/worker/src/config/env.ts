@@ -1,0 +1,47 @@
+import { z } from 'zod';
+
+const MAX_PORT = 65535;
+
+function isBrokerAddress(value: string): boolean {
+  const match = /^([^\s:]+):(\d+)$/.exec(value);
+  if (!match) return false;
+  const port = Number(match[2]);
+  return port >= 1 && port <= MAX_PORT;
+}
+
+const replicaCount = z.coerce.number().int().min(1).default(1);
+
+// Defaults fit local dev: one Kafka broker from Compose
+const envSchema = z
+  .object({
+    KAFKA_BROKERS: z
+      .string()
+      .default('127.0.0.1:9092')
+      .transform((list) => list.split(',').map((broker) => broker.trim()))
+      .pipe(z.array(z.string().refine(isBrokerAddress, 'expected host:port'))),
+    KAFKA_CLIENT_ID: z.string().min(1).default('pulse-worker'),
+    KAFKA_REPLICATION_FACTOR: replicaCount,
+    KAFKA_MIN_INSYNC_REPLICAS: replicaCount,
+  })
+  // More in-sync replicas than copies would make every acks=all write fail
+  .refine((env) => env.KAFKA_MIN_INSYNC_REPLICAS <= env.KAFKA_REPLICATION_FACTOR, {
+    path: ['KAFKA_MIN_INSYNC_REPLICAS'],
+    message: 'must not be above KAFKA_REPLICATION_FACTOR',
+  });
+
+export type Env = z.infer<typeof envSchema>;
+
+/**
+ * Validates the environment at startup and throws if anything is wrong. The error lists keys
+ * only, never values, because values can be secrets.
+ */
+export function validateEnv(source: Record<string, unknown>): Env {
+  const result = envSchema.safeParse(source);
+  if (!result.success) {
+    const problems = result.error.issues.map(
+      (issue) => `${issue.path.join('.')}: ${issue.message}`,
+    );
+    throw new Error(`Invalid environment:\n  ${problems.join('\n  ')}`);
+  }
+  return result.data;
+}
