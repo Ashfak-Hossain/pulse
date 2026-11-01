@@ -21,9 +21,11 @@ export default defineConfig(
     },
   },
   {
-    // Root config files (this one, commitlint…) are plain JS in no tsconfig: lint them without types
-    files: ['*.js'],
+    // Root config files (this one, commitlint…) and Claude's helper scripts are plain JS in no
+    // tsconfig: lint them without types
+    files: ['*.js', '.claude/tools/*.mjs'],
     extends: [tseslint.configs.disableTypeChecked],
+    languageOptions: { globals: { process: 'readonly', console: 'readonly' } },
   },
   {
     // The test database helper loads a dev-only dependency: test code may use it, app code never
