@@ -117,18 +117,23 @@ change anything in it for local work.
 Make sure Docker (OrbStack / Docker Desktop) is running, then:
 
 ```sh
-pnpm infra:up      # starts PostgreSQL, Redis, Mailpit and waits until they are healthy
+pnpm infra:up      # starts PostgreSQL, Redis, Mailpit, Kafka, RabbitMQ; waits until healthy
 pnpm infra:ps      # every service should say "(healthy)"
 ```
 
 The first start downloads the images (a few minutes). On Apple Silicon (M1/M2) PostgreSQL runs
 under Rosetta, so it is a bit slower; that is expected.
 
-| Service    | What it is                                              | Where                 |
-| ---------- | ------------------------------------------------------- | --------------------- |
-| PostgreSQL | The database (with PostGIS for map points)              | `127.0.0.1:5432`      |
-| Redis      | A fast cache (used later)                               | `127.0.0.1:6379`      |
-| Mailpit    | Catches every email the app sends; opens in the browser | http://127.0.0.1:8025 |
+| Service    | What it is                                              | Where                                      |
+| ---------- | ------------------------------------------------------- | ------------------------------------------ |
+| PostgreSQL | The database (with PostGIS for map points)              | `127.0.0.1:5432`                           |
+| Redis      | A fast cache (used later)                               | `127.0.0.1:6379`                           |
+| Mailpit    | Catches every email the app sends; opens in the browser | http://127.0.0.1:8025                      |
+| Kafka      | Carries events between parts of the app                 | `127.0.0.1:9092`                           |
+| RabbitMQ   | Queues one-off jobs (emails, imports); has a web UI     | http://127.0.0.1:15672 (`pulse` / `pulse`) |
+
+To look inside Kafka (topics and messages), start Kafka UI with `pnpm infra:console` and open
+http://127.0.0.1:8080. It is off by default because it needs about 300 MB of memory.
 
 ## Step 7: create the tables and add sample data
 

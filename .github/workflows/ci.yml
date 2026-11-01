@@ -44,6 +44,18 @@ jobs:
       # Every service sits in a profile; without '*' Compose would validate an empty file
       - name: compose file is valid
         run: docker compose -f infra/compose/compose.yaml --profile '*' config --quiet
+      # Production requires every secret; placeholders here only let Compose check the file.
+      # No service may publish a port: only containers on the network reach the data services
+      - name: production compose file is valid and publishes no port
+        run: |
+          docker compose -f infra/compose/compose.prod.yaml config --quiet
+          docker compose -f infra/compose/compose.prod.yaml config --format json |
+            jq -e '[.services[] | select(.ports)] | length == 0'
+        env:
+          POSTGRES_PASSWORD: placeholder
+          REDIS_PASSWORD: placeholder
+          RABBITMQ_PASSWORD: placeholder
+          KAFKA_CLUSTER_ID: placeholder
 
   # No path filter on purpose: a required check that is skipped never reports, so GitHub would
   # block the merge forever. The job takes about two minutes

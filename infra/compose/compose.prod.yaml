@@ -1,0 +1,134 @@
+# Production (one host). For now only the data services; Caddy, api, worker, web and the
+# migrate job join with their Dockerfiles in S54.
+#
+# Differences from the local compose.yaml:
+# - no published ports: only containers on this network reach the services
+# - no default passwords: POSTGRES_PASSWORD, REDIS_PASSWORD, RABBITMQ_PASSWORD and
+#   KAFKA_CLUSTER_ID must be set in the host's env file (chmod 600), or Compose refuses to start.
+#   Passwords: letters and digits only, for example `openssl rand -hex 32`
+# - restart after a crash or reboot, capped log files, more time to shut down cleanly
+# - no Mailpit, Kafka UI or Kafka tools; RabbitMQ without its web UI
+#
+# Before S54 adds the app services: a separate internal network for the data services (so Caddy
+# cannot reach them), a pulse_app database role and a RabbitMQ user without admin rights, and
+# secrets from files instead of env vars.
+#
+# Run: docker compose -f infra/compose/compose.prod.yaml --env-file /srv/pulse/.env up -d --wait
+
+# Its own project name, so it never shares containers or volumes with the local stack
+name: pulse-prod
+
+x-service: &service
+  restart: unless-stopped
+  stop_grace_period: 30s
+  security_opt: ['no-new-privileges:true']
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: '5'
+
+services:
+  postgres:
+    <<: *service
+    image: postgis/postgis:18-3.6
+    # The image is amd64-only (ADR 0001), so the host must be amd64
+    platform: linux/amd64
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-pulse}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-pulse}
+    volumes:
+      - pg-data:/var/lib/postgresql
+    # Docker's default 64 MB is too small for parallel queries and large sorts
+    shm_size: 256m
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -h 127.0.0.1 -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+    mem_limit: 1g
+
+  redis:
+    <<: *service
+    image: redis:8.8-alpine
+    # The password goes into a config file, not the command line, where `ps` would show it.
+    # Cache and the Socket.IO adapter: losing it on restart is fine, so no snapshots
+    command:
+      - sh
+      - -c
+      - |
+        umask 077
+        printf 'requirepass %s\n' "$$REDIS_PASSWORD" > /tmp/redis.conf
+        chown redis:redis /tmp/redis.conf
+        exec docker-entrypoint.sh redis-server /tmp/redis.conf \
+          --maxmemory 128mb --maxmemory-policy allkeys-lru --save ''
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?set REDIS_PASSWORD}
+      # redis-cli reads the password from here, so the healthcheck needs no -a
+      REDISCLI_AUTH: ${REDIS_PASSWORD:?set REDIS_PASSWORD}
+    healthcheck:
+      test: ['CMD-SHELL', 'redis-cli ping | grep -q PONG']
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    mem_limit: 256m
+
+  kafka:
+    <<: *service
+    image: apache/kafka-native:4.4.0
+    environment:
+      KAFKA_NODE_ID: 1
+      # Generate once and keep it with the volume:
+      # docker run --rm apache/kafka:4.4.0 /opt/kafka/bin/kafka-storage.sh random-uuid
+      CLUSTER_ID: ${KAFKA_CLUSTER_ID:?set KAFKA_CLUSTER_ID}
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      # Containers use kafka:19092, as in the local file. Plaintext inside the private network;
+      # SASL/TLS is needed before any client outside this host connects (ADR 0006). The
+      # controller listens on localhost only: nothing else needs it
+      KAFKA_LISTENERS: DOCKER://:19092,CONTROLLER://localhost:9093
+      KAFKA_ADVERTISED_LISTENERS: DOCKER://kafka:19092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: DOCKER:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: DOCKER
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_SHARE_COORDINATOR_STATE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_SHARE_COORDINATOR_STATE_TOPIC_MIN_ISR: 1
+      KAFKA_LOG_DIRS: /home/appuser/kraft-logs
+    volumes:
+      - kafka-data:/home/appuser
+    healthcheck:
+      test: ['CMD-SHELL', 'nc -z localhost 19092']
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+    mem_limit: 512m
+
+  rabbitmq:
+    <<: *service
+    image: rabbitmq:4.4-alpine
+    # RabbitMQ keeps its data under its node name, which comes from the hostname
+    hostname: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-pulse}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?set RABBITMQ_PASSWORD}
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    mem_limit: 512m
+
+volumes:
+  pg-data:
+  kafka-data:
+  rabbitmq-data:

@@ -12,28 +12,32 @@ endpoint.
 
 ## Local services
 
-Docker Compose runs the services the apps need (`infra/compose/compose.yaml`). Ports listen on
+Docker Compose runs the services the apps need (`infra/compose/compose.yaml`, local only;
+production uses `infra/compose/compose.prod.yaml`). Ports listen on
 `127.0.0.1` only and the credentials are local defaults (`pulse` / `pulse`). Needs Docker
 (OrbStack or Docker Desktop); the smoke check also needs `curl` and `jq`, and its first run downloads the Kafka tools image
 (about 700 MB on disk). Kafka creates no topic
 by itself: a topic that does not exist is an error, not a new topic.
 
-| Service    | Address                                               | Used for                                  |
-| ---------- | ----------------------------------------------------- | ----------------------------------------- |
-| PostgreSQL | `postgres://pulse:pulse@127.0.0.1:5432/pulse`         | Source of truth, with PostGIS             |
-| Redis      | `redis://127.0.0.1:6379`                              | Cache                                     |
-| Mailpit    | SMTP `127.0.0.1:1025`, inbox http://127.0.0.1:8025    | Catches every email; nothing is delivered |
-| Kafka      | `127.0.0.1:9092` (laptop), `kafka:19092` (containers) | Domain events from the outbox (ADR 0004)  |
+| Service    | Address                                                        | Used for                                    |
+| ---------- | -------------------------------------------------------------- | ------------------------------------------- |
+| PostgreSQL | `postgres://pulse:pulse@127.0.0.1:5432/pulse`                  | Source of truth, with PostGIS               |
+| Redis      | `redis://127.0.0.1:6379`                                       | Cache                                       |
+| Mailpit    | SMTP `127.0.0.1:1025`, inbox http://127.0.0.1:8025             | Catches every email; nothing is delivered   |
+| Kafka      | `127.0.0.1:9092` (laptop), `kafka:19092` (containers)          | Domain events from the outbox (ADR 0004)    |
+| RabbitMQ   | `amqp://pulse:pulse@127.0.0.1:5672`, UI http://127.0.0.1:15672 | Jobs done once (email, imports, AI calls)   |
+| Kafka UI   | http://127.0.0.1:8080 (only with `pnpm infra:console`)         | Browse topics, messages and consumer groups |
 
-| Command            | Does                                                                                                   |
-| ------------------ | ------------------------------------------------------------------------------------------------------ |
-| `pnpm infra:up`    | Start the services and wait until they are healthy                                                     |
-| `pnpm infra:smoke` | Check each service answers a real request                                                              |
-| `pnpm infra:kafka` | Run a Kafka tool, for example `pnpm infra:kafka kafka-topics.sh --bootstrap-server kafka:19092 --list` |
-| `pnpm infra:ps`    | Show status and health                                                                                 |
-| `pnpm infra:logs`  | Follow the logs                                                                                        |
-| `pnpm infra:down`  | Stop the services; data is kept                                                                        |
-| `pnpm infra:reset` | Stop and delete all data                                                                               |
+| Command              | Does                                                                                                   |
+| -------------------- | ------------------------------------------------------------------------------------------------------ |
+| `pnpm infra:up`      | Start the services and wait until they are healthy                                                     |
+| `pnpm infra:console` | Also start Kafka UI (about 300 MB of memory, so it is off by default)                                  |
+| `pnpm infra:smoke`   | Check each service answers a real request                                                              |
+| `pnpm infra:kafka`   | Run a Kafka tool, for example `pnpm infra:kafka kafka-topics.sh --bootstrap-server kafka:19092 --list` |
+| `pnpm infra:ps`      | Show status and health                                                                                 |
+| `pnpm infra:logs`    | Follow the logs                                                                                        |
+| `pnpm infra:down`    | Stop the services; data is kept                                                                        |
+| `pnpm infra:reset`   | Stop and delete all data                                                                               |
 
 ## Database
 

@@ -80,12 +80,13 @@ Inside `packages/db`:
 
 ## `infra/`: local services
 
-| Path                           | What it is                                                            |
-| ------------------------------ | --------------------------------------------------------------------- |
-| `infra/compose/compose.yaml`   | Docker Compose: PostgreSQL + PostGIS, Redis, Mailpit (127.0.0.1 only) |
-| `infra/compose/postgres/init/` | Runs once on an empty database: creates the `pulse_app` role          |
-| `infra/compose/postgres/seed/` | Sample data for `pnpm infra:seed`                                     |
-| `infra/compose/smoke.sh`       | `pnpm infra:smoke`: checks each service answers a real request        |
+| Path                              | What it is                                                                                             |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `infra/compose/compose.yaml`      | Local Docker Compose: PostgreSQL + PostGIS, Redis, Mailpit, Kafka, RabbitMQ, Kafka UI (127.0.0.1 only) |
+| `infra/compose/compose.prod.yaml` | Production Compose: the data services with no published ports and required secrets                     |
+| `infra/compose/postgres/init/`    | Runs once on an empty database: creates the `pulse_app` role                                           |
+| `infra/compose/postgres/seed/`    | Sample data for `pnpm infra:seed`                                                                      |
+| `infra/compose/smoke.sh`          | `pnpm infra:smoke`: checks each service answers a real request                                         |
 
 ## `postman/`
 

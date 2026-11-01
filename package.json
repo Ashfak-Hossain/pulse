@@ -11,6 +11,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "infra:up": "docker compose -f infra/compose/compose.yaml --profile core --profile events --profile queue up -d --wait",
+    "infra:console": "docker compose -f infra/compose/compose.yaml --profile events --profile console up -d --wait",
     "infra:down": "docker compose -f infra/compose/compose.yaml --profile '*' down",
     "infra:ps": "docker compose -f infra/compose/compose.yaml --profile '*' ps",
     "infra:logs": "docker compose -f infra/compose/compose.yaml --profile '*' logs -f --tail 100",
