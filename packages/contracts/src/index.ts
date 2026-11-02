@@ -8,3 +8,9 @@ export {
   type CampusList,
   type CampusParams,
 } from './campus.js';
+export {
+  fareSplitRequestSchema,
+  fareSplitPreviewSchema,
+  type FareSplitRequest,
+  type FareSplitPreview,
+} from './fare.js';
