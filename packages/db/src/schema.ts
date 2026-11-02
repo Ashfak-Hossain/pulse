@@ -13,6 +13,7 @@ import {
   text,
   timestamp,
   uuid,
+  unique,
 } from 'drizzle-orm/pg-core';
 
 // Created by the Compose init script, not by migrations
@@ -96,4 +97,27 @@ export const processedEvent = pgTable(
     processedAt: timestamp('processed_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [primaryKey({ columns: [table.consumer, table.eventId] })],
+);
+
+// Course reads are campus-scoped; writes remain owner-only until an admin workflow exists.
+export const course = pgTable(
+  'course',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    campusId: uuid('campus_id')
+      .notNull()
+      .references(() => campus.id),
+    code: text('code').notNull(),
+    title: text('title').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // Also indexes the campus foreign key and the scoped code-ordered list query.
+    unique('course_campus_code_unique').on(table.campusId, table.code),
+    pgPolicy('course_read', {
+      for: 'select',
+      to: pulseApp,
+      using: sql`${table.campusId} = ${currentCampusId}`,
+    }),
+  ],
 );
