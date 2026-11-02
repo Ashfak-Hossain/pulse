@@ -70,12 +70,13 @@ process runs; `/health/ready` also checks PostgreSQL (503 when it is unreachable
 Tests: `pnpm --filter @pulse/api test` (unit) and `pnpm --filter @pulse/api test:e2e` (over HTTP,
 against a PostGIS container, so Docker must be running).
 
-| Endpoint              | Answers                                                                                              |
-| --------------------- | ---------------------------------------------------------------------------------------------------- |
-| `GET /health`         | `{"status":"ok"}` while the process runs                                                             |
-| `GET /health/ready`   | 200 when PostgreSQL answers, 503 when it does not                                                    |
-| `GET /campuses`       | `{ "items": [campus, …] }`, sorted by name                                                           |
-| `GET /campuses/:slug` | One campus (`id`, `name`, `slug`, `emailDomains`, `timezone`, `location: { lat, lng }`); 404 if none |
+| Endpoint                      | Answers                                                                                              |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `GET /health`                 | `{"status":"ok"}` while the process runs                                                             |
+| `GET /health/ready`           | 200 when PostgreSQL answers, 503 when it does not                                                    |
+| `GET /campuses`               | `{ "items": [campus, …] }`, sorted by name                                                           |
+| `GET /campuses/:slug/courses` | Up to 500 public courses from that campus, ordered by code; 404 for unknown campus                   |
+| `GET /campuses/:slug`         | One campus (`id`, `name`, `slug`, `emailDomains`, `timezone`, `location: { lat, lng }`); 404 if none |
 
 There is no sign-in yet, so every route is public. Campuses are public on purpose (the app needs
 them before sign-in). A new route is public only if its data is public too; anything personal
