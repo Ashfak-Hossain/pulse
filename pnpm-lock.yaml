@@ -309,6 +309,9 @@ importers:
       '@platformatic/kafka':
         specifier: ^2.14.0
         version: 2.14.0
+      '@pulse/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@pulse/events':
         specifier: workspace:*
         version: link:../../packages/events

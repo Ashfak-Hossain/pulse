@@ -1,15 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import {
-  Consumer,
-  stringDeserializers,
-  type Admin,
-  type Message,
-  type Producer,
-} from '@platformatic/kafka';
+import type { Admin, Producer } from '@platformatic/kafka';
 import { inject } from 'vitest';
 import { createAdmin, createProducer } from '../src/kafka/client.js';
-
-type StringMessage = Message<string, string, string, string>;
+import { readMessages } from './support/consume.js';
 
 // Its own topic, so it never meets the shared names topics.int.test.ts creates
 const topic = `round-trip-${randomUUID()}`;
@@ -30,27 +23,6 @@ afterAll(async () => {
   await admin.close();
 });
 
-async function readAll(count: number): Promise<StringMessage[]> {
-  const consumer = new Consumer({
-    groupId: `round-trip-${randomUUID()}`,
-    clientId: 'round-trip-consumer',
-    bootstrapBrokers: inject('kafkaBrokers'),
-    deserializers: stringDeserializers,
-  });
-  const stream = await consumer.consume({ topics: [topic], mode: 'earliest' });
-  const messages: StringMessage[] = [];
-  try {
-    for await (const message of stream) {
-      messages.push(message);
-      if (messages.length === count) break;
-    }
-  } finally {
-    await stream.close();
-    await consumer.close();
-  }
-  return messages;
-}
-
 describe('producer → Kafka 4.4 → consumer group', () => {
   it('sends keyed records with headers, idempotently with acks=all', async () => {
     // Nine records, three per key, sent in one request
@@ -67,7 +39,7 @@ describe('producer → Kafka 4.4 → consumer group', () => {
   });
 
   it('reads them back: same key → same partition, in send order', async () => {
-    const received = await readAll(9);
+    const received = await readMessages(inject('kafkaBrokers'), topic, 9);
     expect(received).toHaveLength(9);
 
     for (const key of keys) {

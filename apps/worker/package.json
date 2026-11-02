@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@platformatic/kafka": "^2.14.0",
+    "@pulse/db": "workspace:*",
     "@pulse/events": "workspace:*",
     "zod": "catalog:"
   },
