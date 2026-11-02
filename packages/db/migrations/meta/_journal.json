@@ -22,6 +22,27 @@
       "when": 1793303206709,
       "tag": "0002_app-privileges",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793571731702,
+      "tag": "0003_outbox-relay-columns",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793571796452,
+      "tag": "0004_relay-role",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793605344675,
+      "tag": "0005_outbox-checks",
+      "breakpoints": true
     }
   ]
 }

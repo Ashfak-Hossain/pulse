@@ -10,8 +10,9 @@
 # - no Mailpit, Kafka UI or Kafka tools; RabbitMQ without its web UI
 #
 # Before S54 adds the app services: a separate internal network for the data services (so Caddy
-# cannot reach them), a pulse_app database role and a RabbitMQ user without admin rights, and
-# secrets from files instead of env vars.
+# cannot reach them), the pulse_app and pulse_relay database roles with generated passwords (never
+# the local defaults in postgres/init), a RabbitMQ user without admin rights, and secrets from
+# files instead of env vars.
 #
 # Run: docker compose -f infra/compose/compose.prod.yaml --env-file /srv/pulse/.env up -d --wait
 

@@ -21,6 +21,9 @@ export function campusCreated(campusId: string): typeof outboxEvent.$inferInsert
     aggregate: 'campus',
     aggregateId: campusId,
     type: 'CampusCreated',
+    version: 1,
+    topic: 'campuses',
+    key: campusId,
     payload: { campusId },
   };
 }

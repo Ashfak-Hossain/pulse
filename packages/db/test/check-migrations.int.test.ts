@@ -23,6 +23,9 @@ type Journal = { entries: { idx: number; when: number; tag: string }[] };
 // `main` holds the package as it is; the cases change the working tree on top of it
 describe('check-migrations.sh', () => {
   let repo = '';
+  // How many migrations main holds, and the number the next one gets (e.g. '0005')
+  let merged = 0;
+  let next = '';
 
   function run(command: string, args: string[]): { status: number | null; output: string } {
     const result = spawnSync(command, args, { cwd: repo, encoding: 'utf8' });
@@ -81,6 +84,8 @@ describe('check-migrations.sh', () => {
     git('add', '.');
     git('commit', '-qm', 'base');
     git('switch', '-qc', 'pr');
+    merged = (JSON.parse(readFileSync(journalPath(), 'utf8')) as Journal).entries.length;
+    next = String(merged).padStart(4, '0');
   });
 
   beforeEach(() => {
@@ -139,9 +144,9 @@ describe('check-migrations.sh', () => {
   });
 
   it('fails a .sql file the journal does not list', () => {
-    writeFileSync(join(repo, 'migrations', '0003_orphan.sql'), 'SELECT 1;\n');
+    writeFileSync(join(repo, 'migrations', `${next}_orphan.sql`), 'SELECT 1;\n');
     const result = check();
-    expect(result.output).toContain('0003_orphan.sql is not in the journal');
+    expect(result.output).toContain(`${next}_orphan.sql is not in the journal`);
     expect(result.status).toBe(1);
   });
 
@@ -171,9 +176,9 @@ describe('check-migrations.sh', () => {
   // the one that has to notice
   it('fails a new migration whose snapshot is missing', () => {
     expect(run('pnpm', ['exec', 'drizzle-kit', 'generate', '--custom']).status).toBe(0);
-    unlinkSync(join(repo, 'migrations', 'meta', '0003_snapshot.json'));
+    unlinkSync(join(repo, 'migrations', 'meta', `${next}_snapshot.json`));
     const result = check();
-    expect(result.output).toContain('has no meta/0003_snapshot.json');
+    expect(result.output).toContain(`has no meta/${next}_snapshot.json`);
     expect(result.status).toBe(1);
   });
 
@@ -183,7 +188,7 @@ describe('check-migrations.sh', () => {
     addColumn();
     expect(generate().status).toBe(0);
     for (const file of readdirSync(join(repo, 'migrations'))) {
-      if (file.startsWith('0003_')) {
+      if (file.startsWith(`${next}_`)) {
         unlinkSync(join(repo, 'migrations', file));
       }
     }
@@ -192,7 +197,9 @@ describe('check-migrations.sh', () => {
     });
     const result = check();
     expect(result.output).toContain('ok  schema and migrations agree');
-    expect(result.output).toContain('meta/ holds 4 snapshots for 3 journal entries');
+    expect(result.output).toContain(
+      `meta/ holds ${merged + 1} snapshots for ${merged} journal entries`,
+    );
     expect(result.status).toBe(1);
   });
 }, 120_000);
