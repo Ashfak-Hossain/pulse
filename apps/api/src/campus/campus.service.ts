@@ -1,6 +1,6 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import type { Campus, CampusList } from '@pulse/contracts';
-import { asc, campus, eq, type Database } from '@pulse/db';
+import type { Campus, CampusList, CampusDistance } from '@pulse/contracts';
+import { asc, campus, eq, sql, type Database } from '@pulse/db';
 import { DATABASE } from '../db/db.module.js';
 
 type CampusRow = typeof campus.$inferSelect;
@@ -23,6 +23,18 @@ export class CampusService {
       .orderBy(asc(campus.name), asc(campus.slug))
       .limit(CAMPUS_LIST_LIMIT);
     return { items: rows.map(toCampus) };
+  }
+
+  async distance(slug: string, lat: number, lng: number): Promise<CampusDistance> {
+    // geography gives metres on WGS84; MakePoint takes longitude before latitude.
+    const distance = sql<number>`round(ST_Distance(${campus.location}::geography, ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography))::int`;
+    const [row] = await this.db
+      .select({ slug: campus.slug, distanceMetres: distance })
+      .from(campus)
+      .where(eq(campus.slug, slug))
+      .limit(1);
+    if (!row) throw new NotFoundException('Campus not found');
+    return { slug: row.slug, distanceMetres: row.distanceMetres };
   }
 
   async getBySlug(slug: string): Promise<Campus> {

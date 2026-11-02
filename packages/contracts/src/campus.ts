@@ -6,6 +6,18 @@ export const campusSlugSchema = z
   .max(64)
   .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/);
 
+// Query strings arrive as text. Reject blanks before coercion, which would turn them into 0.
+export const campusDistanceQuerySchema = z.strictObject({
+  lat: z.string().trim().min(1).pipe(z.coerce.number<string>().min(-90).max(90)),
+  lng: z.string().trim().min(1).pipe(z.coerce.number<string>().min(-180).max(180)),
+});
+export const campusDistanceSchema = z.strictObject({
+  slug: campusSlugSchema,
+  distanceMetres: z.int().min(0),
+});
+export type CampusDistanceQuery = z.infer<typeof campusDistanceQuerySchema>;
+export type CampusDistance = z.infer<typeof campusDistanceSchema>;
+
 // Route params of /campuses/:slug
 export const campusParamsSchema = z.strictObject({ slug: campusSlugSchema });
 
