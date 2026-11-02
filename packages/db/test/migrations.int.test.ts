@@ -80,8 +80,11 @@ describe('migrations on an empty PostGIS', () => {
       where table_schema = 'public' and is_nullable = 'YES'
         and table_name in ('campus', 'outbox_event', 'processed_event')
       order by 1, 2`);
-    // published_at is the only column the schema leaves nullable
-    expect(result.rows).toEqual([{ table: 'outbox_event', column: 'published_at' }]);
+    // The only columns the schema leaves nullable
+    expect(result.rows).toEqual([
+      { table: 'outbox_event', column: 'last_error' },
+      { table: 'outbox_event', column: 'published_at' },
+    ]);
   });
 
   it('turn on row-level security for campus', async () => {

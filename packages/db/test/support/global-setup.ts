@@ -6,6 +6,7 @@ export default async function setup(project: TestProject): Promise<() => Promise
   const database = await startTestDatabase();
   project.provide('ownerUrl', database.ownerUrl);
   project.provide('appUrl', database.appUrl);
+  project.provide('relayUrl', database.relayUrl);
   return database.stop;
 }
 
@@ -13,5 +14,6 @@ declare module 'vitest' {
   export interface ProvidedContext {
     ownerUrl: string;
     appUrl: string;
+    relayUrl: string;
   }
 }

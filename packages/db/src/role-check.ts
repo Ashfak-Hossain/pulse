@@ -37,7 +37,7 @@ export async function assertRestrictedRole(db: Database): Promise<void> {
   if (unsafe !== undefined) {
     throw new Error(
       `Database role "${unsafe.role}" may bypass row-level security ` +
-        '(superuser, BYPASSRLS or table owner, or a member of one); connect as pulse_app',
+        '(superuser, BYPASSRLS or table owner, or a member of one); connect as a restricted role',
     );
   }
 }
