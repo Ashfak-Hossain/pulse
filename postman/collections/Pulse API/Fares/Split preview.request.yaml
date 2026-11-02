@@ -1,0 +1,19 @@
+$kind: http-request
+description: 'Preview integer-paisa fare shares without creating a payment or ledger entry.'
+url: '{{baseUrl}}/fares/split-preview'
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: '{"totalPaisa": 10000, "weights": [1, 1, 1]}'
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200', () => pm.response.to.have.status(200));
+      pm.test('splits the exact paisa fairly', () => pm.expect(pm.response.json()).to.eql({totalPaisa: 10000, shares: [3334, 3333, 3333]}));
+      pm.test('shares add up to the fare', () => { const body = pm.response.json(); pm.expect(body.shares.reduce((sum, share) => sum + share, 0)).to.equal(body.totalPaisa); });
+    language: text/javascript
+examples: '.resources/Split preview.resources/examples'
+order: 1000

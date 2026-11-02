@@ -1,0 +1,33 @@
+$kind: http-example
+name: '400 Bad Request'
+request:
+  method: POST
+  url: '{{baseUrl}}/fares/split-preview'
+  headers:
+    - key: Content-Type
+      value: application/json
+  body:
+    type: json
+    content: '{"totalPaisa": 10000, "weights": [0, 0]}'
+response:
+  statusCode: 400
+  statusText: 'Bad Request'
+  headers:
+    - key: Content-Type
+      value: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "statusCode": 400,
+        "error": "Bad Request",
+        "message": "Validation failed",
+        "issues": [
+          {
+            "path": "weights",
+            "code": "custom",
+            "message": "At least one weight must be greater than zero"
+          }
+        ]
+      }
+order: 1000
