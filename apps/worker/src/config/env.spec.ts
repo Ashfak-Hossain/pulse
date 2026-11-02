@@ -1,37 +1,47 @@
 import { validateEnv } from './env.js';
 
+const relayUrl = 'postgres://pulse_relay:pulse_relay@127.0.0.1:5432/pulse';
+// The one key without a default
+const required = { RELAY_DATABASE_URL: relayUrl };
+
 describe('validateEnv', () => {
   it('fills the defaults for local dev (Compose Kafka on the HOST listener)', () => {
-    expect(validateEnv({})).toEqual({
+    expect(validateEnv(required)).toEqual({
       KAFKA_BROKERS: ['127.0.0.1:9092'],
       KAFKA_CLIENT_ID: 'pulse-worker',
       KAFKA_REPLICATION_FACTOR: 1,
       KAFKA_MIN_INSYNC_REPLICAS: 1,
+      RELAY_DATABASE_URL: relayUrl,
+      RELAY_BATCH_SIZE: 100,
+      RELAY_POLL_MS: 500,
     });
   });
 
   it('splits a comma-separated broker list and trims spaces', () => {
-    expect(validateEnv({ KAFKA_BROKERS: 'kafka-1:9092, kafka-2:9092' }).KAFKA_BROKERS).toEqual([
-      'kafka-1:9092',
-      'kafka-2:9092',
-    ]);
+    expect(
+      validateEnv({ ...required, KAFKA_BROKERS: 'kafka-1:9092, kafka-2:9092' }).KAFKA_BROKERS,
+    ).toEqual(['kafka-1:9092', 'kafka-2:9092']);
   });
 
   it.each(['', 'kafka', 'kafka:', ':9092', 'kafka:abc', 'kafka:0', 'kafka:65536', 'a:1,,b:2'])(
     'rejects KAFKA_BROKERS=%j',
     (brokers) => {
-      expect(() => validateEnv({ KAFKA_BROKERS: brokers })).toThrow(/KAFKA_BROKERS/);
+      expect(() => validateEnv({ ...required, KAFKA_BROKERS: brokers })).toThrow(/KAFKA_BROKERS/);
     },
   );
 
   it('turns the replica settings from strings into numbers (env values are always strings)', () => {
-    const env = validateEnv({ KAFKA_REPLICATION_FACTOR: '3', KAFKA_MIN_INSYNC_REPLICAS: '2' });
+    const env = validateEnv({
+      ...required,
+      KAFKA_REPLICATION_FACTOR: '3',
+      KAFKA_MIN_INSYNC_REPLICAS: '2',
+    });
     expect(env.KAFKA_REPLICATION_FACTOR).toBe(3);
     expect(env.KAFKA_MIN_INSYNC_REPLICAS).toBe(2);
   });
 
   it.each(['0', '-1', '1.5', 'abc'])('rejects KAFKA_REPLICATION_FACTOR=%s', (value) => {
-    expect(() => validateEnv({ KAFKA_REPLICATION_FACTOR: value })).toThrow(
+    expect(() => validateEnv({ ...required, KAFKA_REPLICATION_FACTOR: value })).toThrow(
       /KAFKA_REPLICATION_FACTOR/,
     );
   });
@@ -39,12 +49,54 @@ describe('validateEnv', () => {
   // More in-sync replicas than copies would make every acks=all write fail
   it('rejects KAFKA_MIN_INSYNC_REPLICAS above KAFKA_REPLICATION_FACTOR', () => {
     expect(() =>
-      validateEnv({ KAFKA_REPLICATION_FACTOR: '1', KAFKA_MIN_INSYNC_REPLICAS: '2' }),
+      validateEnv({ ...required, KAFKA_REPLICATION_FACTOR: '1', KAFKA_MIN_INSYNC_REPLICAS: '2' }),
     ).toThrow(/KAFKA_MIN_INSYNC_REPLICAS/);
   });
 
+  it('requires RELAY_DATABASE_URL (no guessed database address)', () => {
+    expect(() => validateEnv({})).toThrow(/RELAY_DATABASE_URL/);
+  });
+
+  it.each(['postgresql://pulse_relay:pw@db:5432/pulse', relayUrl])(
+    'accepts RELAY_DATABASE_URL=%s',
+    (url) => {
+      expect(validateEnv({ RELAY_DATABASE_URL: url }).RELAY_DATABASE_URL).toBe(url);
+    },
+  );
+
+  it.each(['', 'not a url', 'mysql://u:p@db/pulse', 'http://db:5432/pulse'])(
+    'rejects RELAY_DATABASE_URL=%j',
+    (url) => {
+      expect(() => validateEnv({ RELAY_DATABASE_URL: url })).toThrow(/RELAY_DATABASE_URL/);
+    },
+  );
+
+  it('turns the relay numbers from strings into numbers', () => {
+    const env = validateEnv({ ...required, RELAY_BATCH_SIZE: '250', RELAY_POLL_MS: '2000' });
+    expect(env.RELAY_BATCH_SIZE).toBe(250);
+    expect(env.RELAY_POLL_MS).toBe(2000);
+  });
+
+  it.each(['1', '1000'])('accepts RELAY_BATCH_SIZE=%s (the edges)', (value) => {
+    expect(validateEnv({ ...required, RELAY_BATCH_SIZE: value }).RELAY_BATCH_SIZE).toBe(
+      Number(value),
+    );
+  });
+
+  it.each(['0', '-1', '1.5', 'abc', '1001'])('rejects RELAY_BATCH_SIZE=%s', (value) => {
+    expect(() => validateEnv({ ...required, RELAY_BATCH_SIZE: value })).toThrow(/RELAY_BATCH_SIZE/);
+  });
+
+  it.each(['50', '60000'])('accepts RELAY_POLL_MS=%s (the edges)', (value) => {
+    expect(validateEnv({ ...required, RELAY_POLL_MS: value }).RELAY_POLL_MS).toBe(Number(value));
+  });
+
+  it.each(['49', '0', '-1', '1.5', 'abc', '60001'])('rejects RELAY_POLL_MS=%s', (value) => {
+    expect(() => validateEnv({ ...required, RELAY_POLL_MS: value })).toThrow(/RELAY_POLL_MS/);
+  });
+
   it('drops keys it does not know (the real process env has hundreds)', () => {
-    expect(validateEnv({ PATH: '/usr/bin' })).not.toHaveProperty('PATH');
+    expect(validateEnv({ ...required, PATH: '/usr/bin' })).not.toHaveProperty('PATH');
   });
 
   it('names every bad key in one error', () => {
@@ -53,14 +105,17 @@ describe('validateEnv', () => {
     );
   });
 
-  it('never puts a value in the error (startup logs are not secret)', () => {
+  it.each([
+    ['KAFKA_BROKERS', 'secret-host-name'],
+    ['RELAY_DATABASE_URL', 'mysql://pulse_relay:secret-password@db/pulse'],
+  ])('never puts a value in the error (startup logs are not secret): %s', (key, value) => {
     let message = '';
     try {
-      validateEnv({ KAFKA_BROKERS: 'secret-host-name' });
+      validateEnv({ ...required, [key]: value });
     } catch (error) {
       message = error instanceof Error ? error.message : String(error);
     }
-    expect(message).toMatch(/KAFKA_BROKERS/);
-    expect(message).not.toContain('secret-host-name');
+    expect(message).toMatch(new RegExp(key));
+    expect(message).not.toContain('secret');
   });
 });

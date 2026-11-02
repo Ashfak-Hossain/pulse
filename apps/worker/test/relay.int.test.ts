@@ -1,9 +1,16 @@
 import { randomUUID } from 'node:crypto';
 import type { Admin, Producer } from '@platformatic/kafka';
-import { asc, createDb, eq, outboxEvent, sql } from '@pulse/db';
+import { asc, assertRestrictedRole, createDb, eq, outboxEvent, sql } from '@pulse/db';
 import { inject } from 'vitest';
 import { createAdmin, createProducer } from '../src/kafka/client.js';
-import { RELAY_LOCK_ID, relayOnce, type RelayProducer } from '../src/relay/relay.js';
+import { createRelayDb, currentRole } from '../src/relay/db.js';
+import { runRelayLoop, type LoopLogger } from '../src/relay/loop.js';
+import {
+  oneSendAtATime,
+  RELAY_LOCK_ID,
+  relayOnce,
+  type RelayProducer,
+} from '../src/relay/relay.js';
 import { readMessages } from './support/consume.js';
 
 const owner = createDb(inject('ownerUrl'));
@@ -222,6 +229,34 @@ describe('relayOnce', () => {
     expect(row?.lastError).toHaveLength(1000);
   });
 
+  // The transaction (and the advisory lock) stays open while Kafka answers, so a stuck send
+  // must not hold it forever
+  it('gives up on a send slower than sendTimeoutMs and records it as a failure', async () => {
+    const topic = await newTopic();
+    await insertRows([{ topic, key: 'campus-a' }]);
+    const stuck: RelayProducer = { send: () => new Promise(() => {}) };
+
+    const result = await relayOnce(relay, stuck, { ...options(topic), sendTimeoutMs: 200 });
+
+    expect(result).toMatchObject({ status: 'failed', published: 0 });
+    const [row] = await outboxRows();
+    expect(row).toMatchObject({ publishedAt: null, attempts: 1 });
+    expect(row?.lastError).toMatch(/timed out after 200 ms/);
+  });
+
+  it('frees the lock after a timed-out send, so the next step publishes the row', async () => {
+    const topic = await newTopic();
+    await insertRows([{ topic, key: 'campus-a' }]);
+    const stuck: RelayProducer = { send: () => new Promise(() => {}) };
+    await relayOnce(relay, stuck, { ...options(topic), sendTimeoutMs: 200 });
+
+    expect(await relayOnce(relay, producer, options(topic))).toEqual({
+      status: 'published',
+      count: 1,
+    });
+    expect(await readMessages(inject('kafkaBrokers'), topic, 1)).toHaveLength(1);
+  });
+
   it('sends a row again, with the same eventId, when it was sent but never marked', async () => {
     const topic = await newTopic();
     await insertRows([{ topic, key: 'campus-a' }]);
@@ -285,5 +320,198 @@ describe('relayOnce', () => {
     const [, wrong] = await outboxRows();
     expect(wrong).toMatchObject({ publishedAt: null, attempts: 1 });
     expect(wrong?.lastError).toMatch(/unknown topic/);
+  });
+});
+
+// Here and not in its own file: both suites empty and drain the one outbox table, so they must
+// not run in parallel
+describe('relayOnce when Kafka is slow', () => {
+  // Never answers, like a broker that accepts the connection and then goes quiet
+  const stuck: RelayProducer = { send: () => new Promise(() => {}) };
+
+  it('stops waiting for Kafka when the shutdown signal fires, and leaves the rows unpublished', async () => {
+    const topic = await newTopic();
+    await insertRows([{ topic, key: 'campus-a' }]);
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), 100);
+
+    const started = performance.now();
+    const result = await relayOnce(relay, stuck, { ...options(topic), signal: controller.signal });
+
+    expect(performance.now() - started).toBeLessThan(1000);
+    expect(result).toMatchObject({ status: 'failed', published: 0 });
+    const [row] = await outboxRows();
+    expect(row?.publishedAt).toBeNull();
+    expect(row?.lastError).toMatch(/stopped by shutdown/);
+  });
+
+  it('does not start a send once the shutdown signal has fired', async () => {
+    const topic = await newTopic();
+    await insertRows([{ topic, key: 'campus-a' }]);
+    const controller = new AbortController();
+    controller.abort();
+    const { fake, sent } = fakeProducer();
+
+    await relayOnce(relay, fake, { ...options(topic), signal: controller.signal });
+
+    expect(sent).toEqual([]);
+    expect((await outboxRows())[0]?.publishedAt).toBeNull();
+  });
+
+  // The timed-out send keeps going inside the Kafka client and lands later. With one send at a
+  // time, the resend starts only after it, so a copy can never land after a newer event
+  it('with oneSendAtATime, a send that lands after its timeout is not overlapped by the next one', async () => {
+    const topic = await newTopic();
+    await insertRows([
+      { topic, key: 'campus-a' },
+      { topic, key: 'campus-a' },
+    ]);
+    let sends = 0;
+    let firstSend: Promise<void> | undefined;
+    const slow: RelayProducer = {
+      send: (request) => {
+        sends += 1;
+        if (firstSend !== undefined) return producer.send(request);
+        firstSend = (async () => {
+          await new Promise((resolve) => setTimeout(resolve, 600));
+          await producer.send(request);
+        })();
+        return firstSend;
+      },
+    };
+    const guarded = oneSendAtATime(slow);
+    const slowOptions = { ...options(topic), sendTimeoutMs: 200 };
+
+    expect(await relayOnce(relay, guarded, slowOptions)).toMatchObject({ status: 'failed' });
+    expect(await relayOnce(relay, guarded, slowOptions)).toMatchObject({ status: 'failed' });
+    expect((await outboxRows())[0]?.lastError).toMatch(/still running/);
+    expect(sends).toBe(1);
+
+    // The guard waits on this same promise and was first in line, so it is free again after it
+    await firstSend;
+    expect(await relayOnce(relay, guarded, slowOptions)).toEqual({ status: 'published', count: 2 });
+
+    const rows = await outboxRows();
+    const ids = rows.map((row) => row.id);
+    const received = await readMessages(inject('kafkaBrokers'), topic, 4);
+    // The late send, then the resend: each in seq order, the copy never before the original
+    expect(received.map((m) => m.headers.get('eventId'))).toEqual([...ids, ...ids]);
+    for (const row of rows) {
+      expect(row.publishedAt).not.toBeNull();
+    }
+  });
+});
+
+describe('runRelayLoop with PostgreSQL and Kafka', () => {
+  const ignore = (): void => undefined;
+  const silent: LoopLogger = { info: ignore, warn: ignore, error: ignore };
+
+  it('connects as pulse_relay, a role that cannot bypass row-level security', async () => {
+    await expect(assertRestrictedRole(relay)).resolves.toBeUndefined();
+    const { rows } = await relay.execute<{ role: string }>(sql`select current_user as role`);
+    expect(rows[0]?.role).toBe('pulse_relay');
+  });
+
+  it('publishes rows written while it runs, in seq order, then returns after an abort', async () => {
+    const topic = await newTopic();
+    const controller = new AbortController();
+    // A batch of 2 makes the loop take several steps for the five rows
+    const loop = runRelayLoop(() => relayOnce(relay, producer, options(topic, 2)), {
+      batchSize: 2,
+      pollMs: 50,
+      signal: controller.signal,
+      logger: silent,
+    });
+
+    // One key, so all five land on one partition and Kafka keeps their order
+    await insertRows(Array.from({ length: 5 }, () => ({ topic, key: 'campus-a' })));
+    const received = await readMessages(inject('kafkaBrokers'), topic, 5);
+    controller.abort();
+    await loop;
+
+    const rows = await outboxRows();
+    expect(received.map((m) => m.headers.get('eventId'))).toEqual(rows.map((row) => row.id));
+    for (const row of rows) {
+      expect(row.publishedAt).not.toBeNull();
+    }
+  });
+
+  it('reports the role it connected as, for the start-up log', async () => {
+    expect(await currentRole(relay)).toBe('pulse_relay');
+  });
+
+  it('stops within a second when a shutdown comes during a stuck send', async () => {
+    const topic = await newTopic();
+    await insertRows([{ topic, key: 'campus-a' }]);
+    const stuck: RelayProducer = { send: () => new Promise(() => {}) };
+    const controller = new AbortController();
+    const loop = runRelayLoop(
+      () => relayOnce(relay, stuck, { ...options(topic), signal: controller.signal }),
+      { batchSize: 100, pollMs: 50, signal: controller.signal, logger: silent },
+    );
+
+    // Let the first step reach the send
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    const started = performance.now();
+    controller.abort();
+    await loop;
+
+    expect(performance.now() - started).toBeLessThan(1000);
+    expect((await outboxRows())[0]?.publishedAt).toBeNull();
+  });
+
+  // Like a Postgres restart: without error listeners, pg emits 'error' with nobody listening
+  // and the process dies
+  it('keeps publishing after its database connections are cut', async () => {
+    const appName = `relay-cut-${randomUUID()}`;
+    const url = new URL(inject('relayUrl'));
+    url.searchParams.set('application_name', appName);
+    const warnings: string[] = [];
+    const logger: LoopLogger = { ...silent, warn: (_fields, message) => warnings.push(message) };
+    const db = createRelayDb(url.href, logger);
+    const topic = await newTopic();
+    const controller = new AbortController();
+    const loop = runRelayLoop(() => relayOnce(db, producer, options(topic)), {
+      batchSize: 100,
+      pollMs: 50,
+      signal: controller.signal,
+      logger,
+    });
+
+    try {
+      await insertRows([{ topic, key: 'campus-a' }]);
+      await readMessages(inject('kafkaBrokers'), topic, 1);
+
+      await owner.execute(
+        sql`select pg_terminate_backend(pid) from pg_stat_activity where application_name = ${appName}`,
+      );
+      await insertRows([{ topic, key: 'campus-a' }]);
+      const received = await readMessages(inject('kafkaBrokers'), topic, 2);
+
+      expect(received).toHaveLength(2);
+      expect(warnings).toContain('Database connection lost');
+    } finally {
+      controller.abort();
+      await loop;
+      await db.$client.end();
+    }
+  });
+
+  it('returns soon after an abort while it sleeps on an empty outbox', async () => {
+    const topic = await newTopic();
+    const controller = new AbortController();
+    const loop = runRelayLoop(() => relayOnce(relay, producer, options(topic)), {
+      batchSize: 100,
+      pollMs: 60_000,
+      signal: controller.signal,
+      logger: silent,
+    });
+
+    // Let the first step run and the minute-long sleep start
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    const started = performance.now();
+    controller.abort();
+    await loop;
+    expect(performance.now() - started).toBeLessThan(1000);
   });
 });
