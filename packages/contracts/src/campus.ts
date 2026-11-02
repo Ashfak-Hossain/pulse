@@ -6,6 +6,10 @@ export const campusSlugSchema = z
   .max(64)
   .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/);
 
+// Query input for the public email-domain lookup. Never include the email in errors.
+export const campusLookupQuerySchema = z.strictObject({ email: z.email() });
+export type CampusLookupQuery = z.infer<typeof campusLookupQuerySchema>;
+
 // Route params of /campuses/:slug
 export const campusParamsSchema = z.strictObject({ slug: campusSlugSchema });
 

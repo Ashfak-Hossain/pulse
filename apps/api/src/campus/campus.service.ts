@@ -1,6 +1,6 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type { Campus, CampusList } from '@pulse/contracts';
-import { asc, campus, eq, type Database } from '@pulse/db';
+import { arrayContains, asc, campus, eq, type Database } from '@pulse/db';
 import { DATABASE } from '../db/db.module.js';
 
 type CampusRow = typeof campus.$inferSelect;
@@ -23,6 +23,22 @@ export class CampusService {
       .orderBy(asc(campus.name), asc(campus.slug))
       .limit(CAMPUS_LIST_LIMIT);
     return { items: rows.map(toCampus) };
+  }
+
+  async lookup(email: string): Promise<Campus> {
+    const domain = email.slice(email.lastIndexOf('@') + 1).toLowerCase();
+    // Two rows suffice to detect ambiguity; never log the address or return it in an error.
+    const rows = await this.db
+      .select()
+      .from(campus)
+      .where(arrayContains(campus.emailDomains, [domain]))
+      .limit(2);
+    if (rows.length > 1) {
+      throw new ConflictException('Email domain belongs to more than one campus');
+    }
+    const row = rows[0];
+    if (!row) throw new NotFoundException('Campus not found');
+    return toCampus(row);
   }
 
   async getBySlug(slug: string): Promise<Campus> {
