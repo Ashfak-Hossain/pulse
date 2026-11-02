@@ -11,6 +11,10 @@ function isBrokerAddress(value: string): boolean {
 
 const replicaCount = z.coerce.number().int().min(1).default(1);
 
+// One send carries the whole batch. Kafka's ~1 MB limit per partition batch can still be hit by
+// large rows on one key
+const MAX_BATCH_SIZE = 1000;
+
 // Defaults fit local dev: one Kafka broker from Compose
 const envSchema = z
   .object({
@@ -22,6 +26,10 @@ const envSchema = z
     KAFKA_CLIENT_ID: z.string().min(1).default('pulse-worker'),
     KAFKA_REPLICATION_FACTOR: replicaCount,
     KAFKA_MIN_INSYNC_REPLICAS: replicaCount,
+    // No default: a guessed database address could connect somewhere it should not
+    RELAY_DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
+    RELAY_BATCH_SIZE: z.coerce.number().int().min(1).max(MAX_BATCH_SIZE).default(100),
+    RELAY_POLL_MS: z.coerce.number().int().min(50).max(60_000).default(500),
   })
   // More in-sync replicas than copies would make every acks=all write fail
   .refine((env) => env.KAFKA_MIN_INSYNC_REPLICAS <= env.KAFKA_REPLICATION_FACTOR, {
