@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "start": "node dist/main.js",
+    "start": "node --env-file-if-exists=../../.env dist/main.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
@@ -15,6 +15,7 @@
     "@platformatic/kafka": "^2.14.0",
     "@pulse/db": "workspace:*",
     "@pulse/events": "workspace:*",
+    "pino": "^10.4.0",
     "zod": "catalog:"
   },
   "devDependencies": {
