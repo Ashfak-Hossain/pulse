@@ -8,3 +8,4 @@ export {
   type CampusList,
   type CampusParams,
 } from './campus.js';
+export { courseSchema, courseListSchema, type Course, type CourseList } from './course.js';
