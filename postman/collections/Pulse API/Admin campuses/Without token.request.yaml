@@ -1,0 +1,25 @@
+$kind: http-request
+description: 'No Authorization header: 401 before the body is even read, so a caller without the token learns nothing about the rules.'
+url: "{{baseUrl}}/admin/campuses"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 401', () => pm.response.to.have.status(401));
+      pm.test('error shape, no hint about the body', () =>
+        pm.expect(pm.response.json()).to.eql({
+          statusCode: 401,
+          error: 'Unauthorized',
+          message: 'Unauthorized',
+        }),
+      );
+    language: text/javascript
+examples: .resources/Without token.resources/examples
+order: 2000

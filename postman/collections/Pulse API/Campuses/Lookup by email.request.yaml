@@ -1,0 +1,18 @@
+$kind: http-request
+description: 'Look up a public campus by its exact email domain. Uses synthetic email addresses.'
+url: '{{baseUrl}}/campuses/lookup?email=name%40student.aiub.edu'
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  - key: email
+    value: "name@student.aiub.edu"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200', () => pm.response.to.have.status(200));
+      pm.test('matches AIUB', () => pm.expect(pm.response.json().slug).to.equal('aiub'));
+      pm.test('has exactly the campus fields', () => pm.expect(Object.keys(pm.response.json()).sort()).to.eql(['emailDomains', 'id', 'location', 'name', 'slug', 'timezone']));
+    language: text/javascript
+examples: '.resources/Lookup by email.resources/examples'
+order: 5000

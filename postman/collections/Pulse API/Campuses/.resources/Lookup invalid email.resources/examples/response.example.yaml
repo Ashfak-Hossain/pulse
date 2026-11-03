@@ -1,0 +1,27 @@
+$kind: http-example
+name: '400 Bad Request'
+request:
+  method: GET
+  url: '{{baseUrl}}/campuses/lookup?email=invalid'
+response:
+  statusCode: 400
+  statusText: 'Bad Request'
+  headers:
+    - key: Content-Type
+      value: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "statusCode": 400,
+        "error": "Bad Request",
+        "message": "Validation failed",
+        "issues": [
+          {
+            "path": "email",
+            "code": "invalid_format",
+            "message": "Invalid email address"
+          }
+        ]
+      }
+order: 1000

@@ -1,0 +1,40 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/admin/campuses"
+  method: POST
+  headers:
+    Accept: application/json
+    Content-Type: application/json
+    Authorization: Bearer {{adminToken}}
+  body:
+    type: json
+    content: |-
+      {
+        "name": "Pulse Demo Campus demo-mhi2k3x1",
+        "slug": "demo-mhi2k3x1",
+        "emailDomains": ["demo-mhi2k3x1.pulse.test"],
+        "timezone": "Asia/Dhaka",
+        "location": { "lat": 23.8103, "lng": 90.4125 }
+      }
+response:
+  statusCode: 201
+  statusText: Created
+  headers:
+    content-type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "id": "0b6f3c1e-8a52-4d6e-9f1a-2c7d5e4b3a90",
+        "name": "Pulse Demo Campus demo-mhi2k3x1",
+        "slug": "demo-mhi2k3x1",
+        "emailDomains": [
+          "demo-mhi2k3x1.pulse.test"
+        ],
+        "timezone": "Asia/Dhaka",
+        "location": {
+          "lat": 23.8103,
+          "lng": 90.4125
+        }
+      }
+order: 1000

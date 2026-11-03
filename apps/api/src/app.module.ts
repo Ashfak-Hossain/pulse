@@ -7,6 +7,7 @@ import { validateEnv } from './config/env.js';
 import { APP_FILTER } from '@nestjs/core';
 import { HttpErrorFilter } from './common/http-error.filter.js';
 import { CampusModule } from './campus/campus.module.js';
+import { CourseModule } from './course/course.module.js';
 
 // The repo-root .env
 const rootEnvFile = fileURLToPath(new URL('../../../.env', import.meta.url));
@@ -23,6 +24,7 @@ const rootEnvFile = fileURLToPath(new URL('../../../.env', import.meta.url));
     HealthModule,
     DbModule,
     CampusModule,
+    CourseModule,
   ],
   providers: [
     // Registered here, not in main.ts, so every app built from AppModule (tests too) gets it

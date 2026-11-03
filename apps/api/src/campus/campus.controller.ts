@@ -1,5 +1,7 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import {
+  campusLookupQuerySchema,
+  type CampusLookupQuery,
   campusDistanceQuerySchema,
   type CampusDistanceQuery,
   type CampusDistance,
@@ -20,6 +22,14 @@ export class CampusController {
   @Get()
   list(): Promise<CampusList> {
     return this.campuses.list();
+  }
+
+  // Static routes precede :slug so "lookup" cannot be interpreted as a campus slug.
+  @Get('lookup')
+  lookup(
+    @Query(new ZodValidationPipe(campusLookupQuerySchema)) query: CampusLookupQuery,
+  ): Promise<Campus> {
+    return this.campuses.lookup(query.email);
   }
 
   @Get(':slug/distance')

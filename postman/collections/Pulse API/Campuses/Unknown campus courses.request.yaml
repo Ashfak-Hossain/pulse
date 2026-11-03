@@ -1,0 +1,14 @@
+$kind: http-request
+description: 'Public courses from one campus, with a stable code order and a 500-row cap. Run pnpm infra:seed:courses for the AIUB example.'
+url: '{{baseUrl}}/campuses/unknown-campus/courses'
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 404', () => pm.response.to.have.status(404));
+      pm.test('uses the public not-found message', () => pm.expect(pm.response.json().message).to.equal('Campus not found'));
+    language: text/javascript
+examples: '.resources/Unknown campus courses.resources/examples'
+order: 12000
