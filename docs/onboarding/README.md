@@ -57,14 +57,15 @@ not need to change them.
    `good first issue`.
 4. **Day 4–5:** build it on a branch, open a pull request, answer the review.
 
-Your first tasks copy the campus endpoint (`apps/api/src/campus/`) almost line for line:
+The first four tasks copied the campus endpoint (`apps/api/src/campus/`) and are merged. Read
+them as more worked examples:
 
-| Who      | Task                                                                         |
-| -------- | ---------------------------------------------------------------------------- |
-| Member 2 | `GET /campuses/lookup?email=…`: which campus an email address belongs to     |
-| Member 2 | `POST /fares/split-preview`: split a fare between riders with `@pulse/money` |
-| Member 3 | `GET /campuses/:slug/distance?lat=&lng=`: how far a point is from campus     |
-| Member 3 | A `course` table and `GET /campuses/:slug/courses` (pair with Ashfak)        |
+| Who      | Task                                                                         | PR       |
+| -------- | ---------------------------------------------------------------------------- | -------- |
+| Member 3 | `GET /campuses/lookup?email=…`: which campus an email address belongs to     | #26      |
+| Member 3 | `GET /campuses/:slug/distance?lat=&lng=`: how far a point is from campus     | #27      |
+| Member 2 | `POST /fares/split-preview`: split a fare between riders with `@pulse/money` | #28      |
+| Member 2 | A `course` table and `GET /campuses/:slug/courses`                           | #29, #30 |
 
 ## When you are stuck
 

@@ -28,18 +28,19 @@ gantt
   Final                           :milestone, m4, 2026-12-13, 0d
   section Ashfak
   Backbone S10b–S16               :a1, 2026-11-01, 12d
+  Auth S28–S29                    :a6, 2026-11-04, 8d
   Geo, roadgraph, matching        :a2, 2026-11-08, 14d
   Matcher, trips, realtime, deploy :a3, 2026-11-22, 7d
   Notifications, safety, projectors :a4, 2026-11-29, 7d
   AI, simulator, GPS, fault suite :a5, 2026-11-29, 14d
   section M2
-  Auth, users, campus admin       :b1, 2026-11-01, 14d
+  Catalog, users, campus admin    :b1, 2026-11-01, 14d
   Web shell, onboarding, calendar :b2, 2026-11-15, 7d
   Ledger, settings                :b3, 2026-11-22, 7d
   Settlement, wallet, admin panel :b4, 2026-11-29, 7d
   Shuttles, operator, admin tools :b5, 2026-12-06, 7d
   section M3
-  Catalog, adapter, routine       :c1, 2026-11-01, 14d
+  Lookup, adapter, routine        :c1, 2026-11-01, 14d
   Requests, parser                :c2, 2026-11-15, 7d
   Web routine, rides, trip screen :c3, 2026-11-22, 7d
   Notifications UI, Autopilot, safety centre :c4, 2026-11-29, 7d
@@ -59,18 +60,20 @@ that must be merged first.
 
 | ID   | Slice                                                                                                                                         | Owner | Wave | Dep. |
 | ---- | --------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ---- | ---- |
-| S12  | `@pulse/events`: envelope, topics, `CampusCreated` (PR #20 open)                                                                              | A     | 1    |      |
+| S12  | `@pulse/events`: envelope, topics, `CampusCreated` (PR #20)                                                                                   | A     | 1    |      |
 | S10b | `apps/worker`: outbox relay to Kafka (`pulse_relay` role, advisory lock, `seq` order); add `topic`/`key` columns to `outbox_event`            | A     | 1    | S12  |
 | S13  | `POST /admin/campuses`: campus + outbox row in one transaction (padmin guard comes with S29)                                                  | A     | 1    | S12  |
 | S11  | Compose `queue` + `@pulse/jobs`: exchange, quorum queues, retry tiers, `jobs.dead`                                                            | A     | 1    |      |
-| S24  | `POST /campuses/lookup {email}` (was a query string; see [04](04-api.md))                                                                     | M2    | 1    |      |
-| S28  | Auth 1: `app_user`, `email_otp`, `POST /auth/otp/request` + `/verify`, rate limits; code sent via an `OtpMailer` port (logs in dev until S15) | M2    | 1    |      |
-| S29  | Auth 2: `session`, JWT cookies, refresh rotation + reuse detection, `AuthGuard`, `@Roles`, Origin check, `/auth/sessions`                     | M2    | 1    | S28  |
-| S30  | Catalog tables `term`, `section`, `section_meeting` (+ RLS) and `GET /terms`, `/sections` (replaces drafted S27)                              | M3    | 1    |      |
+| S24  | `GET /campuses/lookup?email=` (done, PR #26)                                                                                                  | M3    | 1    |      |
+| S24b | Lookup moves to `POST /campuses/lookup {email}`: emails stay out of URLs and logs (see [04](04-api.md))                                       | M3    | 1    | S24  |
+| S28  | Auth 1: `app_user`, `email_otp`, `POST /auth/otp/request` + `/verify`, rate limits; code sent via an `OtpMailer` port (logs in dev until S15) | A     | 1    |      |
+| S29  | Auth 2: `session`, JWT cookies, refresh rotation + reuse detection, `AuthGuard`, `@Roles`, Origin check, `/auth/sessions`                     | A     | 1    | S28  |
+| S30  | Catalog tables `term`, `section`, `section_meeting` (+ RLS) under `course`, and `GET /terms`, `/sections`                                     | M2    | 1    | S27  |
 | S31  | `@pulse/catalog-adapters`: AIUB offered-course adapter + golden-file tests on the real report                                                 | M3    | 1    |      |
 
-S25 (split preview) and S26 (distance) stay as optional warm-ups if already started; otherwise
-they fold into S47 and S32.
+The first tasks S24–S27 are merged (PRs #26–#30): lookup and distance by M3, fare split preview
+and the `course` table by M2. Ashfak took auth (S28–S29), so M2 moved to the catalog (S30).
+S29 must land by about 12 Nov: S35, S36 and S38 wait for it.
 
 ### Week 2 · 8–14 Nov · midterm week
 

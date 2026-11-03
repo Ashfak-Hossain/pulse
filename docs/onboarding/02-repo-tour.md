@@ -46,7 +46,7 @@ apps/api/
 └── package.json                its scripts (dev, test, test:e2e…) and dependencies
 ```
 
-**Rule of thumb:** one folder per feature under `src/` (`campus/`, later `fare/`, `course/`),
+**Rule of thumb:** one folder per feature under `src/` (`campus/`, `fare/`, `course/`),
 each with a module, a controller and a service.
 
 ## `packages/`: shared code

@@ -54,8 +54,9 @@ Compose creates `pulse_app` only on an empty volume, so after pulling this chang
 | `pnpm --filter @pulse/db db:studio`   | Browse the tables in the browser (as the owner)                                                          |
 | `pnpm --filter @pulse/db test:int`    | Integration tests against a fresh PostGIS container                                                      |
 | `pnpm infra:seed`                     | Add local sample data (AIUB and a demo campus); safe to run again                                        |
+| `pnpm infra:seed:courses`             | Add sample AIUB courses (after `infra:seed`); safe to run again                                          |
 
-Run the optional course seed after migrations and the campus seed: pnpm infra:seed:courses. It adds AIUB courses idempotently. Courses are readable by pulse_app only inside withCampus(); inserts, updates and deletes remain owner-only.
+`pulse_app` reads courses only inside `withCampus()`; only the owner can write them.
 
 ## API
 
@@ -80,8 +81,10 @@ against a PostGIS container, so Docker must be running).
 | `GET /campuses/:slug/distance?lat=…&lng=…` | Distance from a point to campus, in whole metres; 400 for invalid coordinates, 404 for an unknown campus |
 | `GET /campuses/:slug`                      | One campus (`id`, `name`, `slug`, `emailDomains`, `timezone`, `location: { lat, lng }`); 404 if none     |
 | `POST /fares/split-preview`                | Preview an exact integer-paisa fare split for 1–8 riders; 200 on success, 400 for invalid input          |
+| `POST /admin/campuses`                     | Create a campus and its `CampusCreated` outbox row; 401 without the admin token, 409 if the slug exists  |
 
-There is no sign-in yet, so every route is public. Campuses are public on purpose (the app needs
+There is no sign-in yet. `/admin/*` routes need `Authorization: Bearer <ADMIN_TOKEN>` (from
+`.env`, a stand-in until sign-in); every other route is public. Campuses are public on purpose (the app needs
 them before sign-in). A new route is public only if its data is public too; anything personal
 waits for the auth guard. Campus-scoped tables are read and written only inside `withCampus()`,
 and every list has a hard limit.

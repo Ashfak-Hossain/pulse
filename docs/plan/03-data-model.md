@@ -376,11 +376,12 @@ Unique (user_id, weekday, direction). `real` is fine here: it is a statistic, no
 
 ## 6. Catalog, routine and calendar
 
-The catalog (one copy per term):
+The catalog (one copy per term; a course is shared by every term that offers it):
 
 ```mermaid
 erDiagram
   catalog_import }o--|| term : fills
+  course ||--o{ section : "taught as"
   term ||--o{ section : offers
   section ||--|{ section_meeting : meets
   term ||--o{ calendar_event : has
@@ -415,7 +416,12 @@ erDiagram
 | applied_at  | timestamptz        |                                                                |
 
 Parsed rows wait in the import's staging file (JSON in the file store) until the admin applies
-them, so a bad file never touches `section`.
+them, so a bad file never touches `section`. Applying upserts `course` rows first (by
+`(campus_id, code)`), then sections.
+
+`course` exists since S27: `id`, `campus_id`, `code` (e.g. `CSC4161`), `title`, `created_at`;
+unique `(campus_id, code)`; `pulse_app` may only read it, inside `withCampus`. S30 adds a trigram
+index on `title` for search.
 
 ### 6.2 `section`
 
@@ -425,8 +431,7 @@ them, so a bad file never touches `section`.
 | campus_id              | uuid → campus         |                                                      |
 | term_id                | uuid → term           |                                                      |
 | external_class_id      | text                  | AIUB "Class ID"; unique (term_id, external_class_id) |
-| course_code            | text                  |                                                      |
-| title                  | text                  | trigram index (`pg_trgm`) for search                 |
+| course_id              | uuid → course         | code and title live on the course, stored once       |
 | section_label          | text                  | e.g. `B`                                             |
 | type                   | text                  | `theory \| lab \| other`                             |
 | capacity               | smallint              |                                                      |
@@ -436,7 +441,7 @@ them, so a bad file never touches `section`.
 | import_id              | uuid → catalog_import |                                                      |
 | created_at, updated_at | timestamptz           |                                                      |
 
-Indexes: unique (term_id, external_class_id); (term_id, course_code); GIN trigram on title.
+Indexes: unique (term_id, external_class_id); (term_id, course_id); (course_id).
 
 ### 6.3 `section_meeting`
 
@@ -1354,7 +1359,7 @@ Not campus-scoped (infrastructure); exempt from RLS, worker only.
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
 | Campus and geography        | campus, campus_gate, term, zone, meeting_point, cell_distance                                                                                   | 6      |
 | Identity and people         | app_user, email_otp, session, preference, vehicle, trusted_contact, push_subscription, reliability, fairness_balance, travel_habit, data_export | 11     |
-| Catalog, routine, calendar  | catalog_import, section, section_meeting, enrollment, schedule_block, calendar_event, class_change_report, class_change_confirmation            | 8      |
+| Catalog, routine, calendar  | course, catalog_import, section, section_meeting, enrollment, schedule_block, calendar_event, class_change_report, class_change_confirmation    | 9      |
 | Requests                    | trip_request, recurring_plan, autopilot_suggestion, request_text_sample, route_waitlist                                                         | 5      |
 | Matching, crews, trips      | match_batch, crew, crew_member, trip, trip_participant, trip_transition, message                                                                | 7      |
 | Safety                      | sos_event, safety_check, rating, report, block, moderation_action, sim_sms                                                                      | 7      |
@@ -1362,7 +1367,7 @@ Not campus-scoped (infrastructure); exempt from RLS, worker only.
 | Shuttles                    | operator, shuttle_vehicle, shuttle_route, shuttle_stop, shuttle_run, seat_booking, operator_payout, demand_snapshot                             | 8      |
 | Notifications               | notification, notification_attempt, calendar_feed_token                                                                                         | 3      |
 | Platform and infrastructure | file_object, onboarding_spec, ml_model, feature_flag, audit_log, analytics_daily, outbox_event, processed_event, idempotency_key, scheduled_run | 10     |
-| **Total**                   |                                                                                                                                                 | **73** |
+| **Total**                   |                                                                                                                                                 | **74** |
 
 Views: `v_account_balance`, `v_forecast_training` (anonymised: weekday, class gaps, offsets, no
 user ids), `v_week_schedule` (a user's meetings with calendar overrides applied).
