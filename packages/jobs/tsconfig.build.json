@@ -1,0 +1,11 @@
+{
+  // Used by `pnpm build` only: compiles src (never test) into dist
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    // src/topology.ts becomes dist/topology.js, not dist/src/topology.js
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src"]
+}
