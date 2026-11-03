@@ -266,6 +266,9 @@ importers:
       '@pulse/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@pulse/events':
+        specifier: workspace:*
+        version: link:../../packages/events
       helmet:
         specifier: ^8.3.0
         version: 8.3.0
