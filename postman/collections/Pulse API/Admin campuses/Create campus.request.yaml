@@ -1,0 +1,45 @@
+$kind: http-request
+name: Create campus
+description: Creates a campus and its CampusCreated outbox row in one transaction. The id is made by the server; the body is strict (unknown fields answer 400). The slug is new on every send, so repeats give 201; a slug that already exists answers 409.
+url: "{{baseUrl}}/admin/campuses"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+  Authorization: Bearer {{adminToken}}
+body:
+  type: json
+  content: |-
+    {
+      "name": "Pulse Demo Campus {{campusSlug}}",
+      "slug": "{{campusSlug}}",
+      "emailDomains": ["{{campusSlug}}.pulse.test"],
+      "timezone": "Asia/Dhaka",
+      "location": { "lat": 23.8103, "lng": 90.4125 }
+    }
+auth:
+  type: bearer
+scripts:
+  - type: beforeRequest
+    code: |-
+      // A fresh slug per send, so the request can be run again without a 409
+      pm.variables.set('campusSlug', `demo-${Date.now().toString(36)}`);
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('status is 201 (401: set adminToken to ADMIN_TOKEN from .env)', () =>
+        pm.response.to.have.status(201),
+      );
+      pm.test('has exactly the contract fields', () =>
+        pm.expect(Object.keys(pm.response.json()).sort()).to.eql(
+          ['emailDomains', 'id', 'location', 'name', 'slug', 'timezone'],
+        ),
+      );
+      pm.test('is the campus that was sent, with a server-made id', () => {
+        const body = pm.response.json();
+        pm.expect(body.slug).to.equal(pm.variables.get('campusSlug'));
+        pm.expect(body.id).to.match(/^[0-9a-f-]{36}$/);
+      });
+    language: text/javascript
+examples: .resources/Create campus.resources/examples
+order: 1000

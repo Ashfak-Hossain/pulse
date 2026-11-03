@@ -44,6 +44,21 @@ describe('validateEnv', () => {
     );
   });
 
+  it('accepts an ADMIN_TOKEN made by openssl rand -hex 32', () => {
+    const token = '9f'.repeat(32);
+    expect(validateEnv({ DATABASE_URL: appUrl, ADMIN_TOKEN: token }).ADMIN_TOKEN).toBe(token);
+  });
+
+  // The old public placeholder is in the table: a copied example file must stop the boot
+  it.each([
+    ['too short', 'x'.repeat(42)],
+    ['the old public placeholder', 'local-dev-admin-token-not-a-secret-0123'],
+    ['a space inside', `${'a'.repeat(43)} b`],
+    ['empty', ''],
+  ])('rejects an ADMIN_TOKEN that is %s', (_, token) => {
+    expect(() => validateEnv({ DATABASE_URL: appUrl, ADMIN_TOKEN: token })).toThrow(/ADMIN_TOKEN/);
+  });
+
   it('never puts the URL or its password in the error (startup logs are not secret)', () => {
     const badUrl = 'http://pulse_app:fake-test-pw@127.0.0.1:5432/pulse';
     let message = '';

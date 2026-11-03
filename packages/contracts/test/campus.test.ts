@@ -4,6 +4,7 @@ import {
   campusParamsSchema,
   campusSchema,
   campusSlugSchema,
+  createCampusSchema,
 } from '../src/index.js';
 
 const aiub = {
@@ -68,5 +69,52 @@ describe('campusListSchema', () => {
 
   it('rejects a bare array (the wrapper leaves room for a page cursor later)', () => {
     expect(campusListSchema.safeParse([aiub]).success).toBe(false);
+  });
+});
+
+describe('createCampusSchema', () => {
+  const body = {
+    name: 'American International University-Bangladesh',
+    slug: 'aiub',
+    emailDomains: ['aiub.edu', 'student.aiub.edu'],
+    timezone: 'Asia/Dhaka',
+    location: { lat: 23.8223, lng: 90.4274 },
+  };
+
+  it('accepts a new campus and trims the name', () => {
+    expect(createCampusSchema.parse({ ...body, name: '  AIUB  ' })).toEqual({
+      ...body,
+      name: 'AIUB',
+    });
+  });
+
+  // Intl's own list misses these (it holds older aliases), so the check must not rely on it
+  it.each(['UTC', 'Asia/Kolkata', 'Europe/Kyiv', 'America/Argentina/Buenos_Aires', 'Etc/GMT+6'])(
+    'accepts the time zone %s',
+    (timezone) => {
+      expect(createCampusSchema.safeParse({ ...body, timezone }).success).toBe(true);
+    },
+  );
+
+  // The server makes the id; a client-chosen one must never get through
+  it.each([
+    ['a client-chosen id', { id: '6f1c2a9e-3b4d-4e5f-8a7b-9c0d1e2f3a4b' }],
+    ['a blank name', { name: '   ' }],
+    ['a name over 200 characters', { name: 'x'.repeat(201) }],
+    ['a newline in the name', { name: 'AIUB\nAdmin' }],
+    ['a right-to-left override in the name', { name: 'AIUB\u202Etxt.exe' }],
+    ['a bad slug', { slug: 'AIUB' }],
+    ['an unknown timezone', { timezone: 'Mars/Olympus' }],
+    ['a timezone in the wrong case', { timezone: 'asia/dhaka' }],
+    ['no email domains', { emailDomains: [] }],
+    ['an uppercase domain', { emailDomains: ['AIUB.edu'] }],
+    ['a domain without a dot', { emailDomains: ['aiub'] }],
+    ['an email instead of a domain', { emailDomains: ['admin@aiub.edu'] }],
+    ['a repeated domain', { emailDomains: ['aiub.edu', 'aiub.edu'] }],
+    ['more than 10 domains', { emailDomains: Array.from({ length: 11 }, (_, i) => `d${i}.edu`) }],
+    ['a latitude off the globe', { location: { lat: 91, lng: 90 } }],
+    ['an extra location field', { location: { lat: 23, lng: 90, alt: 5 } }],
+  ])('rejects %s', (_, change) => {
+    expect(createCampusSchema.safeParse({ ...body, ...change }).success).toBe(false);
   });
 });
