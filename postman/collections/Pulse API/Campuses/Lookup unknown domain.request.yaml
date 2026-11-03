@@ -1,0 +1,17 @@
+$kind: http-request
+description: 'Look up a public campus by its exact email domain. Uses synthetic email addresses.'
+url: '{{baseUrl}}/campuses/lookup?email=name%40unknown.pulse.test'
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  - key: email
+    value: "name@unknown.pulse.test"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 404', () => pm.response.to.have.status(404));
+      pm.test('has the public not-found message', () => pm.expect(pm.response.json().message).to.equal('Campus not found'));
+    language: text/javascript
+examples: '.resources/Lookup unknown domain.resources/examples'
+order: 6000
