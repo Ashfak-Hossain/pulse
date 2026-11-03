@@ -1,0 +1,29 @@
+$kind: http-example
+name: '200 OK'
+request:
+  method: POST
+  url: '{{baseUrl}}/fares/split-preview'
+  headers:
+    - key: Content-Type
+      value: application/json
+  body:
+    type: json
+    content: '{"totalPaisa": 10000, "weights": [1, 1, 1]}'
+response:
+  statusCode: 200
+  statusText: 'OK'
+  headers:
+    - key: Content-Type
+      value: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "totalPaisa": 10000,
+        "shares": [
+          3334,
+          3333,
+          3333
+        ]
+      }
+order: 1000

@@ -17,3 +17,9 @@ export {
   type CreateCampus,
 } from './campus.js';
 export { courseSchema, courseListSchema, type Course, type CourseList } from './course.js';
+export {
+  fareSplitRequestSchema,
+  fareSplitPreviewSchema,
+  type FareSplitRequest,
+  type FareSplitPreview,
+} from './fare.js';

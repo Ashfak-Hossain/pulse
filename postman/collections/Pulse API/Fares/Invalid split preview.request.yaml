@@ -1,0 +1,18 @@
+$kind: http-request
+description: 'Preview integer-paisa fare shares without creating a payment or ledger entry.'
+url: '{{baseUrl}}/fares/split-preview'
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: '{"totalPaisa": 10000, "weights": [0, 0]}'
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 400', () => pm.response.to.have.status(400));
+      pm.test('rejects all-zero weights with issues', () => pm.expect(pm.response.json().issues.map(issue => issue.path)).to.include('weights'));
+    language: text/javascript
+examples: '.resources/Invalid split preview.resources/examples'
+order: 2000
