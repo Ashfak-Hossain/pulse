@@ -170,17 +170,37 @@ That is **64 event types** on 9 topics.
 flowchart TB
   P["Publisher"] -->|routing key| X{{"exchange: jobs"}}
   X --> Q["q.notify.push<br/>q.notify.email · …<br/>one quorum queue per key"]
+  Q -->|4th failure / crash| DX{{"exchange: jobs.dlx"}}
+  DX --> D[("jobs.dead")]
   Q -->|handler fails| RX{{"exchange: jobs.retry"}}
-  RX --> W1["wait.10s"] & W2["wait.1m"] & W3["wait.10m"]
-  W1 & W2 & W3 -->|TTL ends| X
-  Q -->|4th failure| D[("jobs.dead")]
+  RX -->|pulse-retry-tier| W["wait.10s<br/>wait.1m · wait.10m<br/>one TTL queue per tier"]
+  W -->|TTL ends| X
 ```
 
-- Exchange `jobs` (topic, durable). One **quorum queue** per routing key: `q.<routing key>`.
-- Retry: the handler republishes to `jobs.retry` with header `x-attempt` and the waiting queue for
-  that attempt (10 s, 1 min, 10 min). Each waiting queue has a TTL and dead-letters back to
-  `jobs` with the original routing key. After attempt 3 the job goes to `jobs.dead`.
+- Exchange `jobs` (topic, durable). One **quorum queue** per job type that has a schema:
+  `q.<routing key>`. A type gets its queue in the slice that adds its handler.
+- Retry: the handler republishes to `jobs.retry` (a headers exchange) with the **original
+  routing key** and headers `pulse-failures` and `pulse-retry-tier` (`10s`, `1m`, `10m`, from
+  `retryStep`), waits for the publisher confirm, and **only then acks** the original. A crash in
+  between gives a duplicate, which the dedupe key absorbs; acking first could lose the job. Each
+  wait queue binds on its tier, has a fixed TTL, and dead-letters to `jobs` without
+  `x-dead-letter-routing-key`, so the job keeps its key and returns to its own queue. No `x-`
+  prefix: a headers exchange ignores binding arguments that start with `x-`.
+- Give up: after the 4th failure, or if the broker nacks the retry publish, the handler nacks
+  without requeue (on a dropped channel or a confirm timeout it does nothing: the job comes back
+  by itself); the queue dead-letters to `jobs.dlx` (fanout) → `jobs.dead`. `x-delivery-limit: 5`
+  sends a job returned more than 5 times (it keeps crashing its handler) the same way.
+  Dead-lettering is `at-least-once` (with `x-overflow: reject-publish`), so a job is never lost
+  between queues.
+- Unroutable: `jobs` and `jobs.retry` have `alternate-exchange: jobs.dlx`, so a job no queue is
+  bound for lands in `jobs.dead` instead of being dropped (or, coming back from a wait queue,
+  held there forever). `jobs.dead` has `x-delivery-limit: -1`: RabbitMQ 4's default of 20 would
+  drop a dead job after 20 peeks. Publishers get no error for an unroutable job (the alternate
+  exchange takes it), so alert when `jobs.dead` is not empty.
+- Queue arguments cannot change once declared (`PRECONDITION_FAILED`); a wait queue's name says
+  its delay, so a new delay is a new queue.
 - Handlers **ack only after success**. Prefetch per queue (below).
+- `notify.email` templates carry ids only: `campus-created` (`campusId`), `otp` (`otpId`).
 - Every job has a `jobId` (UUID) and a `dedupeKey`. Jobs are delivered **at least once**, so every
   handler is idempotent (unique `dedupe_key` rows, `scheduled_run`, or a natural upsert).
 - Publishers use **publisher confirms**. A consumer publishes its jobs, waits for confirms, and
@@ -192,7 +212,7 @@ flowchart TB
 | Routing key          | Payload                                         | Published by                      | Handler                                                                                                 | Prefetch                 | Idempotency                        |
 | -------------------- | ----------------------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------ | ---------------------------------- |
 | `notify.push`        | `{notificationId}`                              | notifier                          | Web Push; on 404/410 delete the subscription; failure → fall back to in-app + `notify.email`            | 20                       | `notification_attempt` per channel |
-| `notify.email`       | `{notificationId}` or `{template:'otp', otpId}` | notifier, auth                    | SMTP (Mailpit in dev)                                                                                   | 10                       | attempt row / `otp.consumed_at`    |
+| `notify.email`       | `{template, …ids}` (§5.1) or `{notificationId}` | notifier, auth                    | SMTP (Mailpit in dev)                                                                                   | 10                       | attempt row / `otp.consumed_at`    |
 | `notify.sms`         | `{simSmsId}`                                    | notifier (safety)                 | Marks the simulated SMS "delivered" (shows in the admin inbox)                                          | 10                       | row status                         |
 | `import.timetable`   | `{importId}`                                    | catalog                           | Runs the adapter on the file; writes the staging JSON; status `review`                                  | 1                        | import status machine              |
 | `ai.onboarding`      | `{specId}`                                      | ai                                | Gemini propose → validate → revise (≤ 4 rounds)                                                         | **1** (free-tier limits) | spec status machine                |
