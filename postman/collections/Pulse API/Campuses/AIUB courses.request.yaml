@@ -1,0 +1,15 @@
+$kind: http-request
+description: 'Public courses from one campus, with a stable code order and a 500-row cap. Run pnpm infra:seed:courses for the AIUB example.'
+url: '{{baseUrl}}/campuses/aiub/courses'
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200', () => pm.response.to.have.status(200));
+      pm.test('returns the seeded courses in code order', () => pm.expect(pm.response.json().items.map(item => item.code)).to.eql(['CSC2105', 'CSC2209', 'CSC4161']));
+      pm.test('exposes only public course fields', () => pm.response.json().items.forEach(item => pm.expect(Object.keys(item).sort()).to.eql(['code', 'id', 'title'])));
+    language: text/javascript
+examples: '.resources/AIUB courses.resources/examples'
+order: 11000

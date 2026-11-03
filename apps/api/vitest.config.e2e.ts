@@ -9,6 +9,10 @@ export default defineConfig({
     globalSetup: ['test/support/global-setup.ts'],
     // ConfigModule validates the env at startup; every test swaps the database (a fake or the
     // container), so this URL only has to be well formed (port 1: nothing ever listens there)
-    env: { DATABASE_URL: 'postgres://pulse_app:unused@127.0.0.1:1/pulse' },
+    // ADMIN_TOKEN: a fixed test value, read back by the admin e2e tests
+    env: {
+      DATABASE_URL: 'postgres://pulse_app:unused@127.0.0.1:1/pulse',
+      ADMIN_TOKEN: 'e2e-admin-token-not-a-secret-0123456789abcdef',
+    },
   },
 });

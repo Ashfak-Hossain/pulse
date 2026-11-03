@@ -55,6 +55,8 @@ Compose creates `pulse_app` only on an empty volume, so after pulling this chang
 | `pnpm --filter @pulse/db test:int`    | Integration tests against a fresh PostGIS container                                                      |
 | `pnpm infra:seed`                     | Add local sample data (AIUB and a demo campus); safe to run again                                        |
 
+Run the optional course seed after migrations and the campus seed: pnpm infra:seed:courses. It adds AIUB courses idempotently. Courses are readable by pulse_app only inside withCampus(); inserts, updates and deletes remain owner-only.
+
 ## API
 
 First run: `cp .env.example .env`, `pnpm infra:up`, `pnpm --filter @pulse/db db:migrate`,
@@ -74,6 +76,7 @@ against a PostGIS container, so Docker must be running).
 | `GET /health/ready`            | 200 when PostgreSQL answers, 503 when it does not                                                    |
 | `GET /campuses`                | `{ "items": [campus, …] }`, sorted by name                                                           |
 | `GET /campuses/lookup?email=…` | Campus matching the exact email domain; 404 if none, 409 if ambiguous                                |
+| `GET /campuses/:slug/courses`  | Up to 500 public courses from that campus, ordered by code; 404 for unknown campus                   |
 | `GET /campuses/:slug`          | One campus (`id`, `name`, `slug`, `emailDomains`, `timezone`, `location: { lat, lng }`); 404 if none |
 
 There is no sign-in yet, so every route is public. Campuses are public on purpose (the app needs

@@ -6,6 +6,12 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   // The app role (pulse_app), never the owner: row-level security only limits pulse_app
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
+  // Stand-in for the platform_admin role until sign-in exists. Unset = admin routes answer 401.
+  // 32 random bytes or more, URL-safe (openssl rand -hex 32), so a placeholder cannot pass
+  ADMIN_TOKEN: z
+    .string()
+    .regex(/^[A-Za-z0-9_-]{43,512}$/, 'must be 43+ letters, digits, - or _')
+    .optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

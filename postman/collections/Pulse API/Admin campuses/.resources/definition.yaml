@@ -1,0 +1,3 @@
+$kind: collection
+description: 'Platform-admin campus writes. Until sign-in exists they need Authorization: Bearer {{adminToken}}; set adminToken to the ADMIN_TOKEN from your .env (the API answers 401 to every admin call when it is unset). Creating a campus also writes a CampusCreated outbox row; with the relay running it appears on the campuses topic in Kafka UI.'
+order: 3000

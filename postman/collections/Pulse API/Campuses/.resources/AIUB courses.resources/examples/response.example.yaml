@@ -1,0 +1,34 @@
+$kind: http-example
+name: '200 OK'
+request:
+  method: GET
+  url: '{{baseUrl}}/campuses/aiub/courses'
+response:
+  statusCode: 200
+  statusText: 'OK'
+  headers:
+    - key: Content-Type
+      value: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "items": [
+          {
+            "id": "210c06d4-abe5-4675-b920-5e6bc3e2d6e2",
+            "code": "CSC2105",
+            "title": "Data Structures"
+          },
+          {
+            "id": "6decb191-9455-4caa-8bd8-4aa1738773e7",
+            "code": "CSC2209",
+            "title": "Object Oriented Programming 1"
+          },
+          {
+            "id": "9c6d335f-78b0-4ce6-8a51-686d58263fb2",
+            "code": "CSC4161",
+            "title": "Advanced Programming in Web Technology"
+          }
+        ]
+      }
+order: 1000
