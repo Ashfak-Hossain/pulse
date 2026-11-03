@@ -2,7 +2,8 @@ import { z } from 'zod';
 import { jobEnvelopeSchema } from './envelope.js';
 import { notifyEmailJobSchema } from './notify-email.js';
 
-// A new job type = its schema file, plus one entry here and one in jobSpecs
+// A new job type = its schema file, plus one entry here and one in jobSpecs. The topology
+// gives it a queue from jobSpecs, so a type cannot exist without one
 export const jobSchema = z.discriminatedUnion('type', [notifyEmailJobSchema]);
 
 export type PulseJob = z.infer<typeof jobSchema>;
