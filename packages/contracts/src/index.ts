@@ -10,3 +10,4 @@ export {
   type CampusParams,
   type CreateCampus,
 } from './campus.js';
+export { courseSchema, courseListSchema, type Course, type CourseList } from './course.js';
