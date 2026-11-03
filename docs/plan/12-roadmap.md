@@ -69,7 +69,7 @@ that must be merged first.
 | S28  | Auth 1: `app_user`, `email_otp`, `POST /auth/otp/request` + `/verify`, rate limits; code sent via an `OtpMailer` port (logs in dev until S15) | A     | 1    |      |
 | S29  | Auth 2: `session`, JWT cookies, refresh rotation + reuse detection, `AuthGuard`, `@Roles`, Origin check, `/auth/sessions`                     | A     | 1    | S28  |
 | S30  | Catalog tables `term`, `section`, `section_meeting` (+ RLS) under `course`, and `GET /terms`, `/sections`                                     | M2    | 1    | S27  |
-| S31  | `@pulse/catalog-adapters`: AIUB offered-course adapter + golden-file tests on the real report                                                 | M3    | 1    |      |
+| S31  | `@pulse/catalog-adapters`: AIUB offered-course XLSX adapter; synthetic fixture in CI, real report tested locally (git-ignored)                | M3    | 1    |      |
 
 The first tasks S24–S27 are merged (PRs #26–#30): lookup and distance by M3, fare split preview
 and the `course` table by M2. Ashfak took auth (S28–S29), so M2 moved to the catalog (S30).
