@@ -1,0 +1,14 @@
+$kind: http-request
+description: 'Public courses from one campus, with a stable code order and a 500-row cap. Run pnpm infra:seed:courses for the AIUB example.'
+url: '{{baseUrl}}/campuses/INVALID/courses'
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 400', () => pm.response.to.have.status(400));
+      pm.test('identifies the malformed slug', () => pm.expect(pm.response.json().issues.map(issue => issue.path)).to.include('slug'));
+    language: text/javascript
+examples: '.resources/Malformed campus courses.resources/examples'
+order: 13000

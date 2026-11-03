@@ -1,5 +1,10 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import {
+  campusLookupQuerySchema,
+  type CampusLookupQuery,
+  campusDistanceQuerySchema,
+  type CampusDistanceQuery,
+  type CampusDistance,
   type Campus,
   type CampusList,
   type CampusParams,
@@ -17,6 +22,22 @@ export class CampusController {
   @Get()
   list(): Promise<CampusList> {
     return this.campuses.list();
+  }
+
+  // Static routes precede :slug so "lookup" cannot be interpreted as a campus slug.
+  @Get('lookup')
+  lookup(
+    @Query(new ZodValidationPipe(campusLookupQuerySchema)) query: CampusLookupQuery,
+  ): Promise<Campus> {
+    return this.campuses.lookup(query.email);
+  }
+
+  @Get(':slug/distance')
+  distance(
+    @Param(new ZodValidationPipe(campusParamsSchema)) params: CampusParams,
+    @Query(new ZodValidationPipe(campusDistanceQuerySchema)) query: CampusDistanceQuery,
+  ): Promise<CampusDistance> {
+    return this.campuses.distance(params.slug, query.lat, query.lng);
   }
 
   // The pipe answers 400 for a malformed slug before the database is asked

@@ -1,0 +1,17 @@
+$kind: http-request
+description: 'Look up a public campus by its exact email domain. Uses synthetic email addresses.'
+url: '{{baseUrl}}/campuses/lookup?email=invalid'
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  - key: email
+    value: "invalid"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 400', () => pm.response.to.have.status(400));
+      pm.test('identifies the invalid email', () => pm.expect(pm.response.json().issues.map(issue => issue.path)).to.include('email'));
+    language: text/javascript
+examples: '.resources/Lookup invalid email.resources/examples'
+order: 7000
