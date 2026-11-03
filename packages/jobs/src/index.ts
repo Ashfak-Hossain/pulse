@@ -17,3 +17,16 @@ export {
   type ParsedJob,
   type PulseJob,
 } from './registry.js';
+export { jobHeaders, retryStep, retryTiers, type RetryStep, type RetryTier } from './retry.js';
+export {
+  jobExchanges,
+  jobQueues,
+  jobTopology,
+  queueFor,
+  waitQueueFor,
+  type BindingSpec,
+  type ExchangeSpec,
+  type QueueSpec,
+  type Topology,
+  type TopologyOptions,
+} from './topology.js';
