@@ -49,7 +49,7 @@ flowchart TB
 3. **PostgreSQL is the truth**. Every change that others care about writes an `outbox_event` row
    in the same transaction; a relay publishes it to **Kafka**. Consumers are idempotent.
 4. **RabbitMQ runs jobs** (send a push, parse a file, settle a week, retrain a model) with retry tiers.
-5. **73 tables** across 10 domains, all campus-scoped tables protected by row-level security.
+5. **74 tables** across 10 domains, all campus-scoped tables protected by row-level security.
 6. **About 185 endpoints** with Zod contracts shared by the API and the web app.
 7. **Pure algorithm packages** (`matching`, `money`, `geo`) with property tests and brute-force oracles.
 8. **AI with fallbacks**: rule-based parser → lab-trained ONNX model; habit blend → LightGBM;
@@ -73,5 +73,5 @@ The proposal was a sample. These are the deliberate changes, each explained in i
 | Two new Kafka topics: `shuttles`, `moderation`                                          | Shuttle and moderation facts have their own ordering keys               | 05     |
 | Live locations need an explicit exception to the outbox rule (ADR to write)             | Locations are deliberately not stored in PostgreSQL, so no outbox row   | 05, 13 |
 | Campus lookup by email is `POST /campuses/lookup`, not a query string                   | Emails must not appear in URLs, which end up in logs                    | 04     |
-| The drafted `course` table (S27) becomes `term` / `section` / `section_meeting`         | The catalog is stored once per term; users point to sections            | 03, 12 |
+| `course` (built in S27) is the parent of each term's `section` rows                     | A course's code and title are stored once; users point to sections      | 03, 12 |
 | Simulated SMS goes to a `sim_sms` table shown in the admin "SMS inbox"                  | Trusted contacts are not users, so they cannot receive a `notification` | 03     |

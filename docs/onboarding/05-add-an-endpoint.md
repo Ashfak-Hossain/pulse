@@ -187,7 +187,9 @@ git push -u origin feat/campus-summary
 
 Then open the PR as in [Git and pull requests](06-git-and-prs.md).
 
-## Your first tasks: where each one differs from the example
+## The first tasks: where each one differs from the example
+
+All four are merged (PRs #26–#30); this table says what each added beyond the campus example.
 
 | Task                                           | New in it                                                                                                                                                                                                                                                                                                                                            |
 | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

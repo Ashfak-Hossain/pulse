@@ -481,16 +481,20 @@ export const campus = pgTable('campus', {
 The left name (`emailDomains`) is what TypeScript uses; the string (`'email_domains'`) is the
 real column. `pgPolicy` lines are the row-level security rules. Changing a table means: edit
 `schema.ts`, run `pnpm --filter @pulse/db db:generate` to write a migration, review the SQL, then
-`db:migrate`. (Your course task does this, paired with Ashfak.)
+`db:migrate`. (The course task did this: `0006_course.sql` and `0007_course-read-only.sql`.)
 
 **[campus-scope.ts](../../packages/db/src/campus-scope.ts)**: `withCampus(db, campusId, work)`
 opens a transaction, tells PostgreSQL "this transaction is for campus X"
 (`set_config('app.campus_id', …, true)`), and runs your queries inside it. Row-level security
 then shows only that campus's rows. Any campus-scoped table (courses, trips) is used only like
-this (a future example: the `course` table does not exist yet):
+this, as [course.service.ts](../../apps/api/src/course/course.service.ts) does:
 
 ```ts
-const courses = await withCampus(this.db, campusId, (tx) =>
-  tx.select().from(course).orderBy(asc(course.code)).limit(COURSE_LIST_LIMIT),
+const rows = await withCampus(this.db, tenant.id, (tx) =>
+  tx
+    .select({ id: course.id, code: course.code, title: course.title })
+    .from(course)
+    .orderBy(asc(course.code), asc(course.id))
+    .limit(COURSE_LIST_LIMIT),
 );
 ```
