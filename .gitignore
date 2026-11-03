@@ -30,3 +30,6 @@ CLAUDE.md
 # Postman Native Git: per-person workspace link and personal globals; the shared files are in postman/
 .postman/
 postman/globals/
+
+# Real source files kept off the public repo (e.g. the AIUB offered-course report); shared privately
+**/fixtures/private/

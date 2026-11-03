@@ -31,14 +31,14 @@ that depends on it. Each ❓ becomes an ADR with `/new-adr` when agreed.
 
 ## 2. Questions for Ashfak
 
-| #   | Question                                                                                                                     | Why it matters                                                                                   |
-| --- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Q1  | Exact midterm date and final date?                                                                                           | Fixes the gate and the pilot window                                                              |
-| Q2  | What format is the AIUB offered-course report (PDF, XLSX, CSV)? Can a copy be committed as a golden file in the public repo? | S31 needs it. It holds only public data (sections, times, rooms, instructor names), but confirm. |
-| Q3  | Golden grade reports must be **synthetic** (same layout, invented names, IDs and grades). Who builds two or three of them?   | Real grade reports can never be committed (rule 9 and the public repo)                           |
-| Q4  | Is Cloudflare Turnstile acceptable (free, needs a Cloudflare account), or skip the bot check for the pilot?                  | D27                                                                                              |
-| Q5  | Can M2 and M3 each take one Wednesday walkthrough per week?                                                                  | Viva readiness: everyone must explain parts they did not build                                   |
-| Q6  | Do we have student credits (GitHub Student Pack: DigitalOcean / Azure; AWS Educate) for hosting?                             | D30                                                                                              |
+| #   | Question                                                                                                                           | Why it matters                                                         |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Q1  | Exact midterm date and final date?                                                                                                 | Fixes the gate and the pilot window                                    |
+| Q2  | ✅ XLSX. Not committed: each member keeps it in a git-ignored `fixtures/private/`; CI uses a synthetic workbook in the same layout | S31                                                                    |
+| Q3  | Golden grade reports must be **synthetic** (same layout, invented names, IDs and grades). Who builds two or three of them?         | Real grade reports can never be committed (rule 9 and the public repo) |
+| Q4  | Is Cloudflare Turnstile acceptable (free, needs a Cloudflare account), or skip the bot check for the pilot?                        | D27                                                                    |
+| Q5  | Can M2 and M3 each take one Wednesday walkthrough per week?                                                                        | Viva readiness: everyone must explain parts they did not build         |
+| Q6  | Do we have student credits (GitHub Student Pack: DigitalOcean / Azure; AWS Educate) for hosting?                                   | D30                                                                    |
 
 ## 3. Risks
 
