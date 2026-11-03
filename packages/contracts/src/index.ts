@@ -2,6 +2,10 @@ export { apiErrorSchema, apiIssueSchema, type ApiError, type ApiIssue } from './
 export {
   campusLookupQuerySchema,
   type CampusLookupQuery,
+  campusDistanceQuerySchema,
+  campusDistanceSchema,
+  type CampusDistanceQuery,
+  type CampusDistance,
   campusListSchema,
   campusParamsSchema,
   campusSchema,

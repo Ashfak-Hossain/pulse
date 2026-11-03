@@ -1,0 +1,19 @@
+$kind: http-request
+description: 'Distance from a point to a campus in whole metres on WGS84.'
+url: '{{baseUrl}}/campuses/aiub/distance?lat=23.8223&lng=90.4274'
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  - key: lat
+    value: "23.8223"
+  - key: lng
+    value: "90.4274"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200', () => pm.response.to.have.status(200));
+      pm.test('is zero at campus', () => pm.expect(pm.response.json()).to.eql({slug: 'aiub', distanceMetres: 0}));
+    language: text/javascript
+examples: '.resources/Distance to AIUB.resources/examples'
+order: 8000

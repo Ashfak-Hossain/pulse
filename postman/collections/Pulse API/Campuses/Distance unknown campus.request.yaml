@@ -1,0 +1,19 @@
+$kind: http-request
+description: 'Distance from a point to a campus in whole metres on WGS84.'
+url: '{{baseUrl}}/campuses/unknown-campus/distance?lat=23.8223&lng=90.4274'
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  - key: lat
+    value: "23.8223"
+  - key: lng
+    value: "90.4274"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 404', () => pm.response.to.have.status(404));
+      pm.test('has the public not-found message', () => pm.expect(pm.response.json().message).to.equal('Campus not found'));
+    language: text/javascript
+examples: '.resources/Distance unknown campus.resources/examples'
+order: 9000

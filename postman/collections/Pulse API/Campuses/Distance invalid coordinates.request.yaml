@@ -1,0 +1,19 @@
+$kind: http-request
+description: 'Distance from a point to a campus in whole metres on WGS84.'
+url: '{{baseUrl}}/campuses/aiub/distance?lat=&lng=90.4274'
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  - key: lat
+    value: ""
+  - key: lng
+    value: "90.4274"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 400', () => pm.response.to.have.status(400));
+      pm.test('identifies the invalid latitude', () => pm.expect(pm.response.json().issues.map(issue => issue.path)).to.include('lat'));
+    language: text/javascript
+examples: '.resources/Distance invalid coordinates.resources/examples'
+order: 10000
