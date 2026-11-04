@@ -189,16 +189,24 @@ flowchart TB
 - Give up: after the 4th failure, or if the broker nacks the retry publish, the handler nacks
   without requeue (on a dropped channel or a confirm timeout it does nothing: the job comes back
   by itself); the queue dead-letters to `jobs.dlx` (fanout) → `jobs.dead`. `x-delivery-limit: 5`
-  sends a job returned more than 5 times (it keeps crashing its handler) the same way.
-  Dead-lettering is `at-least-once` (with `x-overflow: reject-publish`), so a job is never lost
-  between queues.
+  sends a job returned more than 5 times (it keeps crashing its handler) the same way. RabbitMQ 4
+  counts only crashes (the channel closed with the job unacked), not `nack` with requeue, so a
+  handler never requeues a failed job: it would loop forever. Dead-lettering is `at-least-once`
+  (with `x-overflow: reject-publish`), so a job is never lost between queues.
 - Unroutable: `jobs` and `jobs.retry` have `alternate-exchange: jobs.dlx`, so a job no queue is
   bound for lands in `jobs.dead` instead of being dropped (or, coming back from a wait queue,
   held there forever). `jobs.dead` has `x-delivery-limit: -1`: RabbitMQ 4's default of 20 would
   drop a dead job after 20 peeks. Publishers get no error for an unroutable job (the alternate
   exchange takes it), so alert when `jobs.dead` is not empty.
+- Full queues: every queue holds at most 100,000 jobs (`x-max-length`, `reject-publish`). A full
+  queue nacks a publisher instead of dropping old jobs, so publishers back off and retry. Two
+  effects to know: a full `jobs.dead` leaves given-up jobs inside their work queue (out of the
+  handlers' sight; the broker tries again every 180 s), and the wait queues are shared, so one job
+  type that fills `wait.10m` sends every type's retries to `jobs.dead` (replay them by hand). A
+  quorum queue takes one job past its cap before it refuses.
 - Queue arguments cannot change once declared (`PRECONDITION_FAILED`); a wait queue's name says
-  its delay, so a new delay is a new queue.
+  its delay, so a new delay is a new queue. Changing a cap or a limit is the same: declare a new
+  queue name, stop the old workers, move or drain the old queue, then delete it (ADR 0008).
 - Handlers **ack only after success**. Prefetch per queue (below).
 - `notify.email` templates carry ids only: `campus-created` (`campusId`), `otp` (`otpId`).
 - Every job has a `jobId` (UUID) and a `dedupeKey`. Jobs are delivered **at least once**, so every

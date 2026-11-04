@@ -63,6 +63,7 @@ describe('jobTopology', () => {
         'x-dead-letter-strategy': 'at-least-once',
         'x-overflow': 'reject-publish',
         'x-delivery-limit': 5,
+        'x-max-length': 100_000,
       });
     });
   });
@@ -80,6 +81,7 @@ describe('jobTopology', () => {
           'x-dead-letter-exchange': jobExchanges.jobs,
           'x-dead-letter-strategy': 'at-least-once',
           'x-overflow': 'reject-publish',
+          'x-max-length': 100_000,
         });
         expect(args).not.toHaveProperty('x-dead-letter-routing-key');
       });
@@ -99,11 +101,14 @@ describe('jobTopology', () => {
     },
   );
 
-  // RabbitMQ 4's default limit of 20 would drop a dead job after 20 peeks in the UI
+  // RabbitMQ 4's default limit of 20 would drop a dead job after 20 peeks in the UI. When full,
+  // it refuses new jobs (they stay where they were) instead of dropping its oldest
   it('collects every given-up job in jobs.dead and never drops it', () => {
     expect(queue(jobQueues.dead)?.arguments).toEqual({
       'x-queue-type': 'quorum',
       'x-delivery-limit': -1,
+      'x-max-length': 100_000,
+      'x-overflow': 'reject-publish',
     });
     expect(bindingsOf(jobQueues.dead)).toEqual([
       { queue: 'jobs.dead', exchange: 'jobs.dlx', routingKey: '', arguments: {} },
@@ -120,5 +125,20 @@ describe('jobTopology', () => {
         : q;
     });
     expect(jobTopology({ delayMs })).toEqual({ ...topology, queues });
+  });
+
+  // RabbitMQ refuses a bad x-message-ttl only when the worker declares it; fail before that
+  it.each([-1, 1.5, Number.NaN, Number.POSITIVE_INFINITY, 2 ** 53])(
+    'rejects a delay of %s ms',
+    (bad) => {
+      const delayMs = { '10s': 100, '1m': bad, '10m': 300 };
+      expect(() => jobTopology({ delayMs })).toThrow(/1m/);
+    },
+  );
+
+  it('takes a delay of 0 ms', () => {
+    const { queues } = jobTopology({ delayMs: { '10s': 0, '1m': 0, '10m': 0 } });
+    const wait = queues.find((q) => q.name === waitQueueFor('10s'));
+    expect(wait?.arguments['x-message-ttl']).toBe(0);
   });
 });
