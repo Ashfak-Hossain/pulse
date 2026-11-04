@@ -88,6 +88,11 @@ const safeDeadLetter = {
   'x-overflow': 'reject-publish',
 } as const;
 
+// A cap on every queue (about 30 MB of small jobs each). A full queue refuses new jobs: the
+// publisher gets a nack, and a job dead-lettered into it stays in the queue it came from. Without
+// caps, a backlog grows until RabbitMQ's memory alarm blocks every publisher on the broker
+const MAX_QUEUED_JOBS = 100_000;
+
 /** Every exchange, queue and binding the jobs need, as data for the worker to declare. */
 export function jobTopology(options: TopologyOptions = {}): Topology {
   // One queue per job type, where its handler reads
@@ -102,6 +107,7 @@ export function jobTopology(options: TopologyOptions = {}): Topology {
         // A job returned more than 5 times (it keeps crashing its handler) goes to jobs.dead
         // instead of looping forever
         'x-delivery-limit': 5,
+        'x-max-length': MAX_QUEUED_JOBS,
       },
     },
     binding: {
@@ -122,8 +128,9 @@ export function jobTopology(options: TopologyOptions = {}): Topology {
       arguments: {
         ...quorum,
         ...safeDeadLetter,
-        'x-message-ttl': options.delayMs?.[tier.name] ?? tier.delayMs,
+        'x-message-ttl': delayFor(tier.name, options.delayMs?.[tier.name] ?? tier.delayMs),
         'x-dead-letter-exchange': jobExchanges.jobs,
+        'x-max-length': MAX_QUEUED_JOBS,
       },
     },
     binding: {
@@ -149,7 +156,16 @@ export function jobTopology(options: TopologyOptions = {}): Topology {
       ...waitQueues.map((w) => w.queue),
       // RabbitMQ 4 gives quorum queues a delivery limit of 20 by default, and this queue has
       // nowhere to send a job past it: -1 keeps a dead job however often someone peeks at it
-      { name: jobQueues.dead, durable: true, arguments: { ...quorum, 'x-delivery-limit': -1 } },
+      {
+        name: jobQueues.dead,
+        durable: true,
+        arguments: {
+          ...quorum,
+          'x-delivery-limit': -1,
+          'x-max-length': MAX_QUEUED_JOBS,
+          'x-overflow': 'reject-publish',
+        },
+      },
     ],
     bindings: [
       ...workQueues.map((w) => w.binding),
@@ -157,4 +173,12 @@ export function jobTopology(options: TopologyOptions = {}): Topology {
       { queue: jobQueues.dead, exchange: jobExchanges.deadLetter, routingKey: '', arguments: {} },
     ],
   };
+}
+
+// RabbitMQ refuses a bad x-message-ttl only when the worker declares the queue; fail here first
+function delayFor(tier: RetryTier, delayMs: number): number {
+  if (!Number.isSafeInteger(delayMs) || delayMs < 0) {
+    throw new RangeError(`delayMs for ${tier} must be a whole number >= 0, got ${delayMs}`);
+  }
+  return delayMs;
 }
