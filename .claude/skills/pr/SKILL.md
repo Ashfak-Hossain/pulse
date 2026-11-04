@@ -11,7 +11,7 @@ disable-model-invocation: true
 4. Draft the PR from `.github/pull_request_template.md`: title = Conventional Commit summary of the
    slice (`feat(money): add largest remainder split`). Body: **Summary** (1–2 sentences, slice id),
    **Changes** (3–6 bullets, one line each), **Testing** (what ran and what it proved),
-   **Notes for reviewers** (size if over ~400 lines per `git diff --stat main...HEAD`, hand edits,
+   **Notes for reviewers** (size if non-test code is over ~400 lines per `git diff --stat main...HEAD`, hand edits,
    deferred work, setup after merge; omit if empty), **Checklist**. Keep it short: details belong
    in the ADR or the code, not the PR body.
 5. Show the title and body and **ask before pushing** — pushing publishes to a public repo.

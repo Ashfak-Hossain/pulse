@@ -18,7 +18,8 @@ Slice: $ARGUMENTS
 
 Show the plan: files to create or change (and which come from a generator), tests per layer,
 commands to run, open decisions (with a recommendation each), and the estimated changed lines
-(must stay under ~400; otherwise propose a split). For each file, ask **who writes it** — Ashfak
+of non-test code (must stay under ~400; tests do not count; one PR per slice, split only if
+the code itself is too big to review). For each file, ask **who writes it** — Ashfak
 or Claude. **Stop and wait for approval.**
 
 ## 3. Build

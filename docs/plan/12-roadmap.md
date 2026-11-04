@@ -52,7 +52,7 @@ gantt
 
 ## 2. Slices by week
 
-A **slice** = one branch, one PR under ~400 changed lines, with tests (the existing workflow:
+A **slice** = one branch, one PR with under ~400 changed lines of non-test code, with tests (the existing workflow:
 `/slice` → `/verify` → `/review` → PR). IDs continue from the current board. "Dep." lists slices
 that must be merged first.
 

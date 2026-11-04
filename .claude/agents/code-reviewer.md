@@ -20,7 +20,7 @@ Check, in order, and report only real problems:
 4. **Code style:** strict TypeScript, no `any`, `import type` for types (but never for injected
    Nest classes), `.js` suffix on relative imports, comments explain why.
 5. **Readability for a student team:** clear names, small functions, no unexplained cleverness.
-6. **Scope:** the change matches the slice and stays under ~400 changed lines.
+6. **Scope:** the change matches the slice and stays under ~400 changed lines of non-test code (tests do not count).
 
 Output format:
 

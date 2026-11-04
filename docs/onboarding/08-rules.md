@@ -62,5 +62,6 @@ These came out of code reviews of the first endpoints. Follow them from day one.
 
 - Never commit to `main` (you can't push it anyway). One branch per task.
 - Conventional Commits for every commit and PR title.
-- PRs under about 400 changed lines, with the template filled in, and CI green.
+- One PR per task, non-test code under about 400 changed lines (tests do not count), with the
+  template filled in, and CI green.
 - Never commit `.env`, real passwords or personal data. The repository is public.
