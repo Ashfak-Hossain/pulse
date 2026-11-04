@@ -87,8 +87,8 @@ export const outboxEvent = pgTable(
   ],
 );
 
-// A consumer inserts this in the same transaction as its work,
-// so a redelivered event fails on the primary key and runs once
+// A consumer inserts this first, in the same transaction as its work. On a redelivered event the
+// primary key makes the insert return no row, so the work runs once
 export const processedEvent = pgTable(
   'processed_event',
   {

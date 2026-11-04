@@ -32,6 +32,8 @@ const envSchema = z
     RELAY_POLL_MS: z.coerce.number().int().min(50).max(60_000).default(500),
     // No default either: it holds the broker password
     AMQP_URL: z.url({ protocol: /^amqps?$/ }),
+    // The notifier's own role (pulse_notifier): it records processed_event and nothing else
+    NOTIFIER_DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
   })
   // More in-sync replicas than copies would make every acks=all write fail
   .refine((env) => env.KAFKA_MIN_INSYNC_REPLICAS <= env.KAFKA_REPLICATION_FACTOR, {

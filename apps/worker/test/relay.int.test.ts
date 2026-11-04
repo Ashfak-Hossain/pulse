@@ -3,7 +3,7 @@ import type { Admin, Producer } from '@platformatic/kafka';
 import { asc, assertRestrictedRole, createDb, eq, outboxEvent, sql } from '@pulse/db';
 import { inject } from 'vitest';
 import { createAdmin, createProducer } from '../src/kafka/client.js';
-import { createRelayDb, currentRole } from '../src/relay/db.js';
+import { createWorkerDb, currentRole } from '../src/relay/db.js';
 import { runRelayLoop, type LoopLogger } from '../src/relay/loop.js';
 import {
   oneSendAtATime,
@@ -468,7 +468,7 @@ describe('runRelayLoop with PostgreSQL and Kafka', () => {
     url.searchParams.set('application_name', appName);
     const warnings: string[] = [];
     const logger: LoopLogger = { ...silent, warn: (_fields, message) => warnings.push(message) };
-    const db = createRelayDb(url.href, logger);
+    const db = createWorkerDb(url.href, logger);
     const topic = await newTopic();
     const controller = new AbortController();
     const loop = runRelayLoop(() => relayOnce(db, producer, options(topic)), {

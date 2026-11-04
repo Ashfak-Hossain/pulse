@@ -1,10 +1,9 @@
-import { randomUUID } from 'node:crypto';
 import { asc, count, eq } from 'drizzle-orm';
 import { afterAll, describe, expect, inject, it } from 'vitest';
-import { campus, createDb, outboxEvent, processedEvent, withCampus } from '../src/index.js';
+import { campus, createDb, outboxEvent, withCampus } from '../src/index.js';
 import { campusCreated, newCampus, pgErrorCode } from './support/fixtures.js';
 
-describe('outbox and processed events, as pulse_app', () => {
+describe('outbox events, as pulse_app', () => {
   const owner = createDb(inject('ownerUrl'));
   const app = createDb(inject('appUrl'));
 
@@ -81,23 +80,5 @@ describe('outbox and processed events, as pulse_app', () => {
     });
     // 42501: permission denied for table outbox_event. Callers make the event id themselves
     expect(await pgErrorCode(work)).toBe('42501');
-  });
-
-  it('rejects the same event twice for one consumer', async () => {
-    const row = { consumer: 'campus-notifier', eventId: randomUUID() };
-    await app.insert(processedEvent).values(row);
-    // 23505: unique violation on the (consumer, event_id) primary key
-    expect(await pgErrorCode(app.insert(processedEvent).values(row))).toBe('23505');
-  });
-
-  it('lets two consumers record the same event', async () => {
-    const eventId = randomUUID();
-    await app.insert(processedEvent).values({ consumer: 'campus-notifier', eventId });
-    await app.insert(processedEvent).values({ consumer: 'campus-search', eventId });
-    const [recorded] = await owner
-      .select({ n: count() })
-      .from(processedEvent)
-      .where(eq(processedEvent.eventId, eventId));
-    expect(recorded?.n).toBe(2);
   });
 });

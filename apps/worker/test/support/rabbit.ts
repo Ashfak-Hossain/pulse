@@ -46,15 +46,36 @@ export async function rabbitApi(path: string, method = 'GET', body?: unknown): P
 }
 
 /**
- * Drops every client connection, as a broker restart or a network cut would. The API lists a
- * new connection only after its next stats update (~5 s), so wait until `count` are listed.
+ * A vhost of its own for one test file: the job topology uses fixed queue names, so files that
+ * run side by side each get a separate copy of every queue. Returns its AMQP URL.
  */
-export async function dropAllConnections(count: number): Promise<void> {
+export async function createVhost(name: string): Promise<string> {
+  await rabbitApi(`/vhosts/${name}`, 'PUT');
+  await rabbitApi(`/permissions/${name}/${user}`, 'PUT', {
+    configure: '.*',
+    write: '.*',
+    read: '.*',
+  });
+  return `${inject('amqpUrl')}/${name}`;
+}
+
+/**
+ * Drops every client connection to one vhost, as a broker restart or a network cut would. The
+ * API lists a new connection only after its next stats update (~5 s), so wait until `count` are
+ * listed.
+ */
+export async function dropAllConnections(count: number, vhost = '/'): Promise<void> {
   const connections = await vi.waitFor(
     async () => {
-      const listed = (await (await rabbitApi('/connections')).json()) as { name: string }[];
-      if (listed.length < count) throw new Error(`${listed.length} of ${count} connections listed`);
-      return listed;
+      const listed = (await (await rabbitApi('/connections')).json()) as {
+        name: string;
+        vhost: string;
+      }[];
+      const inVhost = listed.filter((connection) => connection.vhost === vhost);
+      if (inVhost.length < count) {
+        throw new Error(`${inVhost.length} of ${count} connections listed`);
+      }
+      return inVhost;
     },
     { timeout: 10_000, interval: 250 },
   );

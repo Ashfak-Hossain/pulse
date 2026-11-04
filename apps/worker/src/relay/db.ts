@@ -1,14 +1,19 @@
-import { createDb, sql, type Database } from '@pulse/db';
+import { createDb, sql, type Database, type PoolOptions } from '@pulse/db';
 import type { LoopLogger } from './loop.js';
 import { describeError } from './relay.js';
 
 /**
- * The relay's pool. A lost connection (a Postgres restart, say) is logged and the step using it
- * fails and is retried, instead of an unhandled 'error' event ending the process.
+ * A pool for one worker part (the relay, the notifier), each with its own role. A lost
+ * connection (a Postgres restart, say) is logged and the step using it fails and is retried,
+ * instead of an unhandled 'error' event ending the process.
  */
-export function createRelayDb(url: string, logger: Pick<LoopLogger, 'warn'>): Database {
+export function createWorkerDb(
+  url: string,
+  logger: Pick<LoopLogger, 'warn'>,
+  limits: PoolOptions = {},
+): Database {
   // One step at a time, so one connection plus a spare
-  const db = createDb(url, { max: 2 });
+  const db = createDb(url, { max: 2, ...limits });
   const onError = (error: Error): void => {
     logger.warn({ error: describeError(error) }, 'Database connection lost');
   };

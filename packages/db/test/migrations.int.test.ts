@@ -110,10 +110,11 @@ describe('migrations on an empty PostGIS', () => {
     });
   });
 
-  it('let the app role record processed events but never change or remove them', async () => {
+  // Consumers record handled events with their own roles (pulse_notifier); the API handles none
+  it('keep processed events away from the app role', async () => {
     expect(await appPrivileges('processed_event')).toEqual({
-      select: true,
-      insert: true,
+      select: false,
+      insert: false,
       update: false,
       delete: false,
     });

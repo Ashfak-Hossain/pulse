@@ -84,8 +84,8 @@ gh pr create --base main --title "feat(api): add campus lookup by email"
 - **Notes for reviewers:** anything surprising; delete if empty.
 - **Checklist:** tick honestly.
 
-Add labels: `enhancement` and an area (`area: api`). Keep PRs under about 400 changed lines; a
-bigger task becomes two PRs.
+Add labels: `enhancement` and an area (`area: api`). One task, one PR. Keep the non-test
+code under about 400 changed lines (tests do not count); only a bigger task becomes two PRs.
 
 ## 5. CI and review
 

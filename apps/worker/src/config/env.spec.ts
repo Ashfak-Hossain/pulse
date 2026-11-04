@@ -2,8 +2,13 @@ import { validateEnv } from './env.js';
 
 const relayUrl = 'postgres://pulse_relay:pulse_relay@127.0.0.1:5432/pulse';
 const amqpUrl = 'amqp://pulse:pulse@127.0.0.1:5672';
+const notifierUrl = 'postgres://pulse_notifier:pulse_notifier@127.0.0.1:5432/pulse';
 // The keys without a default
-const required = { RELAY_DATABASE_URL: relayUrl, AMQP_URL: amqpUrl };
+const required = {
+  RELAY_DATABASE_URL: relayUrl,
+  AMQP_URL: amqpUrl,
+  NOTIFIER_DATABASE_URL: notifierUrl,
+};
 
 describe('validateEnv', () => {
   it('fills the defaults for local dev (Compose Kafka on the HOST listener)', () => {
@@ -16,6 +21,7 @@ describe('validateEnv', () => {
       RELAY_BATCH_SIZE: 100,
       RELAY_POLL_MS: 500,
       AMQP_URL: amqpUrl,
+      NOTIFIER_DATABASE_URL: notifierUrl,
     });
   });
 
@@ -76,7 +82,18 @@ describe('validateEnv', () => {
   );
 
   it('requires AMQP_URL (no guessed broker address)', () => {
-    expect(() => validateEnv({ RELAY_DATABASE_URL: relayUrl })).toThrow(/AMQP_URL/);
+    expect(() => validateEnv({ ...required, AMQP_URL: undefined })).toThrow(/AMQP_URL/);
+  });
+
+  // Its own role, so a bug in the notifier cannot touch the outbox (and the relay cannot touch
+  // processed_event)
+  it('requires NOTIFIER_DATABASE_URL, a postgres URL', () => {
+    expect(() => validateEnv({ ...required, NOTIFIER_DATABASE_URL: undefined })).toThrow(
+      /NOTIFIER_DATABASE_URL/,
+    );
+    expect(() =>
+      validateEnv({ ...required, NOTIFIER_DATABASE_URL: 'http://db:5432/pulse' }),
+    ).toThrow(/NOTIFIER_DATABASE_URL/);
   });
 
   it.each(['amqps://pulse:pw@rabbit.example.com:5671/pulse', amqpUrl])(
@@ -131,6 +148,7 @@ describe('validateEnv', () => {
     ['KAFKA_BROKERS', 'secret-host-name'],
     ['RELAY_DATABASE_URL', 'mysql://pulse_relay:secret-password@db/pulse'],
     ['AMQP_URL', 'http://pulse:secret-password@rabbitmq:5672'],
+    ['NOTIFIER_DATABASE_URL', 'mysql://pulse_notifier:secret-password@db/pulse'],
   ])('never puts a value in the error (startup logs are not secret): %s', (key, value) => {
     let message = '';
     try {

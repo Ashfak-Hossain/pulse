@@ -3,9 +3,15 @@ import { Pool, type PoolConfig } from 'pg';
 import * as schema from './schema.js';
 
 // Pool tuning only: user, host and password always come from the URL
-type PoolOptions = Pick<
+export type PoolOptions = Pick<
   PoolConfig,
-  'max' | 'idleTimeoutMillis' | 'connectionTimeoutMillis' | 'query_timeout' | 'statement_timeout'
+  | 'max'
+  | 'idleTimeoutMillis'
+  | 'connectionTimeoutMillis'
+  | 'query_timeout'
+  | 'statement_timeout'
+  | 'idle_in_transaction_session_timeout'
+  | 'keepAlive'
 >;
 
 // One pool per process: each query borrows a connection and gives it back afterwards.
