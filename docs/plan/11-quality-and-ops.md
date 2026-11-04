@@ -53,7 +53,7 @@ this already for `PORT`, `HOST`, `DATABASE_URL`).
 | `NODE_ENV`, `LOG_LEVEL`                                                                  | ✔                  | ✔      | ✔   |                                                                 |
 | `APP_ORIGIN`                                                                             | ✔                  | ✔      | ✔   | e.g. `https://pulse.example.com`; Origin check, links in emails |
 | `DATABASE_URL`                                                                           | ✔                  |        |     | `pulse_app`                                                     |
-| `WORKER_DATABASE_URL`, `RELAY_DATABASE_URL`                                              |                    | ✔      |     | `pulse_worker`, `pulse_relay`                                   |
+| `RELAY_DATABASE_URL`, `NOTIFIER_DATABASE_URL` (one per consumer)                         |                    | ✔      |     | `pulse_relay`, `pulse_notifier` (ADR 0009)                      |
 | `MIGRATION_DATABASE_URL`                                                                 |                    |        |     | migration step only (owner `pulse`)                             |
 | `REDIS_URL`                                                                              | ✔                  | ✔      |     |                                                                 |
 | `KAFKA_BROKERS`                                                                          | ✔ (locations only) | ✔      |     |                                                                 |
@@ -162,4 +162,4 @@ out unless we build our own image.
 - [ ] Events/jobs reviewed (`events-reviewer`) when touched; add-only baseline updated.
 - [ ] Postman request with a saved example for every new endpoint.
 - [ ] Docs updated (this plan if the design changed; ADR if a decision was made).
-- [ ] PR < ~400 changed lines, template filled, CI green, approved.
+- [ ] One PR, non-test code < ~400 changed lines, template filled, CI green, approved.
