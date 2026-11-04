@@ -4,8 +4,8 @@ import type { Database } from './client.js';
 type RoleRow = { role: string; unsafe: boolean };
 
 // Row-level security does not limit superusers, BYPASSRLS roles or a table's owner, nor any role
-// that can SET ROLE to one of them. The API and worker connect as pulse_app; this refuses to
-// start if they were given anything else
+// that can SET ROLE to one of them. The API and each worker part connect as their own restricted
+// role; this refuses to start if they were given anything else
 export async function assertRestrictedRole(db: Database): Promise<void> {
   // Both the login (session_user) and the active role (current_user): a login that switched
   // roles can switch back with RESET ROLE. pg_has_role(…, 'MEMBER') is true for the role itself

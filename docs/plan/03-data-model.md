@@ -20,20 +20,20 @@ Every table Pulse will have, grouped into 10 domains. Three tables already exist
 
 ## 2. Roles and row-level security
 
-| Database role  | Used by                           | Rights                                                                                                |
-| -------------- | --------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `pulse`        | Migrations only                   | Owns every table                                                                                      |
-| `pulse_app`    | API                               | `SELECT, INSERT, UPDATE, DELETE` by default grant; RLS filters rows; no rights on append-only updates |
-| `pulse_worker` | Worker consumers, jobs, scheduler | Same as `pulse_app` (same RLS); separate so its connections and grants can be audited and tuned       |
-| `pulse_relay`  | Worker relay role                 | `SELECT, UPDATE (published_at)` on `outbox_event` only                                                |
-| `pulse_ml`     | `services/forecast`               | `SELECT` on the training views (`v_forecast_training`), `INSERT` on `ml_model`                        |
+| Database role      | Used by                                                               | Rights                                                                                                   |
+| ------------------ | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `pulse`            | Migrations only                                                       | Owns every table                                                                                         |
+| `pulse_app`        | API                                                                   | `SELECT, INSERT, UPDATE, DELETE` by default grant; RLS filters rows; no rights on append-only updates    |
+| `pulse_<consumer>` | One role per worker consumer group (`pulse_notifier` first, ADR 0009) | `SELECT, INSERT` on `processed_event` plus only the tables that consumer writes; same RLS as `pulse_app` |
+| `pulse_relay`      | Worker relay role                                                     | `SELECT, UPDATE (published_at)` on `outbox_event` only                                                   |
+| `pulse_ml`         | `services/forecast`                                                   | `SELECT` on the training views (`v_forecast_training`), `INSERT` on `ml_model`                           |
 
 **Standard policy** (every campus-scoped table, written once in a helper `campusScoped(table)`):
 
 ```sql
 alter table x enable row level security;
 alter table x force row level security;
-create policy x_campus on x for all to pulse_app, pulse_worker
+create policy x_campus on x for all to pulse_app -- plus each consumer role that needs the table
   using (campus_id = nullif(current_setting('app.campus_id', true), '')::uuid)
   with check (campus_id = nullif(current_setting('app.campus_id', true), '')::uuid);
 ```
@@ -42,8 +42,9 @@ create policy x_campus on x for all to pulse_app, pulse_worker
 transaction (ADR 0003). The API takes the campus from the access token; the worker takes it from
 `payload.campusId`. A query outside `withCampus` sees no campus rows at all.
 
-**Append-only tables** (`journal_entry`, `posting`, `audit_log`, `trip_transition`,
-`processed_event`): policies for `select` and `insert` only, and `revoke update, delete`.
+**Append-only tables** (`journal_entry`, `posting`, `audit_log`, `trip_transition`): policies for
+`select` and `insert` only, and `revoke update, delete`. `processed_event` is append-only too, by
+grants alone: it has no `campus_id` or RLS, and `pulse_app` has no rights on it (ADR 0009).
 
 **Ownership inside a campus** (who may see which crew, trip, chat or ledger) is checked in the
 services, with one test per rule, not by RLS. RLS is the tenancy wall; services are the room doors.

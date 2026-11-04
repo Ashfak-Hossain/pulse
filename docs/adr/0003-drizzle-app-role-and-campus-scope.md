@@ -1,6 +1,7 @@
 # 0003 — Drizzle with node-postgres, a separate app role, and a transaction-local campus scope
 
 Status: proposed
+Partly superseded by 0009: `pulse_app` has no rights on `processed_event`
 Date: 2026-10-30
 
 ## Context

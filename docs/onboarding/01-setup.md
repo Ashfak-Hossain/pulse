@@ -212,7 +212,7 @@ pnpm --filter @pulse/api dev
 | `may bypass row-level security … connect as pulse_app` | `DATABASE_URL` uses the owner role `pulse`           | Use the `pulse_app` URL from `.env.example`                                          |
 | `/health/ready` answers 503                            | PostgreSQL is not running                            | `pnpm infra:up`                                                                      |
 | `relation "campus" does not exist`                     | Migrations have not run                              | `pnpm --filter @pulse/db db:migrate`                                                 |
-| `role "pulse_app" does not exist`                      | Your database volume is older than the role script   | `pnpm infra:reset`, then `infra:up`, `db:migrate`, `infra:seed` (deletes local data) |
+| `role "pulse_…" does not exist` or `is missing`        | Your database volume is older than the role script   | `pnpm infra:reset`, then `infra:up`, `db:migrate`, `infra:seed` (deletes local data) |
 | Editor: `Cannot find module '@pulse/contracts'`        | Workspace packages are used from their built `dist/` | `pnpm build` (or `pnpm --filter @pulse/contracts build`), then restart the TS server |
 | `EADDRINUSE: … :3000`                                  | The API is already running in another terminal       | Stop the other one (Ctrl+C) or set `PORT=3001`                                       |
 | zsh: `no matches found: …@workspace:*`                 | zsh treats `*` as a file pattern                     | Put the argument in quotes: `'@pulse/x@workspace:*'`                                 |

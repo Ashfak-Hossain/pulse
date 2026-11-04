@@ -5,16 +5,18 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 
 const initFolder = new URL('../../../infra/compose/postgres/init/', import.meta.url);
-const roleScripts = ['01-app-role.sql', '02-relay-role.sql'];
+const roleScripts = ['01-app-role.sql', '02-relay-role.sql', '03-notifier-role.sql'];
 const migrationsFolder = fileURLToPath(new URL('../migrations', import.meta.url));
 
 export type TestDatabase = {
   // The owner (pulse): bypasses row-level security, for setting up test rows
   ownerUrl: string;
-  // The app role (pulse_app): what the API and worker connect as
+  // The app role (pulse_app): what the API connects as
   appUrl: string;
   // The relay role (pulse_relay): reads and marks outbox_event, nothing else
   relayUrl: string;
+  // The notifier role (pulse_notifier): records processed_event, nothing else
+  notifierUrl: string;
   stop: () => Promise<void>;
 };
 
@@ -63,6 +65,7 @@ export async function startTestDatabase(): Promise<TestDatabase> {
     ownerUrl,
     appUrl: urlAs(ownerUrl, 'pulse_app'),
     relayUrl: urlAs(ownerUrl, 'pulse_relay'),
+    notifierUrl: urlAs(ownerUrl, 'pulse_notifier'),
     stop: async () => {
       await container.stop();
     },
