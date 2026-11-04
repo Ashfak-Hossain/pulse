@@ -1,9 +1,13 @@
 import { assertRestrictedRole, type Database } from '@pulse/db';
 import { topics } from '@pulse/events';
+import { jobTopology } from '@pulse/jobs';
+import type { ChannelModel } from 'amqplib';
 import { validateEnv, type Env } from './config/env.js';
 import { createAdmin, createProducer, type KafkaConnection } from './kafka/client.js';
 import { ensureTopics } from './kafka/topics.js';
 import { createLogger } from './logger.js';
+import { connectRabbit } from './rabbit/client.js';
+import { ensureTopology } from './rabbit/topology.js';
 import { createRelayDb, currentRole } from './relay/db.js';
 import { runRelayLoop } from './relay/loop.js';
 import { describeError, oneSendAtATime, relayOnce, type RelayProducer } from './relay/relay.js';
@@ -25,13 +29,18 @@ async function main(): Promise<void> {
   const producer = createProducer(connection);
   const controller = new AbortController();
   stopOnSignals(controller);
+  const closers: Closer[] = [() => producer.close(), () => db.$client.end()];
 
   try {
     await assertRestrictedRole(db);
     await createTopics(connection, env);
+    const rabbit = await connectRabbit(env.AMQP_URL, logger, declareJobTopology, {
+      onFatal: (error) => exitWithError(error, 'RabbitMQ refused the worker'),
+    });
+    closers.push(() => rabbit.close());
     await runRelay(db, producer, env, controller.signal);
   } finally {
-    await closeAll(db, producer);
+    await closeAll(closers);
   }
   logger.info({}, 'Worker stopped');
 }
@@ -47,6 +56,12 @@ async function createTopics(connection: KafkaConnection, env: Env): Promise<void
   } finally {
     await admin.close();
   }
+}
+
+// Runs on every RabbitMQ connect, so a queue deleted by hand comes back on the next one
+async function declareJobTopology(model: ChannelModel): Promise<void> {
+  await ensureTopology(model, jobTopology());
+  logger.info({}, 'Job topology ready');
 }
 
 async function runRelay(
@@ -93,12 +108,11 @@ function stopOnSignals(controller: AbortController): void {
   process.on('SIGINT', stop);
 }
 
-// Both always run: a failed close must not leave the other connection open
-async function closeAll(
-  db: Database,
-  producer: RelayProducer & { close(): Promise<void> },
-): Promise<void> {
-  const results = await Promise.allSettled([producer.close(), db.$client.end()]);
+type Closer = () => Promise<void>;
+
+// All always run: a failed close must not leave another connection open
+async function closeAll(closers: Closer[]): Promise<void> {
+  const results = await Promise.allSettled(closers.map((close) => close()));
   for (const result of results) {
     if (result.status === 'rejected') {
       logger.warn({ error: describeError(result.reason) }, 'Closing a connection failed');

@@ -30,6 +30,8 @@ const envSchema = z
     RELAY_DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
     RELAY_BATCH_SIZE: z.coerce.number().int().min(1).max(MAX_BATCH_SIZE).default(100),
     RELAY_POLL_MS: z.coerce.number().int().min(50).max(60_000).default(500),
+    // No default either: it holds the broker password
+    AMQP_URL: z.url({ protocol: /^amqps?$/ }),
   })
   // More in-sync replicas than copies would make every acks=all write fail
   .refine((env) => env.KAFKA_MIN_INSYNC_REPLICAS <= env.KAFKA_REPLICATION_FACTOR, {

@@ -321,6 +321,12 @@ importers:
       '@pulse/events':
         specifier: workspace:*
         version: link:../../packages/events
+      '@pulse/jobs':
+        specifier: workspace:*
+        version: link:../../packages/jobs
+      amqplib:
+        specifier: ^2.2.1
+        version: 2.2.1
       pino:
         specifier: ^10.4.0
         version: 10.4.0
@@ -1852,6 +1858,10 @@ packages:
 
   ajv@8.20.0:
     resolution: {integrity: sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA==}
+
+  amqplib@2.2.1:
+    resolution: {integrity: sha512-J3JjAydC2vJ/AgkgVAE0kVH5M4RNfm51zUaspHpwSai3W35lD3hKryvYY/xqMnYcNfR66NYL06Eik+Adn293dQ==}
+    engines: {node: '>=18'}
 
   ansi-regex@5.0.1:
     resolution: {integrity: sha512-quJQXlTSUGL2LH9SUXo8VwsY4soanhgo6LNSm84E1LBcE8s3O0wpdiRzyR9z/ZZJMlMWv37qOOb9pdJlMUEKFQ==}
@@ -4955,6 +4965,8 @@ snapshots:
       fast-uri: 3.1.9
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
+
+  amqplib@2.2.1: {}
 
   ansi-regex@5.0.1: {}
 
