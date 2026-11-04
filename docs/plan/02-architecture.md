@@ -269,7 +269,7 @@ worker 512 MB when training. Total ≈ 3 GB, so a 4 GB host is the minimum.
 | Database     | PostgreSQL 18 + PostGIS 3.6, Drizzle + node-postgres (ADR 0003)                                                                   | in repo             |
 | Events       | Kafka 4 KRaft (ADR 0004), JSON envelope + Zod (ADR 0005)                                                                          | in repo             |
 | Kafka client | `@platformatic/kafka` (pure TypeScript, no native build)                                                                          | ADR 0006 (proposed) |
-| Jobs         | RabbitMQ 4, `amqplib` + `amqp-connection-manager`                                                                                 | decide in S11 (D6)  |
+| Jobs         | RabbitMQ 4, `amqplib` 2.x (built-in recovery)                                                                                     | ADR 0008 (proposed) |
 | Realtime     | Socket.IO + `@socket.io/redis-adapter` + redis-emitter                                                                            | proposed (D22)      |
 | Auth         | Email OTP, JWT access (15 min) + opaque rotating refresh, cookies                                                                 | proposed (D20)      |
 | Geo          | `h3-js` (resolution 8 home cells), PostGIS, OSM                                                                                   | proposed            |

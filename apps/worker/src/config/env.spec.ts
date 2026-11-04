@@ -1,8 +1,9 @@
 import { validateEnv } from './env.js';
 
 const relayUrl = 'postgres://pulse_relay:pulse_relay@127.0.0.1:5432/pulse';
-// The one key without a default
-const required = { RELAY_DATABASE_URL: relayUrl };
+const amqpUrl = 'amqp://pulse:pulse@127.0.0.1:5672';
+// The keys without a default
+const required = { RELAY_DATABASE_URL: relayUrl, AMQP_URL: amqpUrl };
 
 describe('validateEnv', () => {
   it('fills the defaults for local dev (Compose Kafka on the HOST listener)', () => {
@@ -14,6 +15,7 @@ describe('validateEnv', () => {
       RELAY_DATABASE_URL: relayUrl,
       RELAY_BATCH_SIZE: 100,
       RELAY_POLL_MS: 500,
+      AMQP_URL: amqpUrl,
     });
   });
 
@@ -60,14 +62,34 @@ describe('validateEnv', () => {
   it.each(['postgresql://pulse_relay:pw@db:5432/pulse', relayUrl])(
     'accepts RELAY_DATABASE_URL=%s',
     (url) => {
-      expect(validateEnv({ RELAY_DATABASE_URL: url }).RELAY_DATABASE_URL).toBe(url);
+      expect(validateEnv({ ...required, RELAY_DATABASE_URL: url }).RELAY_DATABASE_URL).toBe(url);
     },
   );
 
   it.each(['', 'not a url', 'mysql://u:p@db/pulse', 'http://db:5432/pulse'])(
     'rejects RELAY_DATABASE_URL=%j',
     (url) => {
-      expect(() => validateEnv({ RELAY_DATABASE_URL: url })).toThrow(/RELAY_DATABASE_URL/);
+      expect(() => validateEnv({ ...required, RELAY_DATABASE_URL: url })).toThrow(
+        /RELAY_DATABASE_URL/,
+      );
+    },
+  );
+
+  it('requires AMQP_URL (no guessed broker address)', () => {
+    expect(() => validateEnv({ RELAY_DATABASE_URL: relayUrl })).toThrow(/AMQP_URL/);
+  });
+
+  it.each(['amqps://pulse:pw@rabbit.example.com:5671/pulse', amqpUrl])(
+    'accepts AMQP_URL=%s',
+    (url) => {
+      expect(validateEnv({ ...required, AMQP_URL: url }).AMQP_URL).toBe(url);
+    },
+  );
+
+  it.each(['', 'rabbitmq:5672', 'http://pulse:pulse@rabbitmq:5672'])(
+    'rejects AMQP_URL=%j',
+    (url) => {
+      expect(() => validateEnv({ ...required, AMQP_URL: url })).toThrow(/AMQP_URL/);
     },
   );
 
@@ -108,6 +130,7 @@ describe('validateEnv', () => {
   it.each([
     ['KAFKA_BROKERS', 'secret-host-name'],
     ['RELAY_DATABASE_URL', 'mysql://pulse_relay:secret-password@db/pulse'],
+    ['AMQP_URL', 'http://pulse:secret-password@rabbitmq:5672'],
   ])('never puts a value in the error (startup logs are not secret): %s', (key, value) => {
     let message = '';
     try {
