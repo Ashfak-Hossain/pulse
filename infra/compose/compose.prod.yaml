@@ -53,7 +53,7 @@ services:
 
   redis:
     <<: *service
-    image: redis:8.8-alpine
+    image: redis:8.10-alpine
     # The password goes into a config file, not the command line, where `ps` would show it.
     # Cache and the Socket.IO adapter: losing it on restart is fine, so no snapshots
     command:
