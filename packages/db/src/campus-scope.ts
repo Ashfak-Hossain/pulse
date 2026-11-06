@@ -1,4 +1,5 @@
 import { sql } from 'drizzle-orm';
+import type { PgTransactionConfig } from 'drizzle-orm/pg-core';
 import type { Database, Transaction } from './client.js';
 
 // The canonical 8-4-4-4-12 hex form. Anything else would only fail later inside a policy's
@@ -12,6 +13,7 @@ export async function withCampus<T>(
   db: Database,
   campusId: string,
   work: (tx: Transaction) => Promise<T>,
+  config?: PgTransactionConfig,
 ): Promise<T> {
   if (!uuidPattern.test(campusId)) {
     // The value is left out on purpose: it may come from a request and must not be echoed back
@@ -22,5 +24,5 @@ export async function withCampus<T>(
     // ${campusId} is sent as a bound parameter, never spliced into the SQL text
     await tx.execute(sql`select set_config('app.campus_id', ${campusId}, true)`);
     return work(tx);
-  });
+  }, config);
 }
