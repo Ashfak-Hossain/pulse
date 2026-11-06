@@ -258,6 +258,11 @@ describe('public campus catalog', () => {
   it.each([
     'bad!',
     'bm90LWpzb24',
+    Buffer.concat([
+      Buffer.from('{"code":"'),
+      Buffer.from([0xff]),
+      Buffer.from('","sectionLabel":"A","id":"' + first.id + '"}'),
+    ]).toString('base64url'),
     Buffer.from(JSON.stringify({ code: 'a\0b', sectionLabel: 'A', id: first.id })).toString(
       'base64url',
     ),

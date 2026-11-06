@@ -174,7 +174,7 @@ function decodeCursor(token: string) {
   const bytes = Buffer.from(token, 'base64url');
   if (bytes.toString('base64url') !== token) throw new BadRequestException('Invalid cursor');
   try {
-    const input: unknown = JSON.parse(bytes.toString('utf8'));
+    const input: unknown = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
     return sectionCursorSchema.parse(input);
   } catch {
     throw new BadRequestException('Invalid cursor');
