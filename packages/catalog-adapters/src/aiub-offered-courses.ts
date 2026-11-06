@@ -152,6 +152,11 @@ function readMeeting(cell: ReadCell, report: ReportProblem): ParsedMeeting | nul
   };
 }
 
+/**
+ * Parse a trusted registrar export. Run untrusted uploads with enforced memory
+ * and time limits because XLSX decoding expands the archive in memory.
+ * An importer must validate parsed counts against its database column limits.
+ */
 export async function parseAiubOfferedCourses(file: Uint8Array): Promise<ParsedCatalog> {
   const sheets = await readExcelFile(Buffer.from(file));
   const reportSheet = sheets.find((sheet) => termPattern.test(sheet.sheet.trim()));
