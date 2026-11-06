@@ -1,7 +1,9 @@
 export { apiErrorSchema, apiIssueSchema, type ApiError, type ApiIssue } from './errors.js';
 export {
-  campusLookupQuerySchema,
-  type CampusLookupQuery,
+  campusLookupBodySchema,
+  type CampusLookupBody,
+  campusLookupResultSchema,
+  type CampusLookupResult,
   campusDistanceQuerySchema,
   campusDistanceSchema,
   type CampusDistanceQuery,
