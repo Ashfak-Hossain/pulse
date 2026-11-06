@@ -384,7 +384,7 @@ erDiagram
   catalog_import }o--|| term : fills
   course ||--o{ section : "taught as"
   term ||--o{ section : offers
-  section ||--|{ section_meeting : meets
+  section ||--o{ section_meeting : meets
   term ||--o{ calendar_event : has
   section ||--o{ calendar_event : "may target"
 ```
@@ -426,37 +426,43 @@ index on `title` for search.
 
 ### 6.2 `section`
 
-| Column                 | Type                  | Rules                                                |
-| ---------------------- | --------------------- | ---------------------------------------------------- |
-| id                     | uuid PK               |                                                      |
-| campus_id              | uuid → campus         |                                                      |
-| term_id                | uuid → term           |                                                      |
-| external_class_id      | text                  | AIUB "Class ID"; unique (term_id, external_class_id) |
-| course_id              | uuid → course         | code and title live on the course, stored once       |
-| section_label          | text                  | e.g. `B`                                             |
-| type                   | text                  | `theory \| lab \| other`                             |
-| capacity               | smallint              |                                                      |
-| enrolled               | smallint              | from the report                                      |
-| status                 | text                  | `open \| closed \| cancelled`                        |
-| instructor_name        | text                  | public in the report                                 |
-| import_id              | uuid → catalog_import |                                                      |
-| created_at, updated_at | timestamptz           |                                                      |
+| Column                 | Type          | Rules                                                 |
+| ---------------------- | ------------- | ----------------------------------------------------- |
+| id                     | uuid PK       | defaults to `uuidv7()`                                |
+| campus_id              | uuid → campus | matches both parents                                  |
+| term_id                | uuid → term   | composite FK with campus_id                           |
+| external_class_id      | text          | AIUB Class ID, unique per term                        |
+| course_id              | uuid → course | composite FK with campus_id                           |
+| section_label          | text          | e.g. `B` or `L1-A`                                    |
+| title                  | text          | title printed for this section                        |
+| capacity               | smallint      | nonnegative                                           |
+| enrolled               | smallint      | nonnegative, may exceed capacity                      |
+| status                 | text          | `open \| reserved \| freshman \| closed \| cancelled` |
+| instructor_name        | text          | nullable, public in the report                        |
+| created_at, updated_at | timestamptz   |                                                       |
 
-Indexes: unique (term_id, external_class_id); (term_id, course_id); (course_id).
+A course code can have several titles in the report. `course.title` holds the most common
+title and `section.title` keeps the printed title for that section. Search matches both.
+The import link comes in S37.
+
+Indexes cover the campus and both composite foreign keys. The pair `(id, campus_id)` is
+unique for same-campus meeting references. Trigram indexes support both course and section titles.
 
 ### 6.3 `section_meeting`
 
-| Column     | Type           | Rules                         |
-| ---------- | -------------- | ----------------------------- |
-| id         | uuid PK        |                               |
-| campus_id  | uuid → campus  |                               |
-| section_id | uuid → section | on delete cascade             |
-| weekday    | smallint       | 0–6                           |
-| start_time | time           |                               |
-| end_time   | time           | check `end_time > start_time` |
-| room       | text           |                               |
+| Column     | Type           | Rules                                          |
+| ---------- | -------------- | ---------------------------------------------- |
+| id         | uuid PK        | defaults to `uuidv7()`                         |
+| campus_id  | uuid → campus  | matches the section                            |
+| section_id | uuid → section | composite FK with campus_id, on delete cascade |
+| kind       | text           | `theory \| lab \| other`                       |
+| weekday    | smallint       | 0 = Sunday through 6 = Saturday                |
+| start_time | time           |                                                |
+| end_time   | time           | check `end_time > start_time`                  |
+| room       | text           | nullable                                       |
 
-Index: (section_id); (campus_id, weekday, end_time) for "who leaves at 16:30 on Sunday".
+A section can mix theory and lab meetings or have no meetings. Indexes cover
+`(section_id, campus_id)` and `(campus_id, weekday, end_time)` for departure lookups.
 
 ### 6.4 `enrollment`
 
