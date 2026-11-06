@@ -1,0 +1,24 @@
+$kind: http-request
+url: '{{baseUrl}}/campuses/aiub/sections?termId={{catalogTermId}}&limit=1'
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  - key: termId
+    value: '{{catalogTermId}}'
+  - key: limit
+    value: '1'
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200', () => pm.response.to.have.status(200));
+      const page = pm.response.json();
+      pm.test('returns one section and a cursor', () => {
+        pm.expect(page.items).to.have.length(1);
+        pm.expect(page.items[0].course.code).to.equal('CSC2105');
+        pm.expect(page.nextCursor).to.be.a('string');
+      });
+      if (page.nextCursor) pm.collectionVariables.set('catalogNextCursor', page.nextCursor);
+    language: text/javascript
+examples: '.resources/List first section page.resources/examples'
+order: 2000

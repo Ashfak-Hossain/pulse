@@ -10,4 +10,16 @@ export {
   sectionMeeting,
 } from './schema.js';
 export { assertRestrictedRole } from './role-check.js';
-export { arrayContains, asc, DrizzleQueryError, eq, inArray, isNull, sql } from 'drizzle-orm';
+export {
+  and,
+  arrayContains,
+  asc,
+  desc,
+  DrizzleQueryError,
+  eq,
+  ilike,
+  inArray,
+  isNull,
+  or,
+  sql,
+} from 'drizzle-orm';

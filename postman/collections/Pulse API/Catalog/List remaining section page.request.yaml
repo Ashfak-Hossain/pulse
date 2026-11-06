@@ -1,0 +1,28 @@
+$kind: http-request
+url: '{{baseUrl}}/campuses/aiub/sections?termId={{catalogTermId}}&limit=2&cursor={{catalogNextCursor}}'
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  - key: termId
+    value: '{{catalogTermId}}'
+  - key: limit
+    value: '2'
+  - key: cursor
+    value: '{{catalogNextCursor}}'
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200', () => pm.response.to.have.status(200));
+      const page = pm.response.json();
+      pm.test('continues the order and finishes the result', () => {
+        pm.expect(page.items.map(item => item.course.code)).to.eql(['CSC2209', 'CSC4161']);
+        pm.expect(page.nextCursor).to.equal(null);
+      });
+      pm.test('includes unscheduled sections and mixed meeting kinds', () => {
+        pm.expect(page.items[0].meetings).to.eql([]);
+        pm.expect(page.items[1].meetings.map(meeting => meeting.kind)).to.eql(['theory', 'lab']);
+      });
+    language: text/javascript
+examples: '.resources/List remaining section page.resources/examples'
+order: 3000

@@ -1,0 +1,26 @@
+$kind: http-example
+name: '200 OK'
+request:
+  method: GET
+  url: '{{baseUrl}}/campuses/aiub/terms'
+response:
+  statusCode: 200
+  statusText: 'OK'
+  headers:
+    - key: Content-Type
+      value: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "items": [
+          {
+            "id": "01a1b23a-135a-7fac-b321-dd9017bf351b",
+            "name": "Fall 2026-2027",
+            "startsOn": "2026-09-13",
+            "endsOn": "2027-01-15",
+            "status": "active"
+          }
+        ]
+      }
+order: 1000
