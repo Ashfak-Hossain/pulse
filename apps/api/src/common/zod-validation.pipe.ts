@@ -21,7 +21,7 @@ export class ZodValidationPipe<T extends z.ZodType> implements PipeTransform<unk
       issues: result.error.issues.map((issue) => ({
         path: issue.path.map(String).join('.'),
         code: issue.code,
-        message: issue.message,
+        message: issue.code === 'unrecognized_keys' ? 'Unrecognized field' : issue.message,
       })),
     };
     throw new BadRequestException(body);

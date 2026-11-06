@@ -100,6 +100,30 @@ describe('Campus lookup over HTTP', () => {
     expect(body.issues?.length).toBeGreaterThan(0);
   });
 
+  it('returns a fixed message for malformed JSON without echoing the submitted email', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/campuses/lookup')
+      .type('json')
+      .send('{"email": somebody@example.test}')
+      .expect(400);
+    expect(apiErrorSchema.parse(res.body)).toEqual({
+      statusCode: 400,
+      error: 'Bad Request',
+      message: 'Malformed JSON body',
+    });
+  });
+
+  it('does not echo user input supplied as a field name', async () => {
+    const extra = 'somebody@example.test';
+    const res = await request(app.getHttpServer())
+      .post('/campuses/lookup')
+      .send({ email: 'name@' + domain, [extra]: true })
+      .expect(400);
+    expect(apiErrorSchema.parse(res.body).issues).toEqual([
+      { path: '', code: 'unrecognized_keys', message: 'Unrecognized field' },
+    ]);
+  });
+
   it('no longer accepts lookup emails in a GET URL', async () => {
     const email = `name@${domain}`;
     const res = await request(app.getHttpServer())
