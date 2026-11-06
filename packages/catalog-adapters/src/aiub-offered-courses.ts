@@ -158,7 +158,13 @@ function readMeeting(cell: ReadCell, report: ReportProblem): ParsedMeeting | nul
  * An importer must validate parsed counts against its database column limits.
  */
 export async function parseAiubOfferedCourses(file: Uint8Array): Promise<ParsedCatalog> {
-  const sheets = await readExcelFile(Buffer.from(file));
+  let sheets: Sheet[];
+  try {
+    sheets = await readExcelFile(Buffer.from(file));
+  } catch {
+    // Decoder errors may contain private workbook values.
+    throw new Error('Could not read the XLSX workbook');
+  }
   const reportSheet = sheets.find((sheet) => termPattern.test(sheet.sheet.trim()));
   const sheet = reportSheet ?? sheets.find((candidate) => locateHeader(candidate)) ?? sheets[0];
   const term = termPattern.exec(sheet?.sheet.trim() ?? '');

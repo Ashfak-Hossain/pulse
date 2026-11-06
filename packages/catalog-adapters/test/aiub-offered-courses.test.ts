@@ -263,6 +263,6 @@ describe('parseAiubOfferedCourses', () => {
   it('rejects bytes that are not an XLSX workbook', async () => {
     await expect(
       parseAiubOfferedCourses(new TextEncoder().encode('not a workbook')),
-    ).rejects.toThrow();
+    ).rejects.toThrow('Could not read the XLSX workbook');
   });
 });
