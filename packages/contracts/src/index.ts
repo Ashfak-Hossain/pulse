@@ -23,3 +23,19 @@ export {
   type FareSplitRequest,
   type FareSplitPreview,
 } from './fare.js';
+export {
+  termStatusSchema,
+  sectionStatusSchema,
+  meetingKindSchema,
+  termSchema,
+  termListSchema,
+  sectionMeetingSchema,
+  sectionSchema,
+  sectionCursorSchema,
+  sectionListSchema,
+  sectionQuerySchema,
+  type TermList,
+  type SectionList,
+  type SectionQuery,
+  type SectionMeeting,
+} from './catalog.js';
