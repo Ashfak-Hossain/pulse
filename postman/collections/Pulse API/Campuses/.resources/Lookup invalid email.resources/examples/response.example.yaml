@@ -1,8 +1,15 @@
 $kind: http-example
 name: '400 Bad Request'
 request:
-  method: GET
-  url: '{{baseUrl}}/campuses/lookup?email=invalid'
+  method: POST
+  url: '{{baseUrl}}/campuses/lookup'
+  headers:
+    - key: Content-Type
+      value: application/json
+  body:
+    type: json
+    content: |-
+      {"email": "invalid"}
 response:
   statusCode: 400
   statusText: 'Bad Request'
