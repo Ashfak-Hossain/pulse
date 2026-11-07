@@ -1,3 +1,4 @@
+import { unzipSync, Zip, ZipDeflate } from 'fflate';
 import { describe, expect, it } from 'vitest';
 import writeExcelFile, { type Cell, type SheetData } from 'write-excel-file/node';
 import { ParsedCatalog, parseAiubOfferedCourses, type ParsedSection } from '../src/index.js';
@@ -38,6 +39,37 @@ function row(id: string | number, overrides: Cells = {}): Cell[] {
 const reportName = 'Offered Course  2026-2027, Fall';
 function workbook(rows: SheetData, sheet = reportName) {
   return writeExcelFile([[null], [null, ...columns], ...rows], { sheet }).toBuffer();
+}
+
+// Recreate the registrar's ZIP layout from generated test data. Streaming ZIP
+// writers add descriptors, and the report also populates each local header.
+function withPopulatedDescriptorHeaders(file: Uint8Array): Buffer {
+  const chunks: Uint8Array[] = [];
+  const archive = new Zip((error, chunk) => {
+    if (error) throw error;
+    chunks.push(chunk);
+  });
+  for (const [name, data] of Object.entries(unzipSync(file))) {
+    const entry = new ZipDeflate(name);
+    archive.add(entry);
+    entry.push(data, true);
+  }
+  archive.end();
+
+  const zip = Buffer.concat(chunks);
+  const count = zip.readUInt16LE(zip.length - 12);
+  let offset = zip.readUInt32LE(zip.length - 6);
+  for (let i = 0; i < count; i++) {
+    const local = zip.readUInt32LE(offset + 42);
+    // Copy the CRC and compressed/uncompressed sizes from the directory.
+    zip.copy(zip, local + 14, offset + 16, offset + 28);
+    offset +=
+      46 +
+      zip.readUInt16LE(offset + 28) +
+      zip.readUInt16LE(offset + 30) +
+      zip.readUInt16LE(offset + 32);
+  }
+  return zip;
 }
 
 function section(id: string, fields: Partial<ParsedSection> = {}): ParsedSection {
@@ -258,6 +290,13 @@ describe('parseAiubOfferedCourses', () => {
       skipped: 205,
       errors: 205,
     });
+  });
+
+  it('reads a ZIP with populated local headers and data descriptors', async () => {
+    const file = withPopulatedDescriptorHeaders(await workbook([row('00001')]));
+    const parsed = ParsedCatalog.parse(await parseAiubOfferedCourses(file));
+    expect(parsed.sections).toEqual([section('00001')]);
+    expect(parsed.problems).toEqual([]);
   });
 
   it('rejects bytes that are not an XLSX workbook', async () => {

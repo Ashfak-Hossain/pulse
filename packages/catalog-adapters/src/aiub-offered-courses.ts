@@ -1,4 +1,5 @@
-import readExcelFile, { type Row, type Sheet } from 'read-excel-file/node';
+import { unzipSync, zipSync } from 'fflate';
+import readExcelFile, { InvalidInputError, type Row, type Sheet } from 'read-excel-file/node';
 import type { ParsedCatalog, ParsedMeeting, ParsedSection } from './parsed-catalog.js';
 
 const headers = [
@@ -158,13 +159,7 @@ function readMeeting(cell: ReadCell, report: ReportProblem): ParsedMeeting | nul
  * An importer must validate parsed counts against its database column limits.
  */
 export async function parseAiubOfferedCourses(file: Uint8Array): Promise<ParsedCatalog> {
-  let sheets: Sheet[];
-  try {
-    sheets = await readExcelFile(Buffer.from(file));
-  } catch {
-    // Decoder errors may contain private workbook values.
-    throw new Error('Could not read the XLSX workbook');
-  }
+  const sheets = await readWorkbook(file);
   const reportSheet = sheets.find((sheet) => termPattern.test(sheet.sheet.trim()));
   const sheet = reportSheet ?? sheets.find((candidate) => locateHeader(candidate)) ?? sheets[0];
   const term = termPattern.exec(sheet?.sheet.trim() ?? '');
@@ -240,4 +235,24 @@ export async function parseAiubOfferedCourses(file: Uint8Array): Promise<ParsedC
       errors,
     },
   };
+}
+
+async function readWorkbook(file: Uint8Array): Promise<Sheet[]> {
+  try {
+    try {
+      return await readExcelFile(Buffer.from(file));
+    } catch (error) {
+      if (!(error instanceof InvalidInputError) || error.code !== 'INVALID_ZIP') throw error;
+      // Some AIUB exports include both populated ZIP headers and data descriptors.
+      // Use the central directory to repack those entries for the streaming XLSX reader.
+      const entries = unzipSync(file, {
+        filter: ({ name }) => name.endsWith('.xml') || name.endsWith('.xml.rels'),
+      });
+      const normalized = zipSync(entries, { level: 0 });
+      return await readExcelFile(Buffer.from(normalized));
+    }
+  } catch {
+    // Decoder errors may contain private workbook values.
+    throw new Error('Could not read the XLSX workbook');
+  }
 }

@@ -352,6 +352,9 @@ importers:
 
   packages/catalog-adapters:
     dependencies:
+      fflate:
+        specifier: ^0.8.3
+        version: 0.8.3
       read-excel-file:
         specifier: ^9.3.14
         version: 9.3.14
