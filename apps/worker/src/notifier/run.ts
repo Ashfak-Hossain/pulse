@@ -1,9 +1,9 @@
 import type { Database } from '@pulse/db';
 import type { PulseJob } from '@pulse/jobs';
 import { consumeCommitted, type RecordConsumer } from '../kafka/client.js';
-import type { LoopLogger } from '../logger.js';
 import { createWorkerDb, currentRole } from '../shared/db.js';
 import { describeError } from '../shared/errors.js';
+import type { LoopLogger } from '../shared/logger.js';
 import { handleCampusCreated, NOTIFIER } from './campus-created.js';
 import { runNotifierLoop } from './loop.js';
 

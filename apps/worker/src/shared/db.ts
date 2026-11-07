@@ -1,9 +1,9 @@
 import { createDb, sql, type Database, type PoolOptions } from '@pulse/db';
-import type { LoopLogger } from '../logger.js';
 import { describeError } from './errors.js';
+import type { LoopLogger } from './logger.js';
 
 /**
- * A pool for one worker part (the relay, the notifier), each with its own role. A lost
+ * A pool for one worker feature (the relay, the notifier), each with its own role. A lost
  * connection (a Postgres restart, say) is logged and the step using it fails and is retried,
  * instead of an unhandled 'error' event ending the process.
  */

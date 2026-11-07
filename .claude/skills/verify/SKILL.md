@@ -5,7 +5,7 @@ description: Run every Pulse check that applies to the current change and report
 
 1. Find what changed: `git diff main...HEAD --name-only` plus `git status --short`.
 2. Always run, from the repo root, each as its own command so failures are attributable:
-   `pnpm format:check`, `pnpm lint`, `pnpm exec eslint .` (root config files), `pnpm typecheck`,
+   `pnpm format:check`, `pnpm lint`, `pnpm exec eslint .` (root config files), `pnpm check:arch`, `pnpm typecheck`,
    `pnpm test`, `pnpm build`.
 3. Add when relevant:
    - `apps/api` changed → `pnpm --filter @pulse/api test:e2e`

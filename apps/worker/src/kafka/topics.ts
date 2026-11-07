@@ -1,5 +1,6 @@
 import { findErrorBy, type CreateTopicsOptions } from '@platformatic/kafka';
 import type { TopicSpec } from '@pulse/events';
+import { createKafkaAdmin, type KafkaConnection } from './client.js';
 
 // Only the two admin calls we use, so unit tests can pass a fake instead of a real Kafka
 export interface TopicAdmin {
@@ -10,6 +11,20 @@ export interface TopicAdmin {
 export interface TopicOptions {
   replicationFactor: number;
   minInsyncReplicas: number;
+}
+
+/** `ensureTopics` over an admin connection that is open only for this call. */
+export async function createMissingTopics(
+  connection: KafkaConnection,
+  specs: readonly TopicSpec[],
+  options: TopicOptions,
+): Promise<string[]> {
+  const admin = createKafkaAdmin(connection);
+  try {
+    return await ensureTopics(admin, specs, options);
+  } finally {
+    await admin.close();
+  }
 }
 
 /**

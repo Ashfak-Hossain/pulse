@@ -7,7 +7,7 @@ import {
   type Message,
   type MessagesStream,
 } from '@platformatic/kafka';
-import { backoffDelay } from './backoff.js';
+import { backoffDelay } from '../shared/backoff.js';
 
 export interface KafkaConnection {
   brokers: string[];

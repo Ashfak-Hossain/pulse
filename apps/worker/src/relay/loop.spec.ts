@@ -1,4 +1,4 @@
-import type { LoopLogger } from '../logger.js';
+import type { LoopLogger } from '../shared/logger.js';
 import { runRelayLoop, type RelayLoopOptions } from './loop.js';
 import type { RelayResult } from './relay.js';
 

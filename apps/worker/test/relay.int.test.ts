@@ -3,8 +3,8 @@ import type { Admin, Producer } from '@platformatic/kafka';
 import { asc, assertRestrictedRole, createDb, eq, outboxEvent, sql } from '@pulse/db';
 import { inject } from 'vitest';
 import { createKafkaAdmin, createKafkaProducer } from '../src/kafka/client.js';
-import type { LoopLogger } from '../src/logger.js';
 import { runRelayLoop } from '../src/relay/loop.js';
+import type { LoopLogger } from '../src/shared/logger.js';
 import {
   oneSendAtATime,
   RELAY_LOCK_ID,

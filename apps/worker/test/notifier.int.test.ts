@@ -11,11 +11,11 @@ import {
   createKafkaProducer,
   type KafkaConnection,
 } from '../src/kafka/client.js';
-import { createLogger } from '../src/logger.js';
 import { campusCreatedEmail } from '../src/notifier/campus-created.js';
 import { createNotifierDb, runNotifier } from '../src/notifier/run.js';
 import { JobPublisher } from '../src/rabbit/publish.js';
 import { ensureTopology } from '../src/rabbit/topology.js';
+import { createLogger } from '../src/shared/logger.js';
 import { createVhost, rabbitApi } from './support/rabbit.js';
 
 // Its own vhost, and a new topic and consumer group per test: a new group reads from the start,
