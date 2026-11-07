@@ -1,22 +1,14 @@
-import {
-  asc,
-  DrizzleQueryError,
-  inArray,
-  isNull,
-  outboxEvent,
-  sql,
-  type Database,
-  type Transaction,
-} from '@pulse/db';
+import { asc, inArray, isNull, outboxEvent, sql, type Database, type Transaction } from '@pulse/db';
+import { describeError } from '../shared/errors.js';
 import { toRecord, type OutboxRecord, type OutboxRow } from './record.js';
 
-// Any fixed number works, as long as nothing else in the database locks it
+// Postgres advisory lock, that keeps it to one relay at a time.
 export const RELAY_LOCK_ID = 4_172_001;
 
 const MAX_ERROR_LENGTH = 1000;
 
-// A cap on how long a step waits, not on the send: against a broker that never answers, the
-// Kafka client can keep retrying longer than this (oneSendAtATime stops a second send meanwhile)
+// How long one pass waits for Kafka. It doesn't stop the send: against a broker that never
+// answers, the Kafka client can keep retrying after this (oneSendAtATime() blocks a second send)
 const DEFAULT_SEND_TIMEOUT_MS = 45_000;
 
 export interface RelayProducer {
@@ -27,9 +19,9 @@ export interface RelayOptions {
   batchSize: number;
   // The only topics the relay may send to
   topics: ReadonlySet<string>;
-  // The transaction and the lock stay open while Kafka answers, so a stuck send must end
+  // The transaction and the lock stay open while waiting for Kafka, so the wait needs a limit
   sendTimeoutMs?: number;
-  // Shutdown: stop waiting for Kafka; the rows stay unpublished and go out on the next start
+  // Aborted on shutdown: stop waiting for Kafka. The rows stay unpublished for the next start
   signal?: AbortSignal;
 }
 
@@ -39,8 +31,10 @@ export type RelayResult =
   | { status: 'failed'; published: number; error: unknown };
 
 /**
- * Publishes the oldest unpublished outbox rows in seq order and marks them published.
- * One relay works at a time; the others get 'standby'.
+ * One pass of the outbox: sends the oldest unpublished rows to Kafka and marks them published.
+ * Returns `standby` if another relay holds the lock. A failed send or bad row comes back as
+ * `failed` instead of being thrown, because a throw would roll back the transaction, losing the
+ * saved error and any published marks.
  */
 export async function relayOnce(
   db: Database,
@@ -91,7 +85,8 @@ export async function relayOnce(
   });
 }
 
-// Released by itself when the transaction ends, even if the process dies
+// False if another relay holds the lock. Postgres releases it when the transaction ends, even if
+// the process dies
 async function tryLock(tx: Transaction): Promise<boolean> {
   const { rows } = await tx.execute<{ locked: boolean }>(
     sql`select pg_try_advisory_xact_lock(${RELAY_LOCK_ID}) as locked`,
@@ -99,7 +94,8 @@ async function tryLock(tx: Transaction): Promise<boolean> {
   return rows[0]?.locked === true;
 }
 
-// Stops at the first bad row: the rows after it wait, so events never go out of order
+// Stops at the first bad row: rows before it still go out and rows after it wait, so events
+// never go out of order
 function prepare(rows: OutboxRow[], topics: ReadonlySet<string>) {
   const records: OutboxRecord[] = [];
   const ids: string[] = [];
@@ -115,8 +111,9 @@ function prepare(rows: OutboxRow[], topics: ReadonlySet<string>) {
 }
 
 /**
- * Refuses a send while an earlier one is still running. A send the relay stopped waiting for
- * keeps retrying inside the Kafka client; a second one on top could land a copy after newer events.
+ * Refuses a new send while the last one is still running. After a timeout the relay stops
+ * waiting, but the Kafka client keeps retrying that send. With a newer send on top, a late copy
+ * of the old events could land after newer ones.
  */
 export function oneSendAtATime(producer: RelayProducer): RelayProducer {
   let running = false;
@@ -133,8 +130,9 @@ export function oneSendAtATime(producer: RelayProducer): RelayProducer {
   };
 }
 
-// Only the wait is cut short, never the mark: once Kafka has the records, committing avoids a
-// resend. A send that finishes after we stopped waiting is sent again later; consumers dedupe
+// Waits for Kafka, but gives up on a timeout or shutdown. Giving up ends only the wait: the send
+// can't be cancelled and may still land, and those rows go out again later (consumers dedupe).
+// Marking rows published is outside this limit: once Kafka has them, committing avoids a resend
 async function sendWithin(
   producer: RelayProducer,
   messages: OutboxRecord[],
@@ -171,18 +169,4 @@ async function recordFailure(tx: Transaction, ids: string[], error: unknown): Pr
       lastError: describeError(error).slice(0, MAX_ERROR_LENGTH),
     })
     .where(inArray(outboxEvent.id, ids));
-}
-
-/** Name, code and message of an error. Never the cause: a ZodError there can hold row data. */
-export function describeError(error: unknown): string {
-  // Drizzle's message is the SQL and its params, which can be row data. The database error
-  // in its cause (pg: code and message, no values) is the useful part
-  if (error instanceof DrizzleQueryError) {
-    return error.cause === undefined
-      ? 'Query failed'
-      : `Query failed: ${describeError(error.cause)}`;
-  }
-  if (!(error instanceof Error)) return String(error);
-  const code = 'code' in error && typeof error.code === 'string' ? ` [${error.code}]` : '';
-  return `${error.name}${code}: ${error.message}`;
 }

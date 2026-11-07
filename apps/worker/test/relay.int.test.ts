@@ -2,15 +2,16 @@ import { randomUUID } from 'node:crypto';
 import type { Admin, Producer } from '@platformatic/kafka';
 import { asc, assertRestrictedRole, createDb, eq, outboxEvent, sql } from '@pulse/db';
 import { inject } from 'vitest';
-import { createAdmin, createProducer } from '../src/kafka/client.js';
-import { createWorkerDb, currentRole } from '../src/relay/db.js';
-import { runRelayLoop, type LoopLogger } from '../src/relay/loop.js';
+import { createKafkaAdmin, createKafkaProducer } from '../src/kafka/client.js';
+import type { LoopLogger } from '../src/logger.js';
+import { runRelayLoop } from '../src/relay/loop.js';
 import {
   oneSendAtATime,
   RELAY_LOCK_ID,
   relayOnce,
   type RelayProducer,
 } from '../src/relay/relay.js';
+import { createWorkerDb, currentRole } from '../src/shared/db.js';
 import { readMessages } from './support/consume.js';
 
 const owner = createDb(inject('ownerUrl'));
@@ -23,8 +24,8 @@ let producer: Producer<string, string, string, string>;
 
 beforeAll(() => {
   const brokers = inject('kafkaBrokers');
-  admin = createAdmin({ brokers, clientId: 'relay-test-admin' });
-  producer = createProducer({ brokers, clientId: 'relay-test-producer' });
+  admin = createKafkaAdmin({ brokers, clientId: 'relay-test-admin' });
+  producer = createKafkaProducer({ brokers, clientId: 'relay-test-producer' });
 });
 
 afterAll(async () => {

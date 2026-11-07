@@ -1,16 +1,12 @@
-import { setTimeout as delay } from 'node:timers/promises';
 import { backoffDelay } from '../kafka/backoff.js';
-import { describeError, type RelayResult } from './relay.js';
+import type { LoopLogger } from '../logger.js';
+import { describeError } from '../shared/errors.js';
+import { abortableSleep } from '../shared/sleep.js';
+import type { RelayResult } from './relay.js';
 
 // From this many failures in a row on, each one logs as error: someone should look
 const ALERT_AFTER_FAILURES = 10;
 const MAX_BACKOFF_MS = 30_000;
-
-export interface LoopLogger {
-  info(fields: Record<string, unknown>, message: string): void;
-  warn(fields: Record<string, unknown>, message: string): void;
-  error(fields: Record<string, unknown>, message: string): void;
-}
 
 export interface RelayLoopOptions {
   batchSize: number;
@@ -56,12 +52,6 @@ export async function runRelayLoop(
     const waitMs = nextWait(result, failures, batchSize, pollMs);
     if (waitMs > 0) await sleep(withJitter(waitMs, random), signal);
   }
-}
-
-/** Waits `ms`, or less when the signal aborts. Never throws. */
-export async function abortableSleep(ms: number, signal: AbortSignal): Promise<void> {
-  // An abort is the only way this wait rejects, and it only means "stop waiting"
-  await delay(ms, undefined, { signal }).catch(() => undefined);
 }
 
 // A step that throws (the pool closed, say) counts as a failure, so the loop never dies of one

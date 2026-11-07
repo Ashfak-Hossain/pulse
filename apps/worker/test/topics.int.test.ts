@@ -1,7 +1,7 @@
 import { ConfigResourceTypes, type Admin } from '@platformatic/kafka';
 import { topics } from '@pulse/events';
 import { inject, vi } from 'vitest';
-import { createAdmin } from '../src/kafka/client.js';
+import { createKafkaAdmin } from '../src/kafka/client.js';
 import { ensureTopics, type TopicAdmin } from '../src/kafka/topics.js';
 
 const specs = Object.values(topics);
@@ -11,7 +11,7 @@ const options = { replicationFactor: 1, minInsyncReplicas: 1 };
 let admin: Admin;
 
 beforeAll(() => {
-  admin = createAdmin({ brokers: inject('kafkaBrokers'), clientId: 'topics-int-test' });
+  admin = createKafkaAdmin({ brokers: inject('kafkaBrokers'), clientId: 'topics-int-test' });
 });
 
 afterAll(async () => {

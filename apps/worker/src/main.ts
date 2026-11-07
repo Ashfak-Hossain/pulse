@@ -4,9 +4,9 @@ import { jobTopology } from '@pulse/jobs';
 import type { ChannelModel } from 'amqplib';
 import { validateEnv, type Env } from './config/env.js';
 import {
-  createAdmin,
-  createConsumer,
-  createProducer,
+  createKafkaAdmin,
+  createKafkaConsumer,
+  createKafkaProducer,
   type KafkaConnection,
 } from './kafka/client.js';
 import { ensureTopics } from './kafka/topics.js';
@@ -16,9 +16,10 @@ import { createNotifierDb, runNotifier } from './notifier/run.js';
 import { connectRabbit } from './rabbit/client.js';
 import { JobPublisher } from './rabbit/publish.js';
 import { ensureTopology } from './rabbit/topology.js';
-import { createWorkerDb, currentRole } from './relay/db.js';
 import { runRelayLoop } from './relay/loop.js';
-import { describeError, oneSendAtATime, relayOnce, type RelayProducer } from './relay/relay.js';
+import { oneSendAtATime, relayOnce, type RelayProducer } from './relay/relay.js';
+import { createWorkerDb, currentRole } from './shared/db.js';
+import { describeError } from './shared/errors.js';
 import { runSideBySide } from './side-by-side.js';
 
 // Docker sends SIGKILL 10 s after SIGTERM, so give up a little before that
@@ -36,8 +37,8 @@ async function main(): Promise<void> {
   const connection = { brokers: env.KAFKA_BROKERS, clientId: env.KAFKA_CLIENT_ID };
   const relayDb = createWorkerDb(env.RELAY_DATABASE_URL, logger);
   const notifierDb = createNotifierDb(env.NOTIFIER_DATABASE_URL, logger);
-  const producer = createProducer(connection);
-  const consumer = createConsumer(connection, NOTIFIER);
+  const producer = createKafkaProducer(connection);
+  const consumer = createKafkaConsumer(connection, NOTIFIER);
   const publisher = new JobPublisher({
     onChannelError: (error) => exitWithError(error, 'RabbitMQ closed the job channel'),
   });
@@ -82,7 +83,7 @@ async function main(): Promise<void> {
 }
 
 async function createTopics(connection: KafkaConnection, env: Env): Promise<void> {
-  const admin = createAdmin(connection);
+  const admin = createKafkaAdmin(connection);
   try {
     const created = await ensureTopics(admin, Object.values(topics), {
       replicationFactor: env.KAFKA_REPLICATION_FACTOR,

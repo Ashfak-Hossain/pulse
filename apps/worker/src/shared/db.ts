@@ -1,6 +1,6 @@
 import { createDb, sql, type Database, type PoolOptions } from '@pulse/db';
-import type { LoopLogger } from './loop.js';
-import { describeError } from './relay.js';
+import type { LoopLogger } from '../logger.js';
+import { describeError } from './errors.js';
 
 /**
  * A pool for one worker part (the relay, the notifier), each with its own role. A lost

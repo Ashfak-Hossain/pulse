@@ -1,7 +1,8 @@
 import type { PulseEvent } from '@pulse/events';
 import { backoffDelay } from '../kafka/backoff.js';
-import { abortableSleep, type LoopLogger } from '../relay/loop.js';
-import { describeError } from '../relay/relay.js';
+import type { LoopLogger } from '../logger.js';
+import { describeError } from '../shared/errors.js';
+import { abortableSleep } from '../shared/sleep.js';
 import { decodeRecord } from './decode.js';
 
 // From this many failures in a row on, each one logs as error: someone should look
