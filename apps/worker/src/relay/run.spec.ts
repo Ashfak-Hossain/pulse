@@ -13,7 +13,8 @@ describe('runRelay', () => {
         execute: () => Promise.resolve({ rows: [{ role: 'pulse_relay' }] }),
       } as unknown as Database,
       producer: { send },
-      env: { RELAY_BATCH_SIZE: 10, RELAY_POLL_MS: 500 },
+      batchSize: 10,
+      pollMs: 500,
       signal: controller.signal,
       logger,
     });

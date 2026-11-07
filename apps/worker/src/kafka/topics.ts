@@ -14,7 +14,7 @@ export interface TopicOptions {
 }
 
 /** `ensureTopics` over an admin connection that is open only for this call. */
-export async function createMissingTopics(
+export async function connectAndEnsureTopics(
   connection: KafkaConnection,
   specs: readonly TopicSpec[],
   options: TopicOptions,

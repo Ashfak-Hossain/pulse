@@ -35,8 +35,11 @@ apps/worker/src/
 
 apps/api/src/
   main.ts          starts the API
-  campus/ course/  one Nest module per domain: x.module.ts, x.controller.ts, x.service.ts
-  common/ config/ db/  used by every module
+  app.module.ts    joins the modules; app.setup.ts sets up what every request goes through
+  campus/ course/ fare/ health/
+                   one Nest module per domain: x.module.ts, x.controller.ts, x.service.ts
+                   (only the files it needs: health/ has no service)
+  common/ config/ db/  used across the app
 ```
 
 The relay and notifier both use `run.ts` to start and stop, and `loop.ts` to repeat their work. A
@@ -57,13 +60,14 @@ Do not put code in `shared/` "in case": code in the wrong folder is cheap to mov
 
 ```text
 main.ts → features → kafka, rabbit, config → shared
-                ↓
-             packages → (algorithm packages import no database, network or Node API)
 ```
 
-Worker features never import each other. `main.ts` connects them by passing functions, as it does
-with `publish` for the notifier. If two need the same code, it moves down a level. API modules may
-use a service another module exports, because that is how Nest shares code.
+Every level may use `packages/`, except that the algorithm packages themselves import no database,
+network or Node API. `lifecycle.ts` and `side-by-side.ts` are for `main.ts` only.
+
+Worker features never import each other. If they ever need to work together, `main.ts` connects them
+by passing functions. If two need the same code, it moves down a level. API modules may use a service
+another module exports, because that is how Nest shares code.
 
 ## Size limits
 
@@ -97,6 +101,10 @@ file.
 
 ## Existing code
 
-Tools enforce rule 4 and the size limits everywhere. The other rules are for new and changed code:
-leave a file you are not otherwise changing as it is, because a rewrite for style alone adds risk
-and review work.
+Tools enforce the size limits, and the import directions listed in `.dependency-cruiser.js`. They do
+not cover everything: `lifecycle.ts` and `side-by-side.ts` have no rule, and `kafka/` could import
+`rabbit/`, so reviewers watch for those.
+
+The other rules are for new and changed code. Leave a file you are not otherwise changing as it is,
+because a rewrite for style alone adds risk and review work. A mechanical edit, like a rename or a
+new import path, does not count as changing it.

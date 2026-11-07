@@ -3,7 +3,7 @@ import type { PulseJob } from '@pulse/jobs';
 import { consumeCommitted, type RecordConsumer } from '../kafka/client.js';
 import { createWorkerDb, currentRole } from '../shared/db.js';
 import { describeError } from '../shared/errors.js';
-import type { LoopLogger } from '../shared/logger.js';
+import type { BasicLogger } from '../shared/logger.js';
 import { handleCampusCreated, NOTIFIER } from './campus-created.js';
 import { runNotifierLoop } from './loop.js';
 
@@ -20,7 +20,7 @@ const DB_LIMITS = {
 };
 
 /** The notifier's pool, connected as pulse_notifier. */
-export function createNotifierDb(url: string, logger: Pick<LoopLogger, 'warn'>): Database {
+export function createNotifierDb(url: string, logger: Pick<BasicLogger, 'warn'>): Database {
   return createWorkerDb(url, logger, DB_LIMITS);
 }
 
@@ -31,7 +31,7 @@ export interface RunNotifierOptions {
   publish: (job: PulseJob) => Promise<void>;
   topicNames: string[];
   signal: AbortSignal;
-  logger: LoopLogger;
+  logger: BasicLogger;
   // Injected so tests skip real waits
   retryDelay?: (failures: number) => number;
 }

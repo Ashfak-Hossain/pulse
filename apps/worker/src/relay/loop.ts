@@ -1,6 +1,6 @@
 import { backoffDelay } from '../shared/backoff.js';
 import { describeError } from '../shared/errors.js';
-import type { LoopLogger } from '../shared/logger.js';
+import type { BasicLogger } from '../shared/logger.js';
 import { abortableSleep } from '../shared/sleep.js';
 import type { RelayResult } from './relay.js';
 
@@ -12,7 +12,7 @@ export interface RelayLoopOptions {
   batchSize: number;
   pollMs: number;
   signal: AbortSignal;
-  logger: LoopLogger;
+  logger: BasicLogger;
   // Injected so tests can pin the jitter and skip real waits
   random?: () => number;
   sleep?: (ms: number, signal: AbortSignal) => Promise<void>;

@@ -2,7 +2,8 @@ import { asc, inArray, isNull, outboxEvent, sql, type Database, type Transaction
 import { describeError } from '../shared/errors.js';
 import { toRecord, type OutboxRecord, type OutboxRow } from './record.js';
 
-// Postgres advisory lock, that keeps it to one relay at a time.
+// Postgres advisory lock that keeps it to one relay at a time. Any fixed number works, as long as
+// nothing else in the database locks it
 export const RELAY_LOCK_ID = 4_172_001;
 
 const MAX_ERROR_LENGTH = 1000;

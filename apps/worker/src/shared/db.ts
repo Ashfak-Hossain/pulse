@@ -1,6 +1,6 @@
 import { createDb, sql, type Database, type PoolOptions } from '@pulse/db';
 import { describeError } from './errors.js';
-import type { LoopLogger } from './logger.js';
+import type { BasicLogger } from './logger.js';
 
 /**
  * A pool for one worker feature (the relay, the notifier), each with its own role. A lost
@@ -9,7 +9,7 @@ import type { LoopLogger } from './logger.js';
  */
 export function createWorkerDb(
   url: string,
-  logger: Pick<LoopLogger, 'warn'>,
+  logger: Pick<BasicLogger, 'warn'>,
   limits: PoolOptions = {},
 ): Database {
   // One step at a time, so one connection plus a spare

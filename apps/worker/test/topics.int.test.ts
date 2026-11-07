@@ -1,8 +1,9 @@
+import { randomUUID } from 'node:crypto';
 import { ConfigResourceTypes, type Admin } from '@platformatic/kafka';
 import { topics } from '@pulse/events';
 import { inject, vi } from 'vitest';
 import { createKafkaAdmin } from '../src/kafka/client.js';
-import { createMissingTopics, ensureTopics, type TopicAdmin } from '../src/kafka/topics.js';
+import { connectAndEnsureTopics, ensureTopics, type TopicAdmin } from '../src/kafka/topics.js';
 
 const specs = Object.values(topics);
 const names = specs.map((spec) => spec.name);
@@ -61,7 +62,12 @@ describe('ensureTopics against Kafka 4.4', () => {
 
   it('does the same over its own short-lived admin connection', async () => {
     const connection = { brokers: inject('kafkaBrokers'), clientId: 'topics-int-test-own' };
-    await expect(createMissingTopics(connection, specs, options)).resolves.toEqual([]);
+    const name = `topics-int-${randomUUID()}`;
+    const spec = { ...topics.campuses, name };
+
+    await expect(connectAndEnsureTopics(connection, [spec], options)).resolves.toEqual([name]);
+
+    expect(await admin.listTopics()).toContain(name);
   });
 
   // Proves the real "already exists" error is recognised, not only the one the unit test builds

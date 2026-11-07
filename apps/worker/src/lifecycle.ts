@@ -1,6 +1,6 @@
 import type { Logger } from 'pino';
 import { describeError } from './shared/errors.js';
-import type { LoopLogger } from './shared/logger.js';
+import type { BasicLogger } from './shared/logger.js';
 
 // Docker sends SIGKILL 10 s after SIGTERM, so give up a little before that
 const SHUTDOWN_TIMEOUT_MS = 8000;
@@ -8,8 +8,8 @@ const SHUTDOWN_TIMEOUT_MS = 8000;
 export type Closer = () => Promise<void>;
 
 /**
- * First signal: finish the current step, then close. Second signal, or a stop that takes too
- * long: exit at once (the outbox keeps any row that was not marked, so nothing is lost).
+ * First signal: finish the current step, then close. Second signal: exit at once (the outbox keeps
+ * any row that was not marked, so nothing is lost).
  */
 export function stopOnSignals(controller: AbortController, logger: Logger): void {
   const stop = (signal: NodeJS.Signals): void => {
@@ -22,7 +22,10 @@ export function stopOnSignals(controller: AbortController, logger: Logger): void
   };
   process.on('SIGTERM', stop);
   process.on('SIGINT', stop);
-  // On every stop, so a feature that failed cannot leave a half-stopped worker running either
+}
+
+/** Exits if stopping takes too long, on every stop: a failed feature aborts with no signal too. */
+export function exitIfStopHangs(controller: AbortController, logger: Logger): void {
   controller.signal.addEventListener('abort', () => {
     // unref: this timer alone must not keep the process alive after a clean stop
     setTimeout(() => {
@@ -33,7 +36,10 @@ export function stopOnSignals(controller: AbortController, logger: Logger): void
 }
 
 /** Runs every closer, even after one fails: a failed close must not leave another open. */
-export async function closeAll(closers: Closer[], logger: Pick<LoopLogger, 'warn'>): Promise<void> {
+export async function closeAll(
+  closers: Closer[],
+  logger: Pick<BasicLogger, 'warn'>,
+): Promise<void> {
   const results = await Promise.allSettled(closers.map((close) => close()));
   for (const result of results) {
     if (result.status === 'rejected') {

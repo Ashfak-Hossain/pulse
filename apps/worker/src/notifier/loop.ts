@@ -1,7 +1,7 @@
 import type { PulseEvent } from '@pulse/events';
 import { backoffDelay } from '../shared/backoff.js';
 import { describeError } from '../shared/errors.js';
-import type { LoopLogger } from '../shared/logger.js';
+import type { BasicLogger } from '../shared/logger.js';
 import { abortableSleep } from '../shared/sleep.js';
 import { decodeRecord } from './decode.js';
 
@@ -22,7 +22,7 @@ export interface ConsumedMessage {
 
 export interface NotifierLoopOptions {
   signal: AbortSignal;
-  logger: LoopLogger;
+  logger: BasicLogger;
   // Injected so tests skip real waits
   retryDelay?: (failures: number) => number;
   sleep?: (ms: number, signal: AbortSignal) => Promise<void>;

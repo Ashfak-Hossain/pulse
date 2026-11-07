@@ -1,16 +1,18 @@
 import { randomUUID } from 'node:crypto';
 import type { Admin, Producer } from '@platformatic/kafka';
 import { asc, assertRestrictedRole, createDb, eq, outboxEvent, sql } from '@pulse/db';
-import { inject } from 'vitest';
+import { topics } from '@pulse/events';
+import { inject, vi } from 'vitest';
 import { createKafkaAdmin, createKafkaProducer } from '../src/kafka/client.js';
 import { runRelayLoop } from '../src/relay/loop.js';
-import type { LoopLogger } from '../src/shared/logger.js';
+import type { BasicLogger } from '../src/shared/logger.js';
 import {
   oneSendAtATime,
   RELAY_LOCK_ID,
   relayOnce,
   type RelayProducer,
 } from '../src/relay/relay.js';
+import { runRelay } from '../src/relay/run.js';
 import { createWorkerDb, currentRole } from '../src/shared/db.js';
 import { readMessages } from './support/consume.js';
 
@@ -403,9 +405,46 @@ describe('relayOnce when Kafka is slow', () => {
   });
 });
 
+describe('runRelay with PostgreSQL', () => {
+  // A fake producer, because the real topic names belong to topics.int.test.ts. An empty topic list
+  // here would make every outbox row fail in production
+  it('sends a row on a topic in @pulse/events and refuses any other topic', async () => {
+    const ignore = (): void => undefined;
+    const { fake, sent } = fakeProducer();
+    const controller = new AbortController();
+    await insertRows([
+      { topic: topics.campuses.name, key: 'campus-a' },
+      { topic: 'not-in-pulse-events', key: 'campus-a' },
+    ]);
+
+    const running = runRelay({
+      db: relay,
+      producer: fake,
+      batchSize: 10,
+      pollMs: 20,
+      signal: controller.signal,
+      logger: { info: ignore, warn: ignore, error: ignore },
+    });
+    await vi.waitFor(
+      async () => {
+        const [, refused] = await outboxRows();
+        expect(refused?.lastError).toMatch(/unknown topic/);
+      },
+      { timeout: 5000, interval: 50 },
+    );
+    controller.abort();
+    await running;
+
+    const [accepted, refused] = await outboxRows();
+    expect(accepted?.publishedAt).not.toBeNull();
+    expect(refused?.publishedAt).toBeNull();
+    expect(sent).toHaveLength(1);
+  });
+});
+
 describe('runRelayLoop with PostgreSQL and Kafka', () => {
   const ignore = (): void => undefined;
-  const silent: LoopLogger = { info: ignore, warn: ignore, error: ignore };
+  const silent: BasicLogger = { info: ignore, warn: ignore, error: ignore };
 
   it('connects as pulse_relay, a role that cannot bypass row-level security', async () => {
     await expect(assertRestrictedRole(relay)).resolves.toBeUndefined();
@@ -468,7 +507,7 @@ describe('runRelayLoop with PostgreSQL and Kafka', () => {
     const url = new URL(inject('relayUrl'));
     url.searchParams.set('application_name', appName);
     const warnings: string[] = [];
-    const logger: LoopLogger = { ...silent, warn: (_fields, message) => warnings.push(message) };
+    const logger: BasicLogger = { ...silent, warn: (_fields, message) => warnings.push(message) };
     const db = createWorkerDb(url.href, logger);
     const topic = await newTopic();
     const controller = new AbortController();

@@ -13,7 +13,8 @@ const REDACTED_FIELDS = [
   'email',
 ];
 
-export interface LoopLogger {
+// The three methods features need, so their tests can pass a fake instead of pino
+export interface BasicLogger {
   info(fields: Record<string, unknown>, message: string): void;
   warn(fields: Record<string, unknown>, message: string): void;
   error(fields: Record<string, unknown>, message: string): void;

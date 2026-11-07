@@ -1,4 +1,4 @@
-import type { LoopLogger } from '../shared/logger.js';
+import type { BasicLogger } from '../shared/logger.js';
 import { runRelayLoop, type RelayLoopOptions } from './loop.js';
 import type { RelayResult } from './relay.js';
 
@@ -18,7 +18,7 @@ function recordingLogger() {
     (fields: Record<string, unknown>, message: string): void => {
       entries.push({ level, fields, message });
     };
-  const logger: LoopLogger = { info: log('info'), warn: log('warn'), error: log('error') };
+  const logger: BasicLogger = { info: log('info'), warn: log('warn'), error: log('error') };
   return { logger, entries };
 }
 
