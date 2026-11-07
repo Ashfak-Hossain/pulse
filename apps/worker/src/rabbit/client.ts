@@ -1,6 +1,6 @@
 import { connect, type ChannelModel, type RecoveringChannelModel } from 'amqplib';
 import type { Logger } from 'pino';
-import { describeError } from '../relay/relay.js';
+import { describeError } from '../shared/errors.js';
 
 export type RabbitSetup = (model: ChannelModel) => Promise<void>;
 

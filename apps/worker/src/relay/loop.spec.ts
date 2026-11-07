@@ -1,4 +1,5 @@
-import { abortableSleep, runRelayLoop, type LoopLogger, type RelayLoopOptions } from './loop.js';
+import type { BasicLogger } from '../shared/logger.js';
+import { runRelayLoop, type RelayLoopOptions } from './loop.js';
 import type { RelayResult } from './relay.js';
 
 const POLL_MS = 500;
@@ -17,7 +18,7 @@ function recordingLogger() {
     (fields: Record<string, unknown>, message: string): void => {
       entries.push({ level, fields, message });
     };
-  const logger: LoopLogger = { info: log('info'), warn: log('warn'), error: log('error') };
+  const logger: BasicLogger = { info: log('info'), warn: log('warn'), error: log('error') };
   return { logger, entries };
 }
 
@@ -283,28 +284,5 @@ describe('runRelayLoop', () => {
       });
       expect(signals).toEqual([controller.signal]);
     });
-  });
-});
-
-describe('abortableSleep', () => {
-  it('waits about the given time', async () => {
-    const started = performance.now();
-    await abortableSleep(30, new AbortController().signal);
-    expect(performance.now() - started).toBeGreaterThanOrEqual(25);
-  });
-
-  it('ends early, without throwing, when the signal aborts', async () => {
-    const controller = new AbortController();
-    const started = performance.now();
-    const sleeping = abortableSleep(60_000, controller.signal);
-    controller.abort();
-    await expect(sleeping).resolves.toBeUndefined();
-    expect(performance.now() - started).toBeLessThan(1000);
-  });
-
-  it('returns at once when the signal is already aborted', async () => {
-    const controller = new AbortController();
-    controller.abort();
-    await expect(abortableSleep(60_000, controller.signal)).resolves.toBeUndefined();
   });
 });

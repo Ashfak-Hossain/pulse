@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { Admin, Producer } from '@platformatic/kafka';
 import { inject } from 'vitest';
-import { createAdmin, createProducer } from '../src/kafka/client.js';
+import { createKafkaAdmin, createKafkaProducer } from '../src/kafka/client.js';
 import { readMessages } from './support/consume.js';
 
 // Its own topic, so it never meets the shared names topics.int.test.ts creates
@@ -13,8 +13,8 @@ let producer: Producer<string, string, string, string>;
 
 beforeAll(async () => {
   const brokers = inject('kafkaBrokers');
-  admin = createAdmin({ brokers, clientId: 'round-trip-admin' });
-  producer = createProducer({ brokers, clientId: 'round-trip-producer' });
+  admin = createKafkaAdmin({ brokers, clientId: 'round-trip-admin' });
+  producer = createKafkaProducer({ brokers, clientId: 'round-trip-producer' });
   await admin.createTopics({ topics: [topic], partitions: 3, replicas: 1 });
 });
 

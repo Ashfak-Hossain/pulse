@@ -10,6 +10,7 @@ description: Run the Pulse reviewer agents that match the changed files, in para
    | ------------------------ | ------------------------------------------------------------------------------------------------------------- |
    | `code-reviewer`          | always                                                                                                        |
    | `public-safety-reviewer` | always (the repo is public)                                                                                   |
+   | `readability-reviewer`   | non-test code in `apps/` or `packages/`                                                                       |
    | `security-reviewer`      | `apps/`, `packages/db`, `packages/contracts`, `.github/`, any `package.json`, `pnpm-workspace.yaml`, `infra/` |
    | `migration-reviewer`     | `packages/db/`                                                                                                |
    | `events-reviewer`        | `packages/events`, `packages/jobs`, `apps/worker`, or any diff line mentioning `outbox`                       |

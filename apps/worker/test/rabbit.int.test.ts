@@ -11,9 +11,9 @@ import {
 } from '@pulse/jobs';
 import { connect, type ChannelModel, type ConfirmChannel, type GetMessage } from 'amqplib';
 import { inject, vi } from 'vitest';
-import { createLogger } from '../src/logger.js';
 import { connectRabbit } from '../src/rabbit/client.js';
 import { ensureTopology } from '../src/rabbit/topology.js';
+import { createLogger } from '../src/shared/logger.js';
 import { dropAllConnections, rabbitApi } from './support/rabbit.js';
 
 // Short delays so a retry comes back in a test's time. The queue names are fixed: this file

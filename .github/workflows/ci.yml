@@ -33,6 +33,8 @@ jobs:
       # One step per check, so a red run names the check that failed
       - run: pnpm format:check
       - run: pnpm lint
+      # After lint, whose turbo run builds the packages: @pulse/* imports resolve to their dist/
+      - run: pnpm check:arch
       - name: eslint (root config files)
         run: pnpm exec eslint .
       - run: pnpm typecheck

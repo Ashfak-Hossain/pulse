@@ -2,10 +2,10 @@ import { randomUUID } from 'node:crypto';
 import { createJob, jobExchanges, jobTopology, queueFor, type PulseJob } from '@pulse/jobs';
 import { connect, type Channel, type ChannelModel } from 'amqplib';
 import { vi } from 'vitest';
-import { createLogger } from '../src/logger.js';
 import { connectRabbit } from '../src/rabbit/client.js';
 import { JobPublisher } from '../src/rabbit/publish.js';
 import { ensureTopology } from '../src/rabbit/topology.js';
+import { createLogger } from '../src/shared/logger.js';
 import { createVhost, dropAllConnections, rabbitApi } from './support/rabbit.js';
 
 const vhost = 'test-publish';
