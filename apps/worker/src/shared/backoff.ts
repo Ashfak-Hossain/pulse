@@ -4,8 +4,8 @@ export interface BackoffOptions {
 }
 
 /**
- * Retry wait in ms: 250, 500, 1000… up to 5000. Ten retries add up to ~33 s, enough for
- * Kafka's ~20 s startup.
+ * Retry wait in ms that doubles each attempt, up to a cap. The defaults (250 ms to 5 s) are the
+ * ones the Kafka client relies on; other callers pass their own.
  */
 export function backoffDelay(
   attempt: number,

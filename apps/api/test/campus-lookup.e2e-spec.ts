@@ -1,6 +1,6 @@
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { apiErrorSchema, campusSchema } from '@pulse/contracts';
+import { apiErrorSchema, campusLookupResultSchema, campusSchema } from '@pulse/contracts';
 import { campus, createDb, type Database } from '@pulse/db';
 import { randomUUID } from 'node:crypto';
 import request from 'supertest';
@@ -49,16 +49,11 @@ describe('Campus lookup over HTTP', () => {
 
   it.each([domain, domain.toUpperCase()])('looks up the exact domain %s', async (emailDomain) => {
     const res = await request(app.getHttpServer())
-      .get('/campuses/lookup')
-      .query({ email: `name@${emailDomain}` })
+      .post('/campuses/lookup')
+      .send({ email: `name@${emailDomain}` })
       .expect(200);
-    expect(campusSchema.parse(res.body)).toEqual({
-      id: expect.any(String) as string,
-      name: campusData.name,
-      slug: campusData.slug,
-      emailDomains: campusData.emailDomains,
-      timezone: campusData.timezone,
-      location: { lat: 23.8223, lng: 90.4274 },
+    expect(campusLookupResultSchema.parse(res.body)).toEqual({
+      campus: { name: campusData.name, slug: campusData.slug },
     });
   });
 
@@ -67,14 +62,10 @@ describe('Campus lookup over HTTP', () => {
     async (emailDomain) => {
       const email = `name@${emailDomain}`;
       const res = await request(app.getHttpServer())
-        .get('/campuses/lookup')
-        .query({ email })
-        .expect(404);
-      expect(apiErrorSchema.parse(res.body)).toEqual({
-        statusCode: 404,
-        error: 'Not Found',
-        message: 'Campus not found',
-      });
+        .post('/campuses/lookup')
+        .send({ email })
+        .expect(200);
+      expect(campusLookupResultSchema.parse(res.body)).toEqual({ campus: null });
       expect(JSON.stringify(res.body)).not.toContain(email);
     },
   );
@@ -82,8 +73,8 @@ describe('Campus lookup over HTTP', () => {
   it('answers 409 for an ambiguous email domain without exposing the email', async () => {
     const email = `name@${duplicateDomain}`;
     const res = await request(app.getHttpServer())
-      .get('/campuses/lookup')
-      .query({ email })
+      .post('/campuses/lookup')
+      .send({ email })
       .expect(409);
     expect(apiErrorSchema.parse(res.body)).toEqual({
       statusCode: 409,
@@ -99,11 +90,47 @@ describe('Campus lookup over HTTP', () => {
     { email: 'invalid' },
     { email: ['a@b.test', 'c@d.test'] },
     { email: `name@${domain}`, extra: 'unexpected' },
-  ])('answers 400 with issues for %o', async (query) => {
-    const res = await request(app.getHttpServer()).get('/campuses/lookup').query(query).expect(400);
+  ])('answers 400 with issues for %o', async (payload) => {
+    const res = await request(app.getHttpServer())
+      .post('/campuses/lookup')
+      .send(payload)
+      .expect(400);
     const body = apiErrorSchema.parse(res.body);
     expect(body.message).toBe('Validation failed');
     expect(body.issues?.length).toBeGreaterThan(0);
+  });
+
+  it('returns a fixed message for malformed JSON without echoing the submitted email', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/campuses/lookup')
+      .type('json')
+      .send('{"email": somebody@example.test}')
+      .expect(400);
+    expect(apiErrorSchema.parse(res.body)).toEqual({
+      statusCode: 400,
+      error: 'Bad Request',
+      message: 'Malformed JSON body',
+    });
+  });
+
+  it('does not echo user input supplied as a field name', async () => {
+    const extra = 'somebody@example.test';
+    const res = await request(app.getHttpServer())
+      .post('/campuses/lookup')
+      .send({ email: 'name@' + domain, [extra]: true })
+      .expect(400);
+    expect(apiErrorSchema.parse(res.body).issues).toEqual([
+      { path: '', code: 'unrecognized_keys', message: 'Unrecognized field' },
+    ]);
+  });
+
+  it('no longer accepts lookup emails in a GET URL', async () => {
+    const email = `name@${domain}`;
+    const res = await request(app.getHttpServer())
+      .get('/campuses/lookup')
+      .query({ email })
+      .expect(404);
+    expect(JSON.stringify(res.body)).not.toContain(email);
   });
 
   it('still resolves a campus by slug', async () => {

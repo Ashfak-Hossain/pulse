@@ -72,17 +72,17 @@ process runs; `/health/ready` also checks PostgreSQL (503 when it is unreachable
 Tests: `pnpm --filter @pulse/api test` (unit) and `pnpm --filter @pulse/api test:e2e` (over HTTP,
 against a PostGIS container, so Docker must be running).
 
-| Endpoint                                   | Answers                                                                                                  |
-| ------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
-| `GET /health`                              | `{"status":"ok"}` while the process runs                                                                 |
-| `GET /health/ready`                        | 200 when PostgreSQL answers, 503 when it does not                                                        |
-| `GET /campuses`                            | `{ "items": [campus, …] }`, sorted by name                                                               |
-| `GET /campuses/lookup?email=…`             | Campus matching the exact email domain; 404 if none, 409 if ambiguous                                    |
-| `GET /campuses/:slug/courses`              | Up to 500 public courses from that campus, ordered by code; 404 for unknown campus                       |
-| `GET /campuses/:slug/distance?lat=…&lng=…` | Distance from a point to campus, in whole metres; 400 for invalid coordinates, 404 for an unknown campus |
-| `GET /campuses/:slug`                      | One campus (`id`, `name`, `slug`, `emailDomains`, `timezone`, `location: { lat, lng }`); 404 if none     |
-| `POST /fares/split-preview`                | Preview an exact integer-paisa fare split for 1–8 riders; 200 on success, 400 for invalid input          |
-| `POST /admin/campuses`                     | Create a campus and its `CampusCreated` outbox row; 401 without the admin token, 409 if the slug exists  |
+| Endpoint                                   | Answers                                                                                                                                            |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /health`                              | `{"status":"ok"}` while the process runs                                                                                                           |
+| `GET /health/ready`                        | 200 when PostgreSQL answers, 503 when it does not                                                                                                  |
+| `GET /campuses`                            | `{ "items": [campus, …] }`, sorted by name                                                                                                         |
+| `POST /campuses/lookup`                    | Accepts JSON with an email and returns a campus summary (slug and name), or a null campus if no domain matches. Returns 409 for ambiguous domains. |
+| `GET /campuses/:slug/courses`              | Up to 500 public courses from that campus, ordered by code; 404 for unknown campus                                                                 |
+| `GET /campuses/:slug/distance?lat=…&lng=…` | Distance from a point to campus, in whole metres; 400 for invalid coordinates, 404 for an unknown campus                                           |
+| `GET /campuses/:slug`                      | One campus (`id`, `name`, `slug`, `emailDomains`, `timezone`, `location: { lat, lng }`); 404 if none                                               |
+| `POST /fares/split-preview`                | Preview an exact integer-paisa fare split for 1–8 riders; 200 on success, 400 for invalid input                                                    |
+| `POST /admin/campuses`                     | Create a campus and its `CampusCreated` outbox row; 401 without the admin token, 409 if the slug exists                                            |
 
 There is no sign-in yet. `/admin/*` routes need `Authorization: Bearer <ADMIN_TOKEN>` (from
 `.env`, a stand-in until sign-in); every other route is public. Campuses are public on purpose (the app needs

@@ -7,7 +7,7 @@ import {
   type Message,
   type MessagesStream,
 } from '@platformatic/kafka';
-import { backoffDelay } from './backoff.js';
+import { backoffDelay } from '../shared/backoff.js';
 
 export interface KafkaConnection {
   brokers: string[];
@@ -28,11 +28,11 @@ function baseOptions({ brokers, clientId }: KafkaConnection) {
   };
 }
 
-export function createAdmin(connection: KafkaConnection): Admin {
+export function createKafkaAdmin(connection: KafkaConnection): Admin {
   return new Admin(baseOptions(connection));
 }
 
-export function createProducer(
+export function createKafkaProducer(
   connection: KafkaConnection,
 ): Producer<string, string, string, string> {
   return new Producer({
@@ -49,7 +49,7 @@ export type RecordStream = MessagesStream<Buffer, Buffer, Buffer, Buffer>;
 export type ConsumedRecord = Message<Buffer, Buffer, Buffer, Buffer>;
 
 /** A consumer in `groupId` that commits only when told to, after a record is handled. */
-export function createConsumer(connection: KafkaConnection, groupId: string): RecordConsumer {
+export function createKafkaConsumer(connection: KafkaConnection, groupId: string): RecordConsumer {
   return new Consumer({ ...baseOptions(connection), groupId, autocommit: false });
 }
 

@@ -50,4 +50,4 @@ Retries: waiting queues with a fixed TTL each (10 s, 1 min, 10 min) and a dead-l
 
 The running app never calls the lab, and personal data never goes to the Gemini free tier.
 
-See `docs/proposal/Pulse_Project_Proposal.pdf` (Section 12) for the full design and `docs/adr/` for decisions.
+See `docs/proposal/Pulse_Project_Proposal.pdf` (Section 12) for the full design, `docs/adr/` for decisions and `docs/code-structure.md` for how code is organised inside each app.

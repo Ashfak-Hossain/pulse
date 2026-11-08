@@ -44,7 +44,7 @@ and proves, on 4.4, keyed produce with `acks=all`, that the producer gets a prod
 - Kafka 4.4 is newer than the client's tested range. The integration tests are the guard: run
   them on every client or broker upgrade.
 - Its API is its own (not kafkajs-style), so kafkajs tutorials do not apply directly; the
-  worker keeps the client behind small functions (`createProducer`, `createAdmin`,
+  worker keeps the client behind small functions (`createKafkaProducer`, `createKafkaAdmin`,
   `ensureTopics`) so swapping it later touches few files.
 - Revisit if the client stops being maintained or if Confluent ships Node 26 binaries and we need
   librdkafka features (for example, exactly-once transactions across topics).
