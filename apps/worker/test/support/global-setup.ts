@@ -15,6 +15,7 @@ export default async function setup(project: TestProject): Promise<() => Promise
   project.provide('ownerUrl', database.ownerUrl);
   project.provide('relayUrl', database.relayUrl);
   project.provide('notifierUrl', database.notifierUrl);
+  project.provide('mailerUrl', database.mailerUrl);
   project.provide('amqpUrl', rabbit.amqpUrl);
   project.provide('rabbitApiUrl', rabbit.apiUrl);
   return async () => {
@@ -28,6 +29,7 @@ declare module 'vitest' {
     ownerUrl: string;
     relayUrl: string;
     notifierUrl: string;
+    mailerUrl: string;
     amqpUrl: string;
     rabbitApiUrl: string;
   }
