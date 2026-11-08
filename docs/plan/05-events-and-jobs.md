@@ -209,6 +209,9 @@ flowchart TB
   queue name, stop the old workers, move or drain the old queue, then delete it (ADR 0008).
 - Handlers **ack only after success**. Prefetch per queue (below).
 - `notify.email` templates carry ids only: `campus-created` (`campusId`), `otp` (`otpId`).
+- The email worker claims each `dedupeKey` in `email_delivery` before it sends (claim → send →
+  mark, ADR 0011), so two copies of a job never both send. A refused SMTP login retries; any other
+  SMTP 5xx goes straight to `jobs.dead`.
 - Every job has a `jobId` (UUID) and a `dedupeKey`. Jobs are delivered **at least once**, so every
   handler is idempotent (unique `dedupe_key` rows, `scheduled_run`, or a natural upsert).
 - Publishers use **publisher confirms**. A consumer publishes its jobs, waits for confirms, and
@@ -220,7 +223,7 @@ flowchart TB
 | Routing key          | Payload                                         | Published by                      | Handler                                                                                                 | Prefetch                 | Idempotency                        |
 | -------------------- | ----------------------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------ | ---------------------------------- |
 | `notify.push`        | `{notificationId}`                              | notifier                          | Web Push; on 404/410 delete the subscription; failure → fall back to in-app + `notify.email`            | 20                       | `notification_attempt` per channel |
-| `notify.email`       | `{template, …ids}` (§5.1) or `{notificationId}` | notifier, auth                    | SMTP (Mailpit in dev)                                                                                   | 10                       | attempt row / `otp.consumed_at`    |
+| `notify.email`       | `{template, …ids}` (§5.1) or `{notificationId}` | notifier, auth                    | SMTP (Mailpit in dev)                                                                                   | 10                       | `email_delivery` claim (ADR 0011)  |
 | `notify.sms`         | `{simSmsId}`                                    | notifier (safety)                 | Marks the simulated SMS "delivered" (shows in the admin inbox)                                          | 10                       | row status                         |
 | `import.timetable`   | `{importId}`                                    | catalog                           | Runs the adapter on the file; writes the staging JSON; status `review`                                  | 1                        | import status machine              |
 | `ai.onboarding`      | `{specId}`                                      | ai                                | Gemini propose → validate → revise (≤ 4 rounds)                                                         | **1** (free-tier limits) | spec status machine                |
