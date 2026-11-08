@@ -153,21 +153,17 @@ export class CatalogService {
 
         return {
           items: page.map((row) => ({ ...row, meetings: meetings.get(row.id) ?? [] })),
-          nextCursor:
-            rows.length > query.limit
-              ? Buffer.from(
-                  JSON.stringify({
-                    code: last.course.code,
-                    sectionLabel: last.sectionLabel,
-                    id: last.id,
-                  }),
-                ).toString('base64url')
-              : null,
+          nextCursor: rows.length > query.limit ? encodeCursor(last) : null,
         };
       },
       { isolationLevel: 'repeatable read', accessMode: 'read only' },
     );
   }
+}
+
+function encodeCursor(last: { course: { code: string }; sectionLabel: string; id: string }) {
+  const position = { code: last.course.code, sectionLabel: last.sectionLabel, id: last.id };
+  return Buffer.from(JSON.stringify(position)).toString('base64url');
 }
 
 function decodeCursor(token: string) {
