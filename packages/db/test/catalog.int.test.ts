@@ -170,30 +170,28 @@ describe('catalog timetable constraints and tenancy', () => {
   it('moves updated_at on a real change and keeps it on an unchanged rewrite', async () => {
     await owner
       .transaction(async (tx) => {
-        const stamp = async () => {
-          const [row] = await tx
-            .select({ section: section.updatedAt })
+        // now() is this transaction's start, so "= now()" means "written here", to the microsecond
+        const touched = async () => {
+          const [sectionRow] = await tx
+            .select({ section: sql<boolean>`${section.updatedAt} = now()` })
             .from(section)
             .where(eq(section.id, sectionA.id));
           const [termRow] = await tx
-            .select({ term: term.updatedAt })
+            .select({ term: sql<boolean>`${term.updatedAt} = now()` })
             .from(term)
             .where(eq(term.id, termA.id));
-          return { ...row, ...termRow };
+          return { ...sectionRow, ...termRow };
         };
-        const before = await stamp();
         await tx.update(section).set({ title: sectionA.title }).where(eq(section.id, sectionA.id));
         await tx.update(term).set({ name: termA.name }).where(eq(term.id, termA.id));
-        expect(await stamp()).toEqual(before);
+        expect(await touched()).toEqual({ section: false, term: false });
 
         await tx
           .update(section)
           .set({ enrolled: sql`${section.enrolled} + 1` })
           .where(eq(section.id, sectionA.id));
         await tx.update(term).set({ name: 'Fall renamed' }).where(eq(term.id, termA.id));
-        const after = await stamp();
-        expect(after.section?.getTime()).toBeGreaterThan(before.section?.getTime() ?? Infinity);
-        expect(after.term?.getTime()).toBeGreaterThan(before.term?.getTime() ?? Infinity);
+        expect(await touched()).toEqual({ section: true, term: true });
         tx.rollback();
       })
       .catch((error: unknown) => {

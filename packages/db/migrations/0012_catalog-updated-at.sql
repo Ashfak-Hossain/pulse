@@ -1,7 +1,9 @@
 -- Custom migration, written by hand: PostgreSQL keeps updated_at current, so no writer
 -- (importer, admin script, psql) can forget it. Rows rewritten unchanged keep their old time.
 CREATE FUNCTION set_updated_at() RETURNS trigger
-LANGUAGE plpgsql AS $$
+LANGUAGE plpgsql
+SET search_path = pg_catalog
+AS $$
 BEGIN
   NEW.updated_at := now();
   RETURN NEW;

@@ -116,7 +116,7 @@ export class CatalogService {
           .limit(query.limit + 1);
         const page = rows.slice(0, query.limit);
         const last = page.at(-1);
-        if (!last) return { items: [], nextCursor: null };
+        if (!last) return sectionListSchema.parse({ items: [], nextCursor: null });
 
         const meetingRows = await tx
           .select({

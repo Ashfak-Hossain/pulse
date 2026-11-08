@@ -35,7 +35,7 @@ const statuses = new Map<string, ParsedSection['status']>([
   ['closed', 'closed'],
   ['cancel', 'cancelled'],
 ]);
-const countMessage = `Expected an integer from 0 to ${maxSectionCount}`;
+const sectionCountMessage = `Expected an integer from 0 to ${maxSectionCount}`;
 const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 const meetingFields = ['Type', 'Day', 'Start Time', 'End Time', 'Room'] as const;
 const sharedFields = {
@@ -117,8 +117,8 @@ function readSection(id: string, cell: ReadCell, report: ReportProblem): Section
   if (!sectionLabel) report('Section', 'Section label is required');
   if (!title) report('Course Title', 'Course title is required');
   if (!status) report('Status', 'Unknown section status');
-  if (capacity === null) report('Capacity', countMessage);
-  if (enrolled === null) report('Count', countMessage);
+  if (capacity === null) report('Capacity', sectionCountMessage);
+  if (enrolled === null) report('Count', sectionCountMessage);
   if (!courseCode || !sectionLabel || !title || !status || capacity === null || enrolled === null) {
     return null;
   }
@@ -182,12 +182,12 @@ export async function parseAiubOfferedCourses(file: Uint8Array): Promise<ParsedC
   const header = sheet && locateHeader(sheet);
   if (!header) {
     report(0, 'Header', 'Required headers were not found in the first ten rows');
-    return {
+    return ParsedCatalog.parse({
       termName,
       sections: [],
       problems,
       stats: { sections: 0, meetings: 0, cancelled: 0, skipped: 0, errors },
-    };
+    });
   }
 
   const sectionsById = new Map<string, ParsedSection>();
