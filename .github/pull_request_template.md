@@ -19,6 +19,6 @@
 ## Checklist
 
 - [ ] Tests added or updated
-- [ ] Format, lint, typecheck, test and build pass
+- [ ] Format, lint, check:arch, typecheck, test and build pass
 - [ ] No secrets, `.env` files or personal data
 - [ ] Docs and ADR updated, if a behaviour or decision changed

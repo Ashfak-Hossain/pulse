@@ -157,7 +157,7 @@ out unless we build our own image.
 
 ## 5. Definition of done (every slice)
 
-- [ ] Code + tests at the right layer; `/verify` green (format, lint, typecheck, test, build).
+- [ ] Code + tests at the right layer; `/verify` green (format, lint, check:arch, typecheck, test, build).
 - [ ] Migrations reviewed (`migration-reviewer`), RLS policy on every new campus table.
 - [ ] Events/jobs reviewed (`events-reviewer`) when touched; add-only baseline updated.
 - [ ] Postman request with a saved example for every new endpoint.

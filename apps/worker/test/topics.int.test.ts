@@ -1,8 +1,9 @@
+import { randomUUID } from 'node:crypto';
 import { ConfigResourceTypes, type Admin } from '@platformatic/kafka';
 import { topics } from '@pulse/events';
 import { inject, vi } from 'vitest';
-import { createAdmin } from '../src/kafka/client.js';
-import { ensureTopics, type TopicAdmin } from '../src/kafka/topics.js';
+import { createKafkaAdmin } from '../src/kafka/client.js';
+import { connectAndEnsureTopics, ensureTopics, type TopicAdmin } from '../src/kafka/topics.js';
 
 const specs = Object.values(topics);
 const names = specs.map((spec) => spec.name);
@@ -11,7 +12,7 @@ const options = { replicationFactor: 1, minInsyncReplicas: 1 };
 let admin: Admin;
 
 beforeAll(() => {
-  admin = createAdmin({ brokers: inject('kafkaBrokers'), clientId: 'topics-int-test' });
+  admin = createKafkaAdmin({ brokers: inject('kafkaBrokers'), clientId: 'topics-int-test' });
 });
 
 afterAll(async () => {
@@ -57,6 +58,16 @@ describe('ensureTopics against Kafka 4.4', () => {
 
   it('creates nothing on a second run', async () => {
     expect(await ensureTopics(admin, specs, options)).toEqual([]);
+  });
+
+  it('does the same over its own short-lived admin connection', async () => {
+    const connection = { brokers: inject('kafkaBrokers'), clientId: 'topics-int-test-own' };
+    const name = `topics-int-${randomUUID()}`;
+    const spec = { ...topics.campuses, name };
+
+    await expect(connectAndEnsureTopics(connection, [spec], options)).resolves.toEqual([name]);
+
+    expect(await admin.listTopics()).toContain(name);
   });
 
   // Proves the real "already exists" error is recognised, not only the one the unit test builds

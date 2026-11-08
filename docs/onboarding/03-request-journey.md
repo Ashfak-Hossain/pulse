@@ -133,15 +133,7 @@ The client never sees a stack trace or a database message, and the log never get
 
 ## The same journey for your endpoint
 
-When you build `GET /campuses/lookup?email=…`, the trip is identical:
-
-| Step | Campus (`/campuses/:slug`)         | Yours (`/campuses/lookup?email=`)     |
-| ---- | ---------------------------------- | ------------------------------------- |
-| ③    | `@Get(':slug')`                    | `@Get('lookup')`                      |
-| ④    | `@Param(new ZodValidationPipe(…))` | `@Query(new ZodValidationPipe(…))`    |
-| ⑤    | `getBySlug(params.slug)`           | `lookupByEmail(query.email)`          |
-| ⑥    | `where(eq(campus.slug, slug))`     | a query on `email_domains`            |
-| ⑧    | 404 "Campus not found"             | 404 "No campus for this email domain" |
-
-One catch for this example: `@Get('lookup')` must be declared **above** `@Get(':slug')` in the
-controller, or Nest will treat `lookup` as a slug.
+Campus lookup follows the same path. Send the email in a JSON body to POST /campuses/lookup.
+The controller validates the body with Zod and calls the service. The service searches the
+exact email domain and returns 200 with the campus summary, or a null campus when no domain
+matches. A domain claimed by two campuses returns 409.

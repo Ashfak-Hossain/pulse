@@ -62,7 +62,7 @@ them as more worked examples:
 
 | Who      | Task                                                                         | PR       |
 | -------- | ---------------------------------------------------------------------------- | -------- |
-| Member 3 | `GET /campuses/lookup?email=…`: which campus an email address belongs to     | #26      |
+| Member 3 | `POST /campuses/lookup`: which campus an email address belongs to            | #26      |
 | Member 3 | `GET /campuses/:slug/distance?lat=&lng=`: how far a point is from campus     | #27      |
 | Member 2 | `POST /fares/split-preview`: split a fare between riders with `@pulse/money` | #28      |
 | Member 2 | A `course` table and `GET /campuses/:slug/courses`                           | #29, #30 |

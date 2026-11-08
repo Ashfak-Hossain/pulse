@@ -6,16 +6,16 @@ import { jobTopology, queueFor } from '@pulse/jobs';
 import { connect, type Channel, type ChannelModel } from 'amqplib';
 import { inject, vi } from 'vitest';
 import {
-  createAdmin,
-  createConsumer,
-  createProducer,
+  createKafkaAdmin,
+  createKafkaConsumer,
+  createKafkaProducer,
   type KafkaConnection,
 } from '../src/kafka/client.js';
-import { createLogger } from '../src/logger.js';
 import { campusCreatedEmail } from '../src/notifier/campus-created.js';
 import { createNotifierDb, runNotifier } from '../src/notifier/run.js';
 import { JobPublisher } from '../src/rabbit/publish.js';
 import { ensureTopology } from '../src/rabbit/topology.js';
+import { createLogger } from '../src/shared/logger.js';
 import { createVhost, rabbitApi } from './support/rabbit.js';
 
 // Its own vhost, and a new topic and consumer group per test: a new group reads from the start,
@@ -37,8 +37,8 @@ const owner = createDb(inject('ownerUrl'));
 
 beforeAll(async () => {
   kafka = { brokers: inject('kafkaBrokers'), clientId: 'notifier-test' };
-  admin = createAdmin(kafka);
-  producer = createProducer(kafka);
+  admin = createKafkaAdmin(kafka);
+  producer = createKafkaProducer(kafka);
 
   model = await connect(await createVhost(vhost));
   model.on('error', () => {});
@@ -82,7 +82,7 @@ let refusedPublishes = 0;
 
 /** The notifier exactly as the worker runs it, in its own consumer group, until stop(). */
 function startNotifier(groupId: string): { stop: () => Promise<void> } {
-  const consumer = createConsumer(kafka, groupId);
+  const consumer = createKafkaConsumer(kafka, groupId);
   const controller = new AbortController();
   const running = runNotifier({
     consumer,
@@ -108,7 +108,7 @@ function startNotifier(groupId: string): { stop: () => Promise<void> } {
 
 // The next offset the group will read (Kafka stores "next", not "last read"); -1 for none
 async function committedOffset(groupId: string): Promise<bigint | undefined> {
-  const consumer = createConsumer(kafka, groupId);
+  const consumer = createKafkaConsumer(kafka, groupId);
   try {
     const offsets = await consumer.listCommittedOffsets({ topics: [{ topic, partitions: [0] }] });
     return offsets.get(topic)?.[0];
@@ -119,7 +119,7 @@ async function committedOffset(groupId: string): Promise<bigint | undefined> {
 
 // Where a group that has read every record written so far stands
 async function endOffset(): Promise<bigint> {
-  const consumer = createConsumer(kafka, `offsets-${randomUUID()}`);
+  const consumer = createKafkaConsumer(kafka, `offsets-${randomUUID()}`);
   try {
     const offset = (await consumer.listOffsets({ topics: [topic] })).get(topic)?.[0];
     if (offset === undefined) throw new Error(`no offsets for ${topic}`);
