@@ -64,6 +64,27 @@
       "when": 1793819548249,
       "tag": "0008_notifier-role",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793991097890,
+      "tag": "0009_catalog-search-extension",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793991151888,
+      "tag": "0010_catalog-timetable",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793991152493,
+      "tag": "0011_catalog-read-only",
+      "breakpoints": true
     }
   ]
 }

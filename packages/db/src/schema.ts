@@ -2,6 +2,8 @@ import { sql } from 'drizzle-orm';
 import {
   bigint,
   check,
+  date,
+  foreignKey,
   geometry,
   index,
   integer,
@@ -10,8 +12,11 @@ import {
   pgRole,
   pgTable,
   primaryKey,
+  smallint,
   text,
   timestamp,
+  time,
+  uniqueIndex,
   uuid,
   unique,
 } from 'drizzle-orm/pg-core';
@@ -114,7 +119,132 @@ export const course = pgTable(
   (table) => [
     // Also indexes the campus foreign key and the scoped code-ordered list query.
     unique('course_campus_code_unique').on(table.campusId, table.code),
+    unique('course_id_campus_unique').on(table.id, table.campusId),
+    index('course_title_trgm_idx').using('gin', table.title.op('gin_trgm_ops')),
     pgPolicy('course_read', {
+      for: 'select',
+      to: pulseApp,
+      using: sql`${table.campusId} = ${currentCampusId}`,
+    }),
+  ],
+);
+
+export const term = pgTable(
+  'term',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`uuidv7()`),
+    campusId: uuid('campus_id')
+      .notNull()
+      .references(() => campus.id),
+    name: text('name').notNull(),
+    startsOn: date('starts_on').notNull(),
+    endsOn: date('ends_on').notNull(),
+    status: text('status', { enum: ['draft', 'active', 'archived'] })
+      .notNull()
+      .default('draft'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    unique('term_id_campus_unique').on(table.id, table.campusId),
+    unique('term_campus_name_unique').on(table.campusId, table.name),
+    uniqueIndex('term_one_active_per_campus')
+      .on(table.campusId)
+      .where(sql`${table.status} = 'active'`),
+    check('term_dates_ordered', sql`${table.endsOn} > ${table.startsOn}`),
+    check('term_status_valid', sql`${table.status} in ('draft', 'active', 'archived')`),
+    pgPolicy('term_read', {
+      for: 'select',
+      to: pulseApp,
+      using: sql`${table.campusId} = ${currentCampusId}`,
+    }),
+  ],
+);
+
+export const section = pgTable(
+  'section',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`uuidv7()`),
+    campusId: uuid('campus_id')
+      .notNull()
+      .references(() => campus.id),
+    termId: uuid('term_id').notNull(),
+    courseId: uuid('course_id').notNull(),
+    externalClassId: text('external_class_id').notNull(),
+    sectionLabel: text('section_label').notNull(),
+    title: text('title').notNull(),
+    capacity: smallint('capacity').notNull(),
+    enrolled: smallint('enrolled').notNull(),
+    status: text('status', {
+      enum: ['open', 'reserved', 'freshman', 'closed', 'cancelled'],
+    }).notNull(),
+    instructorName: text('instructor_name'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    unique('section_id_campus_unique').on(table.id, table.campusId),
+    unique('section_term_external_class_unique').on(table.termId, table.externalClassId),
+    foreignKey({
+      name: 'section_term_campus_fk',
+      columns: [table.termId, table.campusId],
+      foreignColumns: [term.id, term.campusId],
+    }),
+    foreignKey({
+      name: 'section_course_campus_fk',
+      columns: [table.courseId, table.campusId],
+      foreignColumns: [course.id, course.campusId],
+    }),
+    index('section_campus_idx').on(table.campusId),
+    index('section_term_campus_idx').on(table.termId, table.campusId),
+    index('section_course_campus_idx').on(table.courseId, table.campusId),
+    index('section_title_trgm_idx').using('gin', table.title.op('gin_trgm_ops')),
+    check('section_capacity_nonnegative', sql`${table.capacity} >= 0`),
+    check('section_enrolled_nonnegative', sql`${table.enrolled} >= 0`),
+    check(
+      'section_status_valid',
+      sql`${table.status} in ('open', 'reserved', 'freshman', 'closed', 'cancelled')`,
+    ),
+    pgPolicy('section_read', {
+      for: 'select',
+      to: pulseApp,
+      using: sql`${table.campusId} = ${currentCampusId}`,
+    }),
+  ],
+);
+
+export const sectionMeeting = pgTable(
+  'section_meeting',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`uuidv7()`),
+    campusId: uuid('campus_id')
+      .notNull()
+      .references(() => campus.id),
+    sectionId: uuid('section_id').notNull(),
+    kind: text('kind', { enum: ['theory', 'lab', 'other'] }).notNull(),
+    weekday: smallint('weekday').notNull(),
+    startTime: time('start_time').notNull(),
+    endTime: time('end_time').notNull(),
+    room: text('room'),
+  },
+  (table) => [
+    foreignKey({
+      name: 'section_meeting_section_campus_fk',
+      columns: [table.sectionId, table.campusId],
+      foreignColumns: [section.id, section.campusId],
+    }).onDelete('cascade'),
+    index('section_meeting_section_campus_idx').on(table.sectionId, table.campusId),
+    index('section_meeting_departure_idx').on(table.campusId, table.weekday, table.endTime),
+    check('section_meeting_kind_valid', sql`${table.kind} in ('theory', 'lab', 'other')`),
+    check('section_meeting_weekday_valid', sql`${table.weekday} between 0 and 6`),
+    check('section_meeting_times_ordered', sql`${table.endTime} > ${table.startTime}`),
+    pgPolicy('section_meeting_read', {
       for: 'select',
       to: pulseApp,
       using: sql`${table.campusId} = ${currentCampusId}`,

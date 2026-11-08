@@ -55,6 +55,7 @@ Compose creates `pulse_app` only on an empty volume, so after pulling this chang
 | `pnpm --filter @pulse/db test:int`    | Integration tests against a fresh PostGIS container                                                      |
 | `pnpm infra:seed`                     | Add local sample data (AIUB and a demo campus); safe to run again                                        |
 | `pnpm infra:seed:courses`             | Add sample AIUB courses (after `infra:seed`); safe to run again                                          |
+| `pnpm infra:seed:catalog`             | Add a synthetic AIUB term and timetable after the course seed. Safe to run again.                        |
 
 `pulse_app` reads courses only inside `withCampus()`; only the owner can write them.
 
