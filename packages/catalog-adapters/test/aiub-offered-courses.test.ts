@@ -217,6 +217,21 @@ describe('parseAiubOfferedCourses', () => {
     expect(await parseAiubOfferedCourses(file)).toEqual(parsed);
   });
 
+  it('rejects counts the section table cannot store', async () => {
+    const rows = [
+      row('00001', { Capacity: '40000' }),
+      row('00002', { Count: 32768 }),
+      row('00003', { Capacity: '32767', Count: '32767' }),
+    ];
+    const parsed = await parseAiubOfferedCourses(await workbook(rows));
+    expect(parsed.sections.map((section) => section.externalClassId)).toEqual(['00003']);
+    expect(parsed.problems).toEqual([
+      { row: 3, field: 'Capacity', message: 'Expected an integer from 0 to 32767' },
+      { row: 4, field: 'Count', message: 'Expected an integer from 0 to 32767' },
+    ]);
+    expect(parsed.stats.skipped).toBe(2);
+  });
+
   it('reports missing headers without inventing sections', async () => {
     const file = await writeExcelFile([['Class ID', 'Course Code']], {
       sheet: reportName,

@@ -167,6 +167,40 @@ describe('catalog timetable constraints and tenancy', () => {
     expect(result.meetings).toEqual([]);
   });
 
+  it('moves updated_at on a real change and keeps it on an unchanged rewrite', async () => {
+    await owner
+      .transaction(async (tx) => {
+        const stamp = async () => {
+          const [row] = await tx
+            .select({ section: section.updatedAt })
+            .from(section)
+            .where(eq(section.id, sectionA.id));
+          const [termRow] = await tx
+            .select({ term: term.updatedAt })
+            .from(term)
+            .where(eq(term.id, termA.id));
+          return { ...row, ...termRow };
+        };
+        const before = await stamp();
+        await tx.update(section).set({ title: sectionA.title }).where(eq(section.id, sectionA.id));
+        await tx.update(term).set({ name: termA.name }).where(eq(term.id, termA.id));
+        expect(await stamp()).toEqual(before);
+
+        await tx
+          .update(section)
+          .set({ enrolled: sql`${section.enrolled} + 1` })
+          .where(eq(section.id, sectionA.id));
+        await tx.update(term).set({ name: 'Fall renamed' }).where(eq(term.id, termA.id));
+        const after = await stamp();
+        expect(after.section?.getTime()).toBeGreaterThan(before.section?.getTime() ?? Infinity);
+        expect(after.term?.getTime()).toBeGreaterThan(before.term?.getTime() ?? Infinity);
+        tx.rollback();
+      })
+      .catch((error: unknown) => {
+        if (!(error instanceof Error) || error.message !== 'Rollback') throw error;
+      });
+  });
+
   it('cascades meeting deletion when the owner deletes a section', async () => {
     await owner
       .transaction(async (tx) => {

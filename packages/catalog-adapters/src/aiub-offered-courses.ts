@@ -1,6 +1,11 @@
 import { unzipSync, zipSync } from 'fflate';
 import readExcelFile, { InvalidInputError, type Row, type Sheet } from 'read-excel-file/node';
-import type { ParsedCatalog, ParsedMeeting, ParsedSection } from './parsed-catalog.js';
+import {
+  maxSectionCount,
+  ParsedCatalog,
+  type ParsedMeeting,
+  type ParsedSection,
+} from './parsed-catalog.js';
 
 const headers = [
   'Class ID',
@@ -30,6 +35,7 @@ const statuses = new Map<string, ParsedSection['status']>([
   ['closed', 'closed'],
   ['cancel', 'cancelled'],
 ]);
+const countMessage = `Expected an integer from 0 to ${maxSectionCount}`;
 const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 const meetingFields = ['Type', 'Day', 'Start Time', 'End Time', 'Room'] as const;
 const sharedFields = {
@@ -53,7 +59,7 @@ function count(value: unknown): number | null {
   const input = text(value);
   if (!/^\d+$/.test(input)) return null;
   const parsed = Number(input);
-  return Number.isSafeInteger(parsed) ? parsed : null;
+  return parsed <= maxSectionCount ? parsed : null;
 }
 
 function normalizeTitle(value: unknown, label: string): string {
@@ -111,8 +117,8 @@ function readSection(id: string, cell: ReadCell, report: ReportProblem): Section
   if (!sectionLabel) report('Section', 'Section label is required');
   if (!title) report('Course Title', 'Course title is required');
   if (!status) report('Status', 'Unknown section status');
-  if (capacity === null) report('Capacity', 'Expected a nonnegative integer');
-  if (enrolled === null) report('Count', 'Expected a nonnegative integer');
+  if (capacity === null) report('Capacity', countMessage);
+  if (enrolled === null) report('Count', countMessage);
   if (!courseCode || !sectionLabel || !title || !status || capacity === null || enrolled === null) {
     return null;
   }
@@ -156,7 +162,7 @@ function readMeeting(cell: ReadCell, report: ReportProblem): ParsedMeeting | nul
 /**
  * Parse a trusted registrar export. Run untrusted uploads with enforced memory
  * and time limits because XLSX decoding expands the archive in memory.
- * An importer must validate parsed counts against its database column limits.
+ * The result is checked against ParsedCatalog before it is returned.
  */
 export async function parseAiubOfferedCourses(file: Uint8Array): Promise<ParsedCatalog> {
   const sheets = await readWorkbook(file);
@@ -223,7 +229,7 @@ export async function parseAiubOfferedCourses(file: Uint8Array): Promise<ParsedC
   }
 
   const sections = [...sectionsById.values()];
-  return {
+  return ParsedCatalog.parse({
     termName,
     sections,
     problems,
@@ -234,7 +240,7 @@ export async function parseAiubOfferedCourses(file: Uint8Array): Promise<ParsedC
       skipped: rejectedIds.size + unidentifiedRows,
       errors,
     },
-  };
+  });
 }
 
 async function readWorkbook(file: Uint8Array): Promise<Sheet[]> {
