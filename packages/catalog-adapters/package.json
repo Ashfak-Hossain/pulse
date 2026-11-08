@@ -1,0 +1,28 @@
+{
+  "name": "@pulse/catalog-adapters",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "write-excel-file": "^4.1.1"
+  },
+  "dependencies": {
+    "fflate": "^0.8.3",
+    "read-excel-file": "^9.3.14",
+    "zod": "catalog:"
+  }
+}
