@@ -1,0 +1,4 @@
+$kind: collection
+name: Catalog
+description: 'Public timetable for the synthetic AIUB catalog. Run the campus, course and catalog seeds before running the folder.'
+order: 5000

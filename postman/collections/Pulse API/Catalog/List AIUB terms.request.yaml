@@ -1,0 +1,19 @@
+$kind: http-request
+url: '{{baseUrl}}/campuses/aiub/terms'
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200', () => pm.response.to.have.status(200));
+      const terms = pm.response.json().items;
+      const active = terms.find(term => term.status === 'active');
+      pm.test('lists visible terms and finds the seeded active term', () => {
+        pm.expect(terms.every(term => ['active', 'archived'].includes(term.status))).to.equal(true);
+        pm.expect(active?.name).to.equal('Fall 2026-2027');
+      });
+      if (active) pm.collectionVariables.set('catalogTermId', active.id);
+    language: text/javascript
+examples: '.resources/List AIUB terms.resources/examples'
+order: 1000
