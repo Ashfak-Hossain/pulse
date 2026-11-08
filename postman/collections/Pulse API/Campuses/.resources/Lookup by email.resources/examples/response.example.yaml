@@ -1,8 +1,15 @@
 $kind: http-example
 name: '200 OK'
 request:
-  method: GET
-  url: '{{baseUrl}}/campuses/lookup?email=name%40student.aiub.edu'
+  method: POST
+  url: '{{baseUrl}}/campuses/lookup'
+  headers:
+    - key: Content-Type
+      value: application/json
+  body:
+    type: json
+    content: |-
+      {"email": "name@student.aiub.edu"}
 response:
   statusCode: 200
   statusText: 'OK'
@@ -13,17 +20,9 @@ response:
     type: json
     content: |-
       {
-        "id": "1faef202-8a34-475c-8016-e4d1405cef3f",
-        "name": "American International University-Bangladesh",
-        "slug": "aiub",
-        "emailDomains": [
-          "aiub.edu",
-          "student.aiub.edu"
-        ],
-        "timezone": "Asia/Dhaka",
-        "location": {
-          "lat": 23.8223,
-          "lng": 90.4274
+        "campus": {
+          "slug": "aiub",
+          "name": "American International University-Bangladesh"
         }
       }
 order: 1000

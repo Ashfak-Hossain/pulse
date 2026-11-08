@@ -6,9 +6,9 @@ export const campusSlugSchema = z
   .max(64)
   .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/);
 
-// Query input for the public email-domain lookup. Never include the email in errors.
-export const campusLookupQuerySchema = z.strictObject({ email: z.email() });
-export type CampusLookupQuery = z.infer<typeof campusLookupQuerySchema>;
+// JSON body for the public email-domain lookup. Never include the email in errors.
+export const campusLookupBodySchema = z.strictObject({ email: z.email() });
+export type CampusLookupBody = z.infer<typeof campusLookupBodySchema>;
 
 // Query strings arrive as text. Reject blanks before coercion, which would turn them into 0.
 export const campusDistanceQuerySchema = z.strictObject({
@@ -65,6 +65,11 @@ export const campusSchema = z.strictObject({
   timezone: z.string(),
   location: locationSchema,
 });
+
+export const campusLookupResultSchema = z.strictObject({
+  campus: campusSchema.pick({ slug: true, name: true }).nullable(),
+});
+export type CampusLookupResult = z.infer<typeof campusLookupResultSchema>;
 
 // Wrapped in an object, so fields such as a page cursor can be added without breaking clients
 export const campusListSchema = z.strictObject({ items: z.array(campusSchema) });

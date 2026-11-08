@@ -1,5 +1,11 @@
 import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import type { Campus, CampusDistance, CampusList, CreateCampus } from '@pulse/contracts';
+import type {
+  Campus,
+  CampusDistance,
+  CampusList,
+  CampusLookupResult,
+  CreateCampus,
+} from '@pulse/contracts';
 import {
   arrayContains,
   asc,
@@ -38,20 +44,18 @@ export class CampusService {
     return { items: rows.map(toCampus) };
   }
 
-  async lookup(email: string): Promise<Campus> {
+  async lookup(email: string): Promise<CampusLookupResult> {
     const domain = email.slice(email.lastIndexOf('@') + 1).toLowerCase();
     // Two rows suffice to detect ambiguity; never log the address or return it in an error.
     const rows = await this.db
-      .select()
+      .select({ slug: campus.slug, name: campus.name })
       .from(campus)
       .where(arrayContains(campus.emailDomains, [domain]))
       .limit(2);
     if (rows.length > 1) {
       throw new ConflictException('Email domain belongs to more than one campus');
     }
-    const row = rows[0];
-    if (!row) throw new NotFoundException('Campus not found');
-    return toCampus(row);
+    return { campus: rows[0] ?? null };
   }
 
   async distance(slug: string, lat: number, lng: number): Promise<CampusDistance> {
