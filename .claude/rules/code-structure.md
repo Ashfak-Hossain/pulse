@@ -15,6 +15,6 @@ Full rules and reasons: `docs/code-structure.md`.
 - `shared/` holds only code at least two features already use. Move it there in the change that adds the second user.
 - Files read top-down: exports first, helpers below.
 - Simple wins: one clear long function beats five small ones to jump between. Add a file, wrapper or interface only for a problem you have today.
-- High ceilings, not targets: 100 lines per function, 400 per file, complexity 20, depth 4, 5 parameters. Never split just for the number. No `eslint-disable` without asking.
+- High ceilings, not targets: 100 lines per function, 400 per file, complexity 40, depth 10, 10 parameters. Never split just for the number. No `eslint-disable` without asking.
 - Name by what a call site can see: a generic word (`createConsumer`) needs its technology when more than one could apply (`createKafkaConsumer`).
 - Check with `pnpm check:arch` and `pnpm lint`.
