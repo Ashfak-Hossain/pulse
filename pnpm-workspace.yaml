@@ -20,3 +20,11 @@ allowBuilds:
   esbuild: false
   protobufjs: false
   ssh2: false
+
+# Patched versions for Dependabot alerts in dev-only tools whose latest release still pins the old
+# one (testcontainers → archiver → glob/minimatch, drizzle-kit → @esbuild-kit → esbuild).
+# Remove an entry once the upstream package ships the fix.
+overrides:
+  'glob@>=9.0.0 <14.0.2': ^14.0.4
+  'minimatch@>=7.0.0 <11.0.1': ^11.0.5
+  'esbuild@<0.25.0': ^0.25.12
