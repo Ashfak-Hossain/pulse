@@ -5,7 +5,12 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 
 const initFolder = new URL('../../../infra/compose/postgres/init/', import.meta.url);
-const roleScripts = ['01-app-role.sql', '02-relay-role.sql', '03-notifier-role.sql'];
+const roleScripts = [
+  '01-app-role.sql',
+  '02-relay-role.sql',
+  '03-notifier-role.sql',
+  '04-mailer-role.sql',
+];
 const migrationsFolder = fileURLToPath(new URL('../migrations', import.meta.url));
 
 export type TestDatabase = {
@@ -17,6 +22,8 @@ export type TestDatabase = {
   relayUrl: string;
   // The notifier role (pulse_notifier): records processed_event, nothing else
   notifierUrl: string;
+  // The mailer role (pulse_mailer): claims and marks email_delivery, reads campus names
+  mailerUrl: string;
   stop: () => Promise<void>;
 };
 
@@ -66,6 +73,7 @@ export async function startTestDatabase(): Promise<TestDatabase> {
     appUrl: urlAs(ownerUrl, 'pulse_app'),
     relayUrl: urlAs(ownerUrl, 'pulse_relay'),
     notifierUrl: urlAs(ownerUrl, 'pulse_notifier'),
+    mailerUrl: urlAs(ownerUrl, 'pulse_mailer'),
     stop: async () => {
       await container.stop();
     },
