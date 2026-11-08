@@ -78,9 +78,9 @@ and being under them does not make code good.
 | --------------------- | ------- |
 | Lines in a function   | 100     |
 | Lines in a file       | 400     |
-| Complexity (branches) | 20      |
-| Nesting depth         | 4       |
-| Parameters            | 5       |
+| Complexity (branches) | 40      |
+| Nesting depth         | 10      |
+| Parameters            | 10      |
 
 Blank lines, comments and test files do not count.
 
