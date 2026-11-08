@@ -17,11 +17,13 @@
     "@pulse/events": "workspace:*",
     "@pulse/jobs": "workspace:*",
     "amqplib": "^2.2.1",
+    "nodemailer": "^10.3.1",
     "pino": "^10.4.0",
     "uuid": "^14.0.3",
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@types/nodemailer": "^8.0.2",
     "fast-check": "catalog:",
     "testcontainers": "^12.2.1",
     "typescript": "catalog:",

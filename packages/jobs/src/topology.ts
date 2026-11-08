@@ -15,7 +15,7 @@
 // The handler publishes the retry and waits for the broker's confirm before it acks, so a crash
 // in between gives a duplicate (dedupeKey absorbs it), never a lost job.
 import { jobTypes, type JobType } from './registry.js';
-import { jobHeaders, retryTiers, type RetryTier } from './retry.js';
+import { jobHeaders, retryStep, retryTiers, type RetryTier } from './retry.js';
 
 // Durable: survives a broker restart
 export interface ExchangeSpec {
@@ -172,6 +172,31 @@ export function jobTopology(options: TopologyOptions = {}): Topology {
       ...waitQueues.map((w) => w.binding),
       { queue: jobQueues.dead, exchange: jobExchanges.deadLetter, routingKey: '', arguments: {} },
     ],
+  };
+}
+
+export type RetryPlan =
+  | {
+      kind: 'retry';
+      exchange: string;
+      routingKey: string;
+      headers: { [jobHeaders.failures]: number; [jobHeaders.retryTier]: RetryTier };
+    }
+  | { kind: 'dead' };
+
+/**
+ * Where a job goes after its nth failure: a wait queue, or jobs.dead (the handler then nacks it).
+ * The headers are built fresh, so nothing from earlier trips comes along.
+ */
+export function retryPlanFor(job: { type: JobType }, failures: number): RetryPlan {
+  const step = retryStep(failures);
+  if (step.kind === 'dead') return step;
+  return {
+    kind: 'retry',
+    exchange: jobExchanges.retry,
+    // The original key: when the wait ends, jobs routes it back to its own queue
+    routingKey: job.type,
+    headers: { [jobHeaders.failures]: failures, [jobHeaders.retryTier]: step.tier },
   };
 }
 

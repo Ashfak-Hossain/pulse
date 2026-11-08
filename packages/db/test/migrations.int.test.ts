@@ -28,8 +28,9 @@ describe('migrations on an empty PostGIS', () => {
   });
 
   it('protect every table with RLS and a pulse_app policy, unless it is a listed exception', async () => {
-    // Each exception is a decision in ADR 0003; a new table must either get a policy or be added here
-    const exceptions = ['outbox_event', 'processed_event', 'spatial_ref_sys'];
+    // Each exception is a decision in ADR 0003 (email_delivery: ADR 0011); a new table must
+    // either get a policy or be added here
+    const exceptions = ['email_delivery', 'outbox_event', 'processed_event', 'spatial_ref_sys'];
     // r = table, p = partitioned table
     const result = await owner.execute<{ table: string; rls: boolean; policies: number }>(sql`
       select c.relname as table,

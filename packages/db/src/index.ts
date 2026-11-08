@@ -3,6 +3,7 @@ export { createDb, type Database, type PoolOptions, type Transaction } from './c
 export {
   campus,
   course,
+  emailDelivery,
   outboxEvent,
   processedEvent,
   term,

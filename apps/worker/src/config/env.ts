@@ -34,6 +34,13 @@ const envSchema = z
     AMQP_URL: z.url({ protocol: /^amqps?$/ }),
     // The notifier's own role (pulse_notifier): it records processed_event and nothing else
     NOTIFIER_DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
+    // The email worker's own role (pulse_mailer): email_delivery, and campus names to read
+    MAILER_DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
+    // No default: it can hold the mail server's password. smtps = TLS from the start
+    SMTP_URL: z.url({ protocol: /^smtps?$/ }),
+    MAIL_FROM: z.email(),
+    // Platform ops: who hears about a new campus, until admin users exist
+    OPS_MAIL_TO: z.email(),
   })
   // More in-sync replicas than copies would make every acks=all write fail
   .refine((env) => env.KAFKA_MIN_INSYNC_REPLICAS <= env.KAFKA_REPLICATION_FACTOR, {

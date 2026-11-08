@@ -6,6 +6,7 @@ import {
   jobTopology,
   jobTypes,
   queueFor,
+  retryPlanFor,
   retryTiers,
   waitQueueFor,
 } from '../src/index.js';
@@ -140,5 +141,39 @@ describe('jobTopology', () => {
     const { queues } = jobTopology({ delayMs: { '10s': 0, '1m': 0, '10m': 0 } });
     const wait = queues.find((q) => q.name === waitQueueFor('10s'));
     expect(wait?.arguments['x-message-ttl']).toBe(0);
+  });
+});
+
+describe('retryPlanFor', () => {
+  it.each([
+    [1, '10s'],
+    [2, '1m'],
+    [3, '10m'],
+  ] as const)('sends failure %i to wait queue %s with its own routing key', (failures, tier) => {
+    expect(retryPlanFor({ type: 'notify.email' }, failures)).toEqual({
+      kind: 'retry',
+      exchange: 'jobs.retry',
+      routingKey: 'notify.email',
+      // Only our two headers: x-death and anything else from the last trip stay behind
+      headers: { 'pulse-failures': failures, 'pulse-retry-tier': tier },
+    });
+  });
+
+  it('gives up after the fourth failure', () => {
+    expect(retryPlanFor({ type: 'notify.email' }, 4)).toEqual({ kind: 'dead' });
+  });
+
+  it('routes every retry to a wait queue the topology binds', () => {
+    const { bindings } = jobTopology();
+    for (const failures of [1, 2, 3]) {
+      const plan = retryPlanFor({ type: 'notify.email' }, failures);
+      if (plan.kind !== 'retry') throw new Error('expected a retry');
+      const bound = bindings.filter(
+        (binding) =>
+          binding.exchange === plan.exchange &&
+          binding.arguments[jobHeaders.retryTier] === plan.headers[jobHeaders.retryTier],
+      );
+      expect(bound).toHaveLength(1);
+    }
   });
 });

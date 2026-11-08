@@ -3,11 +3,17 @@ import { validateEnv } from './env.js';
 const relayUrl = 'postgres://pulse_relay:pulse_relay@127.0.0.1:5432/pulse';
 const amqpUrl = 'amqp://pulse:pulse@127.0.0.1:5672';
 const notifierUrl = 'postgres://pulse_notifier:pulse_notifier@127.0.0.1:5432/pulse';
+const mailerUrl = 'postgres://pulse_mailer:pulse_mailer@127.0.0.1:5432/pulse';
+const smtpUrl = 'smtp://127.0.0.1:1025';
 // The keys without a default
 const required = {
   RELAY_DATABASE_URL: relayUrl,
   AMQP_URL: amqpUrl,
   NOTIFIER_DATABASE_URL: notifierUrl,
+  MAILER_DATABASE_URL: mailerUrl,
+  SMTP_URL: smtpUrl,
+  MAIL_FROM: 'noreply@pulse.test',
+  OPS_MAIL_TO: 'ops@pulse.test',
 };
 
 describe('validateEnv', () => {
@@ -22,6 +28,10 @@ describe('validateEnv', () => {
       RELAY_POLL_MS: 500,
       AMQP_URL: amqpUrl,
       NOTIFIER_DATABASE_URL: notifierUrl,
+      MAILER_DATABASE_URL: mailerUrl,
+      SMTP_URL: smtpUrl,
+      MAIL_FROM: 'noreply@pulse.test',
+      OPS_MAIL_TO: 'ops@pulse.test',
     });
   });
 
@@ -94,6 +104,26 @@ describe('validateEnv', () => {
     expect(() =>
       validateEnv({ ...required, NOTIFIER_DATABASE_URL: 'http://db:5432/pulse' }),
     ).toThrow(/NOTIFIER_DATABASE_URL/);
+  });
+
+  // No defaults: SMTP_URL can hold a password, and a guessed address could mail real people
+  it.each(['MAILER_DATABASE_URL', 'SMTP_URL', 'MAIL_FROM', 'OPS_MAIL_TO'])('requires %s', (key) => {
+    expect(() => validateEnv({ ...required, [key]: undefined })).toThrow(new RegExp(key));
+  });
+
+  it.each([
+    ['MAILER_DATABASE_URL', 'http://db:5432/pulse'],
+    ['SMTP_URL', 'http://127.0.0.1:1025'],
+    ['SMTP_URL', '127.0.0.1:1025'],
+    ['MAIL_FROM', 'Pulse'],
+    ['OPS_MAIL_TO', 'ops@'],
+  ])('rejects %s=%j', (key, value) => {
+    expect(() => validateEnv({ ...required, [key]: value })).toThrow(new RegExp(key));
+  });
+
+  it('accepts SMTP over TLS with a login', () => {
+    const url = 'smtps://pulse:secret@smtp.example.com:465';
+    expect(validateEnv({ ...required, SMTP_URL: url }).SMTP_URL).toBe(url);
   });
 
   it.each(['amqps://pulse:pw@rabbit.example.com:5671/pulse', amqpUrl])(

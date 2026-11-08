@@ -92,6 +92,13 @@
       "when": 1794163228975,
       "tag": "0012_catalog-updated-at",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1794167960051,
+      "tag": "0013_email-delivery",
+      "breakpoints": true
     }
   ]
 }

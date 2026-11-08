@@ -25,7 +25,7 @@ describe('setupRabbit', () => {
       },
     } as unknown as JobPublisher;
 
-    await setupRabbit(model, publisher, { info: vi.fn() } as unknown as Logger);
+    await setupRabbit(model, publisher, { info: vi.fn() } as unknown as Logger, []);
 
     expect(steps).toEqual(['topology declared', 'publisher attached']);
   });

@@ -8,6 +8,7 @@ export default async function setup(project: TestProject): Promise<() => Promise
   project.provide('appUrl', database.appUrl);
   project.provide('relayUrl', database.relayUrl);
   project.provide('notifierUrl', database.notifierUrl);
+  project.provide('mailerUrl', database.mailerUrl);
   return database.stop;
 }
 
@@ -17,5 +18,6 @@ declare module 'vitest' {
     appUrl: string;
     relayUrl: string;
     notifierUrl: string;
+    mailerUrl: string;
   }
 }

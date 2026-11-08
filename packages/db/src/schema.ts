@@ -23,6 +23,7 @@ import {
 
 // Created by the Compose init script, not by migrations
 const pulseApp = pgRole('pulse_app').existing();
+const pulseMailer = pgRole('pulse_mailer').existing();
 
 // Set by withCampus(). A reused connection holds '' instead of NULL, so turn it back into NULL
 const currentCampusId = sql`nullif(current_setting('app.campus_id', true), '')::uuid`;
@@ -56,6 +57,9 @@ export const campus = pgTable(
       using: sql`id = ${currentCampusId}`,
       withCheck: sql`id = ${currentCampusId}`,
     }),
+    // Every row: an email about a campus has no campus context. Column grants (migration 0013)
+    // limit it to id and name
+    pgPolicy('campus_mailer_read', { for: 'select', to: pulseMailer, using: sql`true` }),
   ],
 );
 
@@ -102,6 +106,38 @@ export const processedEvent = pgTable(
     processedAt: timestamp('processed_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [primaryKey({ columns: [table.consumer, table.eventId] })],
+);
+
+// One row per email the worker sends, keyed by the job's dedupeKey. The worker claims a row
+// before it sends, so two copies of a job never both send (ADR 0011). A platform table like
+// processed_event: no campus_id, and only pulse_mailer can reach it
+export const emailDelivery = pgTable(
+  'email_delivery',
+  {
+    dedupeKey: text('dedupe_key').primaryKey(),
+    // The job that holds or last held the claim
+    jobId: uuid('job_id').notNull(),
+    template: text('template').notNull(),
+    status: text('status', { enum: ['sending', 'sent', 'failed'] }).notNull(),
+    // New on every claim, so a copy that lost its claim cannot mark the row
+    claimId: uuid('claim_id').notNull(),
+    attempts: integer('attempts').notNull().default(1),
+    // An SMTP code or a fixed label, never an address
+    lastError: text('last_error'),
+    claimedAt: timestamp('claimed_at', { withTimezone: true }).notNull().defaultNow(),
+    sentAt: timestamp('sent_at', { withTimezone: true }),
+  },
+  (table) => [
+    check('email_delivery_status_valid', sql`${table.status} in ('sending', 'sent', 'failed')`),
+    check(
+      'email_delivery_sent_at_iff_sent',
+      sql`(${table.status} = 'sent') = (${table.sentAt} is not null)`,
+    ),
+    check('email_delivery_attempts_positive', sql`${table.attempts} >= 1`),
+    check('email_delivery_last_error_short', sql`length(${table.lastError}) <= 200`),
+    check('email_delivery_dedupe_key_short', sql`length(${table.dedupeKey}) <= 200`),
+    check('email_delivery_template_short', sql`length(${table.template}) <= 100`),
+  ],
 );
 
 // Course reads are campus-scoped; writes remain owner-only until an admin workflow exists.

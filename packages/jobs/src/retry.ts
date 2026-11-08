@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 // When a failed job runs again. Each tier is one wait queue (see topology.ts); a job that fails
 // once more after the last tier goes to jobs.dead
 export const retryTiers = [
@@ -28,4 +30,24 @@ export function retryStep(failures: number): RetryStep {
   }
   const tier = retryTiers[failures - 1];
   return tier ? { kind: 'retry', tier: tier.name } : { kind: 'dead' };
+}
+
+// More than any real retry path reaches; a bigger count means the header was tampered with
+const MAX_HEADER_FAILURES = 100;
+const failuresHeaderSchema = z.coerce.number().int().min(0).max(MAX_HEADER_FAILURES);
+
+/**
+ * How many times a job has failed so far, from its message headers. Absent is 0 (the first
+ * try). null means the header is there but unreadable: the handler dead-letters the job rather
+ * than guess, since a guess could give it endless retries.
+ */
+export function failuresFrom(
+  headers: Readonly<Record<string, unknown>> | undefined,
+): number | null {
+  const value = headers?.[jobHeaders.failures];
+  if (value === undefined) return 0;
+  // coerce turns '' into 0 and true into 1; only numbers and digit strings are counts
+  if (typeof value !== 'number' && !(typeof value === 'string' && /^\d+$/.test(value))) return null;
+  const parsed = failuresHeaderSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
 }

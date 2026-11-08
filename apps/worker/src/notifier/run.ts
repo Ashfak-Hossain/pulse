@@ -8,8 +8,8 @@ import { handleCampusCreated, NOTIFIER } from './campus-created.js';
 import { runNotifierLoop } from './loop.js';
 
 // A hung database must fail the try, or the loop neither retries nor logs. The server gives up
-// first; the client's limit is for a connection that no longer answers at all. Only the notifier:
-// the relay keeps its transaction open for up to 45 s while Kafka answers, and this 15 s limit
+// first; the client's limit is for a connection that no longer answers at all. Not for the relay,
+// which keeps its transaction open for up to 45 s while Kafka answers. This 15 s limit
 // must stay above the 5 s confirm wait that happens inside the notifier's transaction
 const DB_LIMITS = {
   connectionTimeoutMillis: 5000,

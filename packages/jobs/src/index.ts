@@ -17,13 +17,22 @@ export {
   type ParsedJob,
   type PulseJob,
 } from './registry.js';
-export { jobHeaders, retryStep, retryTiers, type RetryStep, type RetryTier } from './retry.js';
+export {
+  failuresFrom,
+  jobHeaders,
+  retryStep,
+  retryTiers,
+  type RetryStep,
+  type RetryTier,
+} from './retry.js';
 export {
   jobExchanges,
   jobQueues,
   jobTopology,
   queueFor,
+  retryPlanFor,
   waitQueueFor,
+  type RetryPlan,
   type BindingSpec,
   type ExchangeSpec,
   type QueueSpec,
