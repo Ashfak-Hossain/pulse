@@ -12,7 +12,8 @@ export const termSchema = z.strictObject({
   endsOn: z.iso.date(),
   status: termStatusSchema.exclude(['draft']),
 });
-export const termListSchema = z.strictObject({ items: z.array(termSchema).max(50) });
+// Not paged: a campus adds about three terms a year.
+export const termListSchema = z.strictObject({ items: z.array(termSchema) });
 
 // PostgreSQL permits 24:00 at the end of a day. Preserve any stored sub-minute precision.
 const meetingTimeSchema = z.union([z.iso.time(), z.literal('24:00')]);

@@ -145,6 +145,7 @@ export const term = pgTable(
       .notNull()
       .default('draft'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    // Set by the set_updated_at trigger (migration 0012); never write it
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
@@ -184,6 +185,7 @@ export const section = pgTable(
     }).notNull(),
     instructorName: text('instructor_name'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    // Set by the set_updated_at trigger (migration 0012); never write it
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [

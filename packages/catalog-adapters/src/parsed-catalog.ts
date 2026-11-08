@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
+/** Largest capacity or enrollment the section table stores (smallint). */
+export const maxSectionCount = 32767;
+
 const countSchema = z.int().nonnegative();
+const sectionCountSchema = countSchema.max(maxSectionCount);
 const timeSchema = z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/);
 
 const meetingSchema = z
@@ -19,8 +23,8 @@ const sectionSchema = z.strictObject({
   title: z.string().min(1),
   sectionLabel: z.string().min(1),
   status: z.enum(['open', 'reserved', 'freshman', 'closed', 'cancelled']),
-  capacity: countSchema,
-  enrolled: countSchema,
+  capacity: sectionCountSchema,
+  enrolled: sectionCountSchema,
   instructorName: z.string().nullable(),
   meetings: z.array(meetingSchema),
 });

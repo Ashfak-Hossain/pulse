@@ -1,6 +1,7 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   sectionCursorSchema,
+  sectionListSchema,
   termListSchema,
   type SectionList,
   type SectionMeeting,
@@ -55,8 +56,7 @@ export class CatalogService {
         })
         .from(term)
         .where(visibleTerm)
-        .orderBy(desc(term.startsOn), asc(term.id))
-        .limit(50),
+        .orderBy(desc(term.startsOn), asc(term.id)),
     );
     return termListSchema.parse({ items });
   }
@@ -116,7 +116,7 @@ export class CatalogService {
           .limit(query.limit + 1);
         const page = rows.slice(0, query.limit);
         const last = page.at(-1);
-        if (!last) return { items: [], nextCursor: null };
+        if (!last) return sectionListSchema.parse({ items: [], nextCursor: null });
 
         const meetingRows = await tx
           .select({
@@ -151,10 +151,10 @@ export class CatalogService {
           else meetings.set(sectionId, [meeting]);
         }
 
-        return {
+        return sectionListSchema.parse({
           items: page.map((row) => ({ ...row, meetings: meetings.get(row.id) ?? [] })),
           nextCursor: rows.length > query.limit ? encodeCursor(last) : null,
-        };
+        });
       },
       { isolationLevel: 'repeatable read', accessMode: 'read only' },
     );

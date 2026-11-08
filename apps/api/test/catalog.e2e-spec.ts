@@ -171,6 +171,24 @@ describe('public campus catalog', () => {
     );
   });
 
+  it('returns every visible term, even past fifty', async () => {
+    const past = Array.from({ length: 55 }, (_, index) => ({
+      campusId: b.id,
+      name: 'Archived ' + String(index),
+      startsOn: String(1960 + index) + '-01-01',
+      endsOn: String(1960 + index) + '-06-01',
+      status: 'archived' as const,
+    }));
+    await owner.insert(term).values(past);
+    const res = await request(app.getHttpServer())
+      .get('/campuses/' + b.slug + '/terms')
+      .expect(200);
+    const items = termListSchema.parse(res.body).items;
+    expect(items).toHaveLength(56);
+    expect(items[0]?.id).toBe(other.id);
+    expect(items.at(-1)?.name).toBe('Archived 0');
+  });
+
   it('orders sections by course, label and UUID and batches sorted meetings', async () => {
     const res = await request(app.getHttpServer())
       .get(sectionsUrl)
