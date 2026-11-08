@@ -19,8 +19,9 @@ Check, in order, and report only real problems:
    nothing weakened or deleted, a test fails if the feature is removed.
 4. **Code style:** strict TypeScript, no `any`, `import type` for types (but never for injected
    Nest classes), `.js` suffix on relative imports, comments explain why.
-5. **Readability for a student team:** clear names, small functions, no unexplained cleverness.
-6. **Scope:** the change matches the slice and stays under ~400 changed lines of non-test code (tests do not count).
+5. **Scope:** the change matches the slice and stays under ~400 changed lines of non-test code (tests do not count).
+
+Readability has its own agent (`readability-reviewer`), so leave it to that one.
 
 Output format:
 
