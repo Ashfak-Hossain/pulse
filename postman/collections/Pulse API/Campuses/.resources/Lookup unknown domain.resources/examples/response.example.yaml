@@ -1,11 +1,18 @@
 $kind: http-example
-name: '404 Not Found'
+name: '200 OK'
 request:
-  method: GET
-  url: '{{baseUrl}}/campuses/lookup?email=name%40unknown.pulse.test'
+  method: POST
+  url: '{{baseUrl}}/campuses/lookup'
+  headers:
+    - key: Content-Type
+      value: application/json
+  body:
+    type: json
+    content: |-
+      {"email": "name@unknown.pulse.test"}
 response:
-  statusCode: 404
-  statusText: 'Not Found'
+  statusCode: 200
+  statusText: 'OK'
   headers:
     - key: Content-Type
       value: application/json; charset=utf-8
@@ -13,8 +20,6 @@ response:
     type: json
     content: |-
       {
-        "statusCode": 404,
-        "error": "Not Found",
-        "message": "Campus not found"
+        "campus": null
       }
 order: 1000

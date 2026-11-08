@@ -38,7 +38,7 @@ your tasks. Your notes stay on your laptop.
   than code you did not read.
 - **Read every line it writes before you commit.** You are the author of your PR; in review you
   must be able to explain each line.
-- **Give it the task and the rule.** "Add `GET /campuses/lookup?email=` following
+- **Give it the task and the rule.** "Add `POST /campuses/lookup` following
   docs/onboarding/05-add-an-endpoint.md; write the e2e test first" works better than "make the
   lookup endpoint".
 - **Let the checks decide.** Run `/verify` (or the commands yourself). If it says green but you
