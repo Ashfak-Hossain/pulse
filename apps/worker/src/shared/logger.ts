@@ -13,11 +13,13 @@ const REDACTED_FIELDS = [
   'email',
 ];
 
-// The three methods features need, so their tests can pass a fake instead of pino
+// The methods features need, so their tests can pass a fake instead of pino. debug is optional:
+// it prints whole objects (events, jobs, emails), only with LOG_LEVEL=debug in development
 export interface BasicLogger {
   info(fields: Record<string, unknown>, message: string): void;
   warn(fields: Record<string, unknown>, message: string): void;
   error(fields: Record<string, unknown>, message: string): void;
+  debug?(fields: Record<string, unknown>, message: string): void;
 }
 
 export interface LoggerOptions {

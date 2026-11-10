@@ -41,6 +41,14 @@ const envSchema = z
     MAIL_FROM: z.email(),
     // Platform ops: who hears about a new campus, until admin users exist
     OPS_MAIL_TO: z.email(),
+    NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+    // debug prints whole events, jobs and emails at each step, for following one in dev
+    LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
+  })
+  // Debug logs hold event payloads and email addresses; production logs must not
+  .refine((env) => !(env.NODE_ENV === 'production' && env.LOG_LEVEL === 'debug'), {
+    path: ['LOG_LEVEL'],
+    message: 'debug is for development only, not with NODE_ENV=production',
   })
   // More in-sync replicas than copies would make every acks=all write fail
   .refine((env) => env.KAFKA_MIN_INSYNC_REPLICAS <= env.KAFKA_REPLICATION_FACTOR, {

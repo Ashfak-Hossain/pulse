@@ -93,6 +93,7 @@ async function handleRecord(
   switch (record.kind) {
     case 'ok': {
       const { event } = record;
+      options.logger.debug?.({ ...where, event }, 'Kafka event received');
       const fields = { ...where, eventId: event.eventId, type: event.type };
       return handleUntilDone(() => handle(event), fields, options);
     }

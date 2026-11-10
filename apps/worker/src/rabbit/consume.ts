@@ -147,6 +147,7 @@ export class JobConsumer {
       logger.error(fields, 'Dead-lettered a job with an unreadable failure count');
       return settle(() => channel.nack(message, false, false));
     }
+    logger.debug?.({ queue, failures, job }, 'RabbitMQ job received');
 
     try {
       await this.#options.handle(job);

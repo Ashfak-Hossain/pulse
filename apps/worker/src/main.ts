@@ -31,6 +31,7 @@ await main().catch((error: unknown) => exitWithError(logger, error, 'Worker fail
 
 async function main(): Promise<void> {
   const env = validateEnv(process.env);
+  logger.level = env.LOG_LEVEL;
   const kafkaSettings = { brokers: env.KAFKA_BROKERS, clientId: env.KAFKA_CLIENT_ID };
   // The relay's pool has no time limits: it holds a transaction while Kafka answers
   const relayDb = createWorkerDb(env.RELAY_DATABASE_URL, logger);
