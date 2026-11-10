@@ -128,6 +128,20 @@ describe('JobConsumer', () => {
     expect(channel.prefetchCount).toBe(10);
   });
 
+  // Only with LOG_LEVEL=debug (development): pino drops debug lines at the default level
+  it('shows the whole job at debug level', async () => {
+    const log = { ...logger(), debug: vi.fn() };
+    const { deliver } = await started({ logger: log });
+    const job = newJob();
+    deliver(messageOf(job));
+    await vi.waitFor(() =>
+      expect(log.debug).toHaveBeenCalledWith(
+        { queue: 'q.notify.email', failures: 0, job },
+        'RabbitMQ job received',
+      ),
+    );
+  });
+
   it('acks a job only after its handler finished', async () => {
     let finish: () => void = () => undefined;
     const handle = vi.fn(() => new Promise<void>((resolve) => (finish = resolve)));

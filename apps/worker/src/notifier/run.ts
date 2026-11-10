@@ -54,7 +54,14 @@ export async function runNotifier(options: RunNotifierOptions): Promise<void> {
     { role: await currentRole(db), group: NOTIFIER, topics: topicNames },
     'Notifier started',
   );
-  const deps = { db, publish, now: () => new Date() };
+  const deps = {
+    db,
+    publish: async (job: PulseJob) => {
+      logger.debug?.({ job }, 'RabbitMQ job to publish');
+      await publish(job);
+    },
+    now: () => new Date(),
+  };
   // CampusCreated is the only event so far; a second one makes this a switch on event.type
   await runNotifierLoop(stream, (event) => handleCampusCreated(deps, event), {
     signal,

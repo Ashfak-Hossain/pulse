@@ -32,6 +32,8 @@ describe('validateEnv', () => {
       SMTP_URL: smtpUrl,
       MAIL_FROM: 'noreply@pulse.test',
       OPS_MAIL_TO: 'ops@pulse.test',
+      NODE_ENV: 'development',
+      LOG_LEVEL: 'info',
     });
   });
 
@@ -118,6 +120,22 @@ describe('validateEnv', () => {
     ['MAIL_FROM', 'Pulse'],
     ['OPS_MAIL_TO', 'ops@'],
   ])('rejects %s=%j', (key, value) => {
+    expect(() => validateEnv({ ...required, [key]: value })).toThrow(new RegExp(key));
+  });
+
+  // Debug logs print whole events, jobs and emails: fine on a laptop, never in production
+  it('allows LOG_LEVEL=debug in development only', () => {
+    expect(validateEnv({ ...required, LOG_LEVEL: 'debug' }).LOG_LEVEL).toBe('debug');
+    expect(() => validateEnv({ ...required, NODE_ENV: 'production', LOG_LEVEL: 'debug' })).toThrow(
+      /LOG_LEVEL/,
+    );
+    expect(validateEnv({ ...required, NODE_ENV: 'production' }).LOG_LEVEL).toBe('info');
+  });
+
+  it.each([
+    ['LOG_LEVEL', 'verbose'],
+    ['NODE_ENV', 'staging'],
+  ])('rejects %s=%s', (key, value) => {
     expect(() => validateEnv({ ...required, [key]: value })).toThrow(new RegExp(key));
   });
 

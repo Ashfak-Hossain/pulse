@@ -39,7 +39,16 @@ export function createMailer({ deps, logger, onChannelError }: MailerOptions): J
     handle: async (job) => {
       // Only a job moved here by hand can be another type
       if (job.type !== 'notify.email') throw new PermanentJobError('Not a notify.email job');
-      const result = await sendEmailJob(deps, job);
+      const result = await sendEmailJob(
+        {
+          ...deps,
+          sendMail: (message) => {
+            logger.debug?.({ message }, 'Email to send');
+            return deps.sendMail(message);
+          },
+        },
+        job,
+      );
       const fields = { jobId: job.jobId, template: job.payload.template, result };
       if (result === 'sent-unmarked') {
         logger.warn(

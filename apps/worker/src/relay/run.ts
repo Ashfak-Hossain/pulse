@@ -18,13 +18,24 @@ export interface RunRelayOptions {
 export async function runRelay(options: RunRelayOptions): Promise<void> {
   const { db, producer, batchSize, pollMs, signal, logger } = options;
   const guarded = oneSendAtATime(producer);
+  const send: RelayProducer = {
+    send: (request) => {
+      for (const { topic, key, headers, value } of request.messages) {
+        logger.debug?.(
+          { topic, key, headers, value: JSON.parse(value) as unknown },
+          'Kafka record to send',
+        );
+      }
+      return guarded.send(request);
+    },
+  };
   const relayOptions = {
     batchSize,
     topics: new Set<string>(Object.values(topics).map((topic) => topic.name)),
     signal,
   };
   logger.info({ role: await currentRole(db), batchSize, pollMs }, 'Outbox relay started');
-  await runRelayLoop(() => relayOnce(db, guarded, relayOptions), {
+  await runRelayLoop(() => relayOnce(db, send, relayOptions), {
     batchSize,
     pollMs,
     signal,
