@@ -43,8 +43,10 @@ export const DATABASE = Symbol('DATABASE');
 export class DbModule implements OnApplicationShutdown {
   constructor(@Inject(DATABASE) private readonly db: Database) {}
 
-  // Runs on Ctrl+C / SIGTERM: close every pooled connection
+  // Runs on Ctrl+C / SIGTERM: close every pooled connection. The log line shows the hooks ran;
+  // without them the process ends the same way, by the signal
   async onApplicationShutdown(): Promise<void> {
     await this.db.$client.end();
+    new Logger('Database').log('Database pool closed');
   }
 }

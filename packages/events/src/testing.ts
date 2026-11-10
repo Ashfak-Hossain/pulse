@@ -28,6 +28,7 @@ async function freePort(): Promise<number> {
   });
 }
 
+/** Tests only (`@pulse/events/testing`; the apps never import it): an empty single-node Kafka. */
 export async function startTestKafka(): Promise<TestKafka> {
   const port = await freePort();
   const container = await new GenericContainer(image)

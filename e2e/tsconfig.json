@@ -1,0 +1,9 @@
+{
+  // Test code only, never built: checked by the editor, ESLint and `pnpm typecheck`
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node", "vitest/globals"]
+  },
+  "include": ["*.ts", "support"]
+}

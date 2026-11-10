@@ -1,7 +1,7 @@
 import { startTestDatabase } from '@pulse/db/testing';
+import { startTestKafka } from '@pulse/events/testing';
+import { startTestRabbit } from '@pulse/jobs/testing';
 import type { TestProject } from 'vitest/node';
-import { startTestKafka } from './kafka.js';
-import { startTestRabbit } from './rabbit.js';
 
 // One Kafka, one PostGIS and one RabbitMQ for the whole run, started side by side; each test
 // file reads the addresses with inject()
