@@ -1,0 +1,21 @@
+{
+  "name": "@pulse/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test:e2e": "vitest run --config vitest.config.e2e.ts"
+  },
+  "devDependencies": {
+    "@pulse/api": "workspace:*",
+    "@pulse/db": "workspace:*",
+    "@pulse/events": "workspace:*",
+    "@pulse/jobs": "workspace:*",
+    "@pulse/worker": "workspace:*",
+    "testcontainers": "^12.2.1",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

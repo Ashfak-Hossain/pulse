@@ -1,7 +1,8 @@
-# Node packages only; services/* are Python and C++
+# Node packages only; services/* are Python and C++. e2e runs the built apps together
 packages:
   - 'apps/*'
   - 'packages/*'
+  - 'e2e'
 
 # One version per shared tool; packages depend on it with "catalog:"
 catalog:

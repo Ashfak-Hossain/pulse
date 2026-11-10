@@ -29,13 +29,18 @@ export default defineConfig(
     languageOptions: { globals: { process: 'readonly', console: 'readonly' } },
   },
   {
-    // The test database helper loads a dev-only dependency: test code may use it, app code never
+    // The test container helpers load dev-only dependencies: test code may use them, app code never
     files: ['apps/*/src/**/*.ts', 'packages/*/src/**/*.ts'],
-    ignores: ['**/*.spec.ts', 'packages/db/src/testing.ts'],
+    ignores: ['**/*.spec.ts', 'packages/*/src/testing.ts'],
     rules: {
       'no-restricted-imports': [
         'error',
-        { paths: [{ name: '@pulse/db/testing', message: 'Test code only (test/ or *.spec.ts).' }] },
+        {
+          // Same set as the ignores above: every package's testing entry
+          patterns: [
+            { group: ['@pulse/*/testing'], message: 'Test code only (test/ or *.spec.ts).' },
+          ],
+        },
       ],
     },
   },
@@ -43,7 +48,7 @@ export default defineConfig(
     // High ceilings that catch a real mess, not targets (docs/code-structure.md). Test code is
     // left out: a test file grows with its cases and is not read the same way
     files: ['apps/*/src/**/*.ts', 'packages/*/src/**/*.ts'],
-    ignores: ['**/*.spec.ts', 'packages/db/src/testing.ts'],
+    ignores: ['**/*.spec.ts', 'packages/*/src/testing.ts'],
     rules: {
       'max-lines': ['error', { max: 400, skipBlankLines: true, skipComments: true }],
       'max-lines-per-function': ['error', { max: 100, skipBlankLines: true, skipComments: true }],

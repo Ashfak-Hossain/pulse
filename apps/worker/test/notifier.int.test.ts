@@ -15,7 +15,7 @@ import { campusCreatedEmail } from '../src/notifier/campus-created.js';
 import { createNotifierDb, runNotifier } from '../src/notifier/run.js';
 import { JobPublisher } from '../src/rabbit/publish.js';
 import { ensureTopology } from '../src/rabbit/topology.js';
-import { createLogger } from '../src/shared/logger.js';
+import { createLogger, type BasicLogger } from '../src/shared/logger.js';
 import { createVhost, rabbitApi } from './support/rabbit.js';
 
 // Its own vhost, and a new topic and consumer group per test: a new group reads from the start,
@@ -81,7 +81,10 @@ async function produce(...values: unknown[]): Promise<void> {
 let refusedPublishes = 0;
 
 /** The notifier exactly as the worker runs it, in its own consumer group, until stop(). */
-function startNotifier(groupId: string): { stop: () => Promise<void> } {
+function startNotifier(
+  groupId: string,
+  logger: BasicLogger = silent,
+): { stop: () => Promise<void> } {
   const consumer = createKafkaConsumer(kafka, groupId);
   const controller = new AbortController();
   const running = runNotifier({
@@ -94,7 +97,7 @@ function startNotifier(groupId: string): { stop: () => Promise<void> } {
       }),
     topicNames: [topic],
     signal: controller.signal,
-    logger: silent,
+    logger,
     retryDelay: () => 100,
   });
   return {
@@ -168,12 +171,13 @@ describe('notifier: Kafka → PostgreSQL + RabbitMQ', () => {
     expect(await isRecorded(event)).toBe(true);
   });
 
-  it('queues one job for an event Kafka delivers twice', async () => {
+  it('queues one job for an event Kafka delivers twice, and logs the skipped copy', async () => {
     const event = campusCreatedEvent();
     await produce(event, event);
     const end = await endOffset();
     const groupId = `notifier-${randomUUID()}`;
-    const notifier = startNotifier(groupId);
+    const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+    const notifier = startNotifier(groupId, logger);
     try {
       await vi.waitFor(async () => expect(await committedOffset(groupId)).toBe(end), settle);
     } finally {
@@ -181,6 +185,15 @@ describe('notifier: Kafka → PostgreSQL + RabbitMQ', () => {
     }
     const mine = (await jobsInQueue()).filter((job) => job.campusId === event.payload.campusId);
     expect(mine).toHaveLength(1);
+    const skipped = logger.info.mock.calls.filter(
+      ([, message]) => message === 'Skipped an event already handled',
+    );
+    expect(skipped).toEqual([
+      [
+        expect.objectContaining({ eventId: event.eventId, type: 'CampusCreated' }),
+        expect.any(String),
+      ],
+    ]);
   });
 
   it('skips records it cannot read and goes on to the next', async () => {

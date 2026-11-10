@@ -7,6 +7,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "default": "./dist/testing.js"
     }
   },
   "scripts": {
@@ -20,6 +24,7 @@
   },
   "devDependencies": {
     "fast-check": "catalog:",
+    "testcontainers": "^12.2.1",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }
