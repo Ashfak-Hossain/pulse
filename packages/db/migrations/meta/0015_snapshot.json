@@ -1,0 +1,1329 @@
+{
+  "id": "092b531e-6824-4ea9-9a5d-4aa7a1d35374",
+  "prevId": "e9945901-833d-4ee9-a00b-1a5b3733327f",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.app_user": {
+      "name": "app_user",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "campus_id": {
+          "name": "campus_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'student'"
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending_profile'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "app_user_campus_role_idx": {
+          "name": "app_user_campus_role_idx",
+          "columns": [
+            {
+              "expression": "campus_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "role",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "app_user_campus_id_campus_id_fk": {
+          "name": "app_user_campus_id_campus_id_fk",
+          "tableFrom": "app_user",
+          "columnsFrom": [
+            "campus_id"
+          ],
+          "tableTo": "campus",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "app_user_email_unique": {
+          "name": "app_user_email_unique",
+          "columns": [
+            "email"
+          ],
+          "nullsNotDistinct": false
+        },
+        "app_user_id_campus_unique": {
+          "name": "app_user_id_campus_unique",
+          "columns": [
+            "id",
+            "campus_id"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {
+        "app_user_campus": {
+          "name": "app_user_campus",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "pulse_app"
+          ],
+          "using": "\"app_user\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid",
+          "withCheck": "\"app_user\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "app_user_deleted_email_wiped": {
+          "name": "app_user_deleted_email_wiped",
+          "value": "(\"app_user\".\"status\" = 'deleted') = (\"app_user\".\"email\" like 'deleted+%@invalid')"
+        },
+        "app_user_email_lowercase": {
+          "name": "app_user_email_lowercase",
+          "value": "\"app_user\".\"email\" = lower(\"app_user\".\"email\")"
+        },
+        "app_user_role_valid": {
+          "name": "app_user_role_valid",
+          "value": "\"app_user\".\"role\" in ('student', 'faculty', 'staff', 'operator', 'campus_admin')"
+        },
+        "app_user_status_valid": {
+          "name": "app_user_status_valid",
+          "value": "\"app_user\".\"status\" in ('pending_profile', 'active', 'suspended', 'deleted')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.campus": {
+      "name": "campus",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email_domains": {
+          "name": "email_domains",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "location": {
+          "name": "location",
+          "type": "geometry(point)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "timezone": {
+          "name": "timezone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "campus_slug_unique": {
+          "name": "campus_slug_unique",
+          "columns": [
+            "slug"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {
+        "campus_read": {
+          "name": "campus_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "pulse_app"
+          ],
+          "using": "true"
+        },
+        "campus_insert": {
+          "name": "campus_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "pulse_app"
+          ],
+          "withCheck": "id = nullif(current_setting('app.campus_id', true), '')::uuid"
+        },
+        "campus_update": {
+          "name": "campus_update",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "pulse_app"
+          ],
+          "using": "id = nullif(current_setting('app.campus_id', true), '')::uuid",
+          "withCheck": "id = nullif(current_setting('app.campus_id', true), '')::uuid"
+        },
+        "campus_mailer_read": {
+          "name": "campus_mailer_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "pulse_mailer"
+          ],
+          "using": "true"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.course": {
+      "name": "course",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "campus_id": {
+          "name": "campus_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "course_title_trgm_idx": {
+          "name": "course_title_trgm_idx",
+          "columns": [
+            {
+              "expression": "title",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "gin_trgm_ops"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "gin",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "course_campus_id_campus_id_fk": {
+          "name": "course_campus_id_campus_id_fk",
+          "tableFrom": "course",
+          "columnsFrom": [
+            "campus_id"
+          ],
+          "tableTo": "campus",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "course_campus_code_unique": {
+          "name": "course_campus_code_unique",
+          "columns": [
+            "campus_id",
+            "code"
+          ],
+          "nullsNotDistinct": false
+        },
+        "course_id_campus_unique": {
+          "name": "course_id_campus_unique",
+          "columns": [
+            "id",
+            "campus_id"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {
+        "course_read": {
+          "name": "course_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "pulse_app"
+          ],
+          "using": "\"course\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.email_delivery": {
+      "name": "email_delivery",
+      "schema": "",
+      "columns": {
+        "dedupe_key": {
+          "name": "dedupe_key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "template": {
+          "name": "template",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "claim_id": {
+          "name": "claim_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attempts": {
+          "name": "attempts",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "last_error": {
+          "name": "last_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "claimed_at": {
+          "name": "claimed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "sent_at": {
+          "name": "sent_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "email_delivery_status_valid": {
+          "name": "email_delivery_status_valid",
+          "value": "\"email_delivery\".\"status\" in ('sending', 'sent', 'failed')"
+        },
+        "email_delivery_sent_at_iff_sent": {
+          "name": "email_delivery_sent_at_iff_sent",
+          "value": "(\"email_delivery\".\"status\" = 'sent') = (\"email_delivery\".\"sent_at\" is not null)"
+        },
+        "email_delivery_attempts_positive": {
+          "name": "email_delivery_attempts_positive",
+          "value": "\"email_delivery\".\"attempts\" >= 1"
+        },
+        "email_delivery_last_error_short": {
+          "name": "email_delivery_last_error_short",
+          "value": "length(\"email_delivery\".\"last_error\") <= 200"
+        },
+        "email_delivery_dedupe_key_short": {
+          "name": "email_delivery_dedupe_key_short",
+          "value": "length(\"email_delivery\".\"dedupe_key\") <= 200"
+        },
+        "email_delivery_template_short": {
+          "name": "email_delivery_template_short",
+          "value": "length(\"email_delivery\".\"template\") <= 100"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.email_otp": {
+      "name": "email_otp",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "campus_id": {
+          "name": "campus_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "code_hash": {
+          "name": "code_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attempts": {
+          "name": "attempts",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "consumed_at": {
+          "name": "consumed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ip_hash": {
+          "name": "ip_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "email_otp_campus_email_created_idx": {
+          "name": "email_otp_campus_email_created_idx",
+          "columns": [
+            {
+              "expression": "campus_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "email",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "email_otp_campus_id_campus_id_fk": {
+          "name": "email_otp_campus_id_campus_id_fk",
+          "tableFrom": "email_otp",
+          "columnsFrom": [
+            "campus_id"
+          ],
+          "tableTo": "campus",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "email_otp_campus": {
+          "name": "email_otp_campus",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "pulse_app"
+          ],
+          "using": "\"email_otp\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid",
+          "withCheck": "\"email_otp\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "email_otp_email_lowercase": {
+          "name": "email_otp_email_lowercase",
+          "value": "\"email_otp\".\"email\" = lower(\"email_otp\".\"email\")"
+        },
+        "email_otp_code_hash_hex": {
+          "name": "email_otp_code_hash_hex",
+          "value": "\"email_otp\".\"code_hash\" ~ '^[0-9a-f]{64}$'"
+        },
+        "email_otp_ip_hash_hex": {
+          "name": "email_otp_ip_hash_hex",
+          "value": "\"email_otp\".\"ip_hash\" ~ '^[0-9a-f]{64}$'"
+        },
+        "email_otp_attempts_range": {
+          "name": "email_otp_attempts_range",
+          "value": "\"email_otp\".\"attempts\" between 0 and 5"
+        },
+        "email_otp_expires_window": {
+          "name": "email_otp_expires_window",
+          "value": "\"email_otp\".\"expires_at\" > \"email_otp\".\"created_at\" and \"email_otp\".\"expires_at\" <= \"email_otp\".\"created_at\" + interval '15 minutes'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.outbox_event": {
+      "name": "outbox_event",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "seq": {
+          "name": "seq",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "identity": {
+            "name": "outbox_event_seq_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public",
+            "type": "always"
+          }
+        },
+        "aggregate": {
+          "name": "aggregate",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "aggregate_id": {
+          "name": "aggregate_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "topic": {
+          "name": "topic",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payload": {
+          "name": "payload",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "attempts": {
+          "name": "attempts",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "last_error": {
+          "name": "last_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "outbox_event_unpublished_idx": {
+          "name": "outbox_event_unpublished_idx",
+          "columns": [
+            {
+              "expression": "seq",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "published_at is null",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "outbox_event_version_positive": {
+          "name": "outbox_event_version_positive",
+          "value": "\"outbox_event\".\"version\" > 0"
+        },
+        "outbox_event_topic_not_empty": {
+          "name": "outbox_event_topic_not_empty",
+          "value": "\"outbox_event\".\"topic\" <> ''"
+        },
+        "outbox_event_key_not_empty": {
+          "name": "outbox_event_key_not_empty",
+          "value": "\"outbox_event\".\"key\" <> ''"
+        },
+        "outbox_event_attempts_not_negative": {
+          "name": "outbox_event_attempts_not_negative",
+          "value": "\"outbox_event\".\"attempts\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.processed_event": {
+      "name": "processed_event",
+      "schema": "",
+      "columns": {
+        "consumer": {
+          "name": "consumer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "event_id": {
+          "name": "event_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "processed_at": {
+          "name": "processed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "processed_event_consumer_event_id_pk": {
+          "name": "processed_event_consumer_event_id_pk",
+          "columns": [
+            "consumer",
+            "event_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.section": {
+      "name": "section",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "campus_id": {
+          "name": "campus_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "term_id": {
+          "name": "term_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "course_id": {
+          "name": "course_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "external_class_id": {
+          "name": "external_class_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "section_label": {
+          "name": "section_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "capacity": {
+          "name": "capacity",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "enrolled": {
+          "name": "enrolled",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "instructor_name": {
+          "name": "instructor_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "section_campus_idx": {
+          "name": "section_campus_idx",
+          "columns": [
+            {
+              "expression": "campus_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "section_term_campus_idx": {
+          "name": "section_term_campus_idx",
+          "columns": [
+            {
+              "expression": "term_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "campus_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "section_course_campus_idx": {
+          "name": "section_course_campus_idx",
+          "columns": [
+            {
+              "expression": "course_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "campus_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "section_title_trgm_idx": {
+          "name": "section_title_trgm_idx",
+          "columns": [
+            {
+              "expression": "title",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "gin_trgm_ops"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "gin",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "section_campus_id_campus_id_fk": {
+          "name": "section_campus_id_campus_id_fk",
+          "tableFrom": "section",
+          "columnsFrom": [
+            "campus_id"
+          ],
+          "tableTo": "campus",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "section_term_campus_fk": {
+          "name": "section_term_campus_fk",
+          "tableFrom": "section",
+          "columnsFrom": [
+            "term_id",
+            "campus_id"
+          ],
+          "tableTo": "term",
+          "columnsTo": [
+            "id",
+            "campus_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "section_course_campus_fk": {
+          "name": "section_course_campus_fk",
+          "tableFrom": "section",
+          "columnsFrom": [
+            "course_id",
+            "campus_id"
+          ],
+          "tableTo": "course",
+          "columnsTo": [
+            "id",
+            "campus_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "section_id_campus_unique": {
+          "name": "section_id_campus_unique",
+          "columns": [
+            "id",
+            "campus_id"
+          ],
+          "nullsNotDistinct": false
+        },
+        "section_term_external_class_unique": {
+          "name": "section_term_external_class_unique",
+          "columns": [
+            "term_id",
+            "external_class_id"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {
+        "section_read": {
+          "name": "section_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "pulse_app"
+          ],
+          "using": "\"section\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "section_capacity_nonnegative": {
+          "name": "section_capacity_nonnegative",
+          "value": "\"section\".\"capacity\" >= 0"
+        },
+        "section_enrolled_nonnegative": {
+          "name": "section_enrolled_nonnegative",
+          "value": "\"section\".\"enrolled\" >= 0"
+        },
+        "section_status_valid": {
+          "name": "section_status_valid",
+          "value": "\"section\".\"status\" in ('open', 'reserved', 'freshman', 'closed', 'cancelled')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.section_meeting": {
+      "name": "section_meeting",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "campus_id": {
+          "name": "campus_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "section_id": {
+          "name": "section_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "weekday": {
+          "name": "weekday",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "start_time": {
+          "name": "start_time",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "end_time": {
+          "name": "end_time",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "room": {
+          "name": "room",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "section_meeting_section_campus_idx": {
+          "name": "section_meeting_section_campus_idx",
+          "columns": [
+            {
+              "expression": "section_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "campus_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "section_meeting_departure_idx": {
+          "name": "section_meeting_departure_idx",
+          "columns": [
+            {
+              "expression": "campus_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "weekday",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "end_time",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "section_meeting_campus_id_campus_id_fk": {
+          "name": "section_meeting_campus_id_campus_id_fk",
+          "tableFrom": "section_meeting",
+          "columnsFrom": [
+            "campus_id"
+          ],
+          "tableTo": "campus",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "section_meeting_section_campus_fk": {
+          "name": "section_meeting_section_campus_fk",
+          "tableFrom": "section_meeting",
+          "columnsFrom": [
+            "section_id",
+            "campus_id"
+          ],
+          "tableTo": "section",
+          "columnsTo": [
+            "id",
+            "campus_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "section_meeting_read": {
+          "name": "section_meeting_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "pulse_app"
+          ],
+          "using": "\"section_meeting\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "section_meeting_kind_valid": {
+          "name": "section_meeting_kind_valid",
+          "value": "\"section_meeting\".\"kind\" in ('theory', 'lab', 'other')"
+        },
+        "section_meeting_weekday_valid": {
+          "name": "section_meeting_weekday_valid",
+          "value": "\"section_meeting\".\"weekday\" between 0 and 6"
+        },
+        "section_meeting_times_ordered": {
+          "name": "section_meeting_times_ordered",
+          "value": "\"section_meeting\".\"end_time\" > \"section_meeting\".\"start_time\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.term": {
+      "name": "term",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "campus_id": {
+          "name": "campus_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "starts_on": {
+          "name": "starts_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ends_on": {
+          "name": "ends_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'draft'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "term_one_active_per_campus": {
+          "name": "term_one_active_per_campus",
+          "columns": [
+            {
+              "expression": "campus_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"term\".\"status\" = 'active'",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "term_campus_id_campus_id_fk": {
+          "name": "term_campus_id_campus_id_fk",
+          "tableFrom": "term",
+          "columnsFrom": [
+            "campus_id"
+          ],
+          "tableTo": "campus",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "term_id_campus_unique": {
+          "name": "term_id_campus_unique",
+          "columns": [
+            "id",
+            "campus_id"
+          ],
+          "nullsNotDistinct": false
+        },
+        "term_campus_name_unique": {
+          "name": "term_campus_name_unique",
+          "columns": [
+            "campus_id",
+            "name"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {
+        "term_read": {
+          "name": "term_read",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "pulse_app"
+          ],
+          "using": "\"term\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "term_dates_ordered": {
+          "name": "term_dates_ordered",
+          "value": "\"term\".\"ends_on\" > \"term\".\"starts_on\""
+        },
+        "term_status_valid": {
+          "name": "term_status_valid",
+          "value": "\"term\".\"status\" in ('draft', 'active', 'archived')"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "views": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

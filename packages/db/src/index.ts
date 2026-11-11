@@ -9,6 +9,8 @@ export {
   term,
   section,
   sectionMeeting,
+  appUser,
+  emailOtp,
 } from './schema.js';
 export { assertRestrictedRole } from './role-check.js';
 export {

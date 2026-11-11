@@ -41,3 +41,17 @@ export {
   type SectionQuery,
   type SectionMeeting,
 } from './catalog.js';
+export {
+  authUserSchema,
+  otpRequestAcceptedSchema,
+  otpRequestBodySchema,
+  otpVerifyBodySchema,
+  otpVerifyResultSchema,
+  userRoleSchema,
+  userStatusSchema,
+  type AuthUser,
+  type OtpRequestAccepted,
+  type OtpRequestBody,
+  type OtpVerifyBody,
+  type OtpVerifyResult,
+} from './auth.js';

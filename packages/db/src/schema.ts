@@ -289,3 +289,119 @@ export const sectionMeeting = pgTable(
     }),
   ],
 );
+
+// One row per person who has signed in.
+export const appUser = pgTable(
+  'app_user',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`uuidv7()`),
+    campusId: uuid('campus_id')
+      .notNull()
+      .references(() => campus.id),
+    email: text('email').notNull(),
+    role: text('role', {
+      // No platform_admin yet: that role works across campuses, but RLS locks this row to one.
+      // The admin slice adds that path
+      enum: ['student', 'faculty', 'staff', 'operator', 'campus_admin'],
+    })
+      .notNull()
+      .default('student'),
+    status: text('status', { enum: ['pending_profile', 'active', 'suspended', 'deleted'] })
+      .notNull()
+      .default('pending_profile'),
+    createdAt: timestamp('created_at', {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+    // Set by the set_updated_at trigger (migration 0015); never write it
+    updatedAt: timestamp('updated_at', {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    // Global, not per campus: one address is one person, whichever campus it maps to. Account
+    // deletion (future slice) wipes the email to deleted+<id>@invalid, freeing the address
+    unique('app_user_email_unique').on(table.email),
+    // Lets later tables (session, preference…) point at a user of the same campus
+    unique('app_user_id_campus_unique').on(table.id, table.campusId),
+    // Covers the RLS filter and the campus foreign key; role second for the admin user list
+    index('app_user_campus_role_idx').on(table.campusId, table.role),
+    // Deleted exactly when wiped: a deleted row never keeps a real email, and a live account
+    // can never take the placeholder
+    check(
+      'app_user_deleted_email_wiped',
+      sql`(${table.status} = 'deleted') = (${table.email} like 'deleted+%@invalid')`,
+    ),
+    check('app_user_email_lowercase', sql`${table.email} = lower(${table.email})`),
+    check(
+      'app_user_role_valid',
+      sql`${table.role} in ('student', 'faculty', 'staff', 'operator', 'campus_admin')`,
+    ),
+    check(
+      'app_user_status_valid',
+      sql`${table.status} in ('pending_profile', 'active', 'suspended', 'deleted')`,
+    ),
+    // Read and insert inside the campus set by withCampus(), nothing else. Updating and deleting
+    // are taken away by grants (0015), not by this policy
+    pgPolicy('app_user_campus', {
+      for: 'all',
+      to: pulseApp,
+      using: sql`${table.campusId} = ${currentCampusId}`,
+      withCheck: sql`${table.campusId} = ${currentCampusId}`,
+    }),
+  ],
+);
+
+// One row per code sent. Only a keyed hash of the code is stored, never the code itself
+export const emailOtp = pgTable(
+  'email_otp',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`uuidv7()`),
+    campusId: uuid('campus_id')
+      .notNull()
+      .references(() => campus.id),
+    email: text('email').notNull(),
+    codeHash: text('code_hash').notNull(),
+    attempts: smallint('attempts').notNull().default(0),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    consumedAt: timestamp('consumed_at', { withTimezone: true }),
+    // Lets an admin spot one IP requesting many codes without storing the IP itself
+    ipHash: text('ip_hash').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // Starts with campus_id: covers the RLS filter and the campus foreign key, and still
+    // serves verify's "newest code for this email" lookup
+    index('email_otp_campus_email_created_idx').on(
+      table.campusId,
+      table.email,
+      table.createdAt.desc(),
+    ),
+    check('email_otp_email_lowercase', sql`${table.email} = lower(${table.email})`),
+    // A hex HMAC-SHA-256 is exactly 64 hex characters, so a plain code or IP never fits
+    check('email_otp_code_hash_hex', sql`${table.codeHash} ~ '^[0-9a-f]{64}$'`),
+    check('email_otp_ip_hash_hex', sql`${table.ipHash} ~ '^[0-9a-f]{64}$'`),
+    // 5 = the most wrong tries per code; verify must use the same limit
+    check('email_otp_attempts_range', sql`${table.attempts} between 0 and 5`),
+    // A code lives at most 15 minutes, whatever the API asks for
+    check(
+      'email_otp_expires_window',
+      sql`${table.expiresAt} > ${table.createdAt} and ${table.expiresAt} <= ${table.createdAt} + interval '15 minutes'`,
+    ),
+    // Same campus rule as app_user. Grants (0015) leave only attempts and consumed_at updatable,
+    // and a trigger makes those one-way
+    pgPolicy('email_otp_campus', {
+      for: 'all',
+      to: pulseApp,
+      using: sql`${table.campusId} = ${currentCampusId}`,
+      withCheck: sql`${table.campusId} = ${currentCampusId}`,
+    }),
+  ],
+);
