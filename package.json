@@ -36,7 +36,7 @@
     "@commitlint/config-conventional": "^21.2.4",
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.6.6",
-    "dependency-cruiser": "18.7.0",
+    "dependency-cruiser": "18.7.2",
     "eslint": "^10.14.0",
     "eslint-config-prettier": "^10.1.8",
     "husky": "^9.1.7",
