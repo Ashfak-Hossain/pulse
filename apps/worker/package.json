@@ -12,12 +12,12 @@
     "test:int": "vitest run --config vitest.config.int.ts"
   },
   "dependencies": {
-    "@platformatic/kafka": "^2.14.0",
+    "@platformatic/kafka": "^2.15.0",
     "@pulse/db": "workspace:*",
     "@pulse/events": "workspace:*",
     "@pulse/jobs": "workspace:*",
-    "amqplib": "^2.2.1",
-    "nodemailer": "^10.3.1",
+    "amqplib": "^2.3.1",
+    "nodemailer": "^10.4.0",
     "pino": "^10.4.0",
     "uuid": "^14.0.3",
     "zod": "catalog:"
