@@ -64,6 +64,7 @@ beforeAll(async () => {
   const port = await freePort();
   apiUrl = `http://127.0.0.1:${port}`;
   api = startApp('api', {
+    NODE_ENV: 'test',
     HOST: '127.0.0.1',
     PORT: String(port),
     DATABASE_URL: inject('appUrl'),

@@ -1,5 +1,4 @@
 $kind: http-request
-name: Verify code
 description: Swaps a right code for the user, creating it on the first sign-in (isNew true). A code works once; every failure is the same 400. Paste the code from the API log as otpCode first.
 url: "{{baseUrl}}/auth/otp/verify"
 method: POST
@@ -8,8 +7,7 @@ headers:
   Content-Type: application/json
 body:
   type: json
-  content: |-
-    {"email": "{{otpEmail}}", "code": "{{otpCode}}"}
+  content: '{"email": "{{otpEmail}}", "code": "{{otpCode}}"}'
 scripts:
   - type: afterResponse
     code: |-
