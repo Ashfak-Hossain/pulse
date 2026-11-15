@@ -1,7 +1,10 @@
 name: Pulse local
 values:
   - key: baseUrl
-    value: http://127.0.0.1:3000
-  # Paste ADMIN_TOKEN from your .env as the current value; never commit it
+    value: 'http://127.0.0.1:3000'
   - key: adminToken
+    value: ''
+  - key: otpEmail
+    value: ''
+  - key: otpCode
     value: ''

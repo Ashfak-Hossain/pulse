@@ -18,6 +18,8 @@ describe('otpRequestBodySchema', () => {
     { email: 'not-an-email' },
     { email: `${'a'.repeat(250)}@aiub.edu` },
     { email: 'student@aiub.edu', turnstileToken: 'later' },
+    // One mailbox, many accounts: a ban or a reliability score could be dodged with +1, +2…
+    { email: 'student+1@aiub.edu' },
   ])('rejects %o', (body) => expect(otpRequestBodySchema.safeParse(body).success).toBe(false));
 });
 

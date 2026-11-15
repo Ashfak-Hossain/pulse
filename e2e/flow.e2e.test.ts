@@ -68,6 +68,9 @@ beforeAll(async () => {
     PORT: String(port),
     DATABASE_URL: inject('appUrl'),
     ADMIN_TOKEN: adminToken,
+    // Required at boot; this flow never signs in, so nothing ever connects to the port
+    REDIS_URL: 'redis://127.0.0.1:1',
+    OTP_PEPPER: 'flow-e2e-otp-pepper-not-a-secret-0123456789ab',
   });
   // The worker starts the notifier after Kafka topics and RabbitMQ are ready, so it is "ready"
   await Promise.all([

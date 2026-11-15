@@ -1,0 +1,28 @@
+$kind: http-request
+name: Wrong code
+description: A wrong, expired, used or unknown code all get this same 400, so the answer never says whether a code exists. Each try counts toward the 5 verifies per address per hour.
+url: "{{baseUrl}}/auth/otp/verify"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {"email": "nobody@student.aiub.edu", "code": "000000"}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 400 (429: this address used its 5 verifies this hour)', () =>
+        pm.response.to.have.status(400),
+      );
+      pm.test('is the one generic failure', () =>
+        pm.expect(pm.response.json()).to.eql({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: 'Invalid or expired code',
+        }),
+      );
+    language: text/javascript
+examples: .resources/Wrong code.resources/examples
+order: 3000

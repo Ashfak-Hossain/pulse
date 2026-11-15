@@ -10,6 +10,7 @@ import { type ApiError, apiIssueSchema } from '@pulse/contracts';
 import { DrizzleQueryError } from '@pulse/db';
 import type { Request } from 'express';
 import { STATUS_CODES } from 'node:http';
+import { RateLimitedException } from './rate-limited.exception.js';
 
 // Catches everything an HTTP request throws and answers in the one shape clients rely on (ApiError).
 // HTTP only: the WebSocket gateway (later) needs its own filter
@@ -36,6 +37,12 @@ export class HttpErrorFilter implements ExceptionFilter {
       httpAdapter.end(response);
       return;
     }
+
+    // The only header an error sets: clients and proxies back off for exactly this long
+    if (exception instanceof RateLimitedException) {
+      httpAdapter.setHeader(response, 'Retry-After', String(exception.retryAfterSec));
+    }
+
     httpAdapter.reply(response, body, body.statusCode);
   }
 }
