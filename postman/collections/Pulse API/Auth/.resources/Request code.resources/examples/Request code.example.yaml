@@ -1,0 +1,23 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/auth/otp/request"
+  method: POST
+  headers:
+    Accept: application/json
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {"email": "postman-mi0k2x7a@student.aiub.edu"}
+response:
+  statusCode: 202
+  statusText: Accepted
+  headers:
+    content-type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "expiresInSec": 600
+      }
+order: 1000

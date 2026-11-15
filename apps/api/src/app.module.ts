@@ -10,6 +10,7 @@ import { CampusModule } from './campus/campus.module.js';
 import { CatalogModule } from './catalog/catalog.module.js';
 import { CourseModule } from './course/course.module.js';
 import { FareModule } from './fare/fare.module.js';
+import { AuthModule } from './auth/auth.module.js';
 
 // The repo-root .env
 const rootEnvFile = fileURLToPath(new URL('../../../.env', import.meta.url));
@@ -29,6 +30,7 @@ const rootEnvFile = fileURLToPath(new URL('../../../.env', import.meta.url));
     CourseModule,
     CatalogModule,
     FareModule,
+    AuthModule,
   ],
   providers: [
     // Registered here, not in main.ts, so every app built from AppModule (tests too) gets it

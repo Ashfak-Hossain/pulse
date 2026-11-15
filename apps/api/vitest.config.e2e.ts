@@ -10,9 +10,12 @@ export default defineConfig({
     // ConfigModule validates the env at startup; every test swaps the database (a fake or the
     // container), so this URL only has to be well formed (port 1: nothing ever listens there)
     // ADMIN_TOKEN: a fixed test value, read back by the admin e2e tests
+    // REDIS_URL: same idea; the auth tests swap in a Redis container, nothing else connects
     env: {
       DATABASE_URL: 'postgres://pulse_app:unused@127.0.0.1:1/pulse',
       ADMIN_TOKEN: 'e2e-admin-token-not-a-secret-0123456789abcdef',
+      REDIS_URL: 'redis://127.0.0.1:1',
+      OTP_PEPPER: 'e2e-otp-pepper-not-a-secret-0123456789abcdefgh',
     },
   },
 });

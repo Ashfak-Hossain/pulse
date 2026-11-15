@@ -1,8 +1,16 @@
 import { z } from 'zod';
 
 // Lowercased here, so every layer below sees one spelling per address. 254 is the longest
-// address SMTP can deliver
-const signInEmailSchema = z.email().max(254).toLowerCase();
+// address SMTP can deliver. No "+tag": student+1@ lands in student@'s mailbox, and one
+// mailbox must be one account (bans and reliability scores follow the account)
+const signInEmailSchema = z
+  .email()
+  .max(254)
+  .toLowerCase()
+  .refine(
+    (email) => !email.slice(0, email.lastIndexOf('@')).includes('+'),
+    'Plus addressing is not supported',
+  );
 
 export const userRoleSchema = z.enum(['student', 'faculty', 'staff', 'operator', 'campus_admin']);
 export const userStatusSchema = z.enum(['pending_profile', 'active', 'suspended', 'deleted']);

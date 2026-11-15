@@ -1,0 +1,27 @@
+$kind: http-request
+name: Request code
+description: Asks for a sign-in code. The answer is the same 202 for every address, known or not, so nobody can probe for accounts. In development the code goes to the API log, not to email.
+url: "{{baseUrl}}/auth/otp/request"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {"email": "{{otpEmail}}"}
+scripts:
+  - type: beforeRequest
+    code: |-
+      // A fresh address per send: Verify code reads it, and isNew is true on the first verify
+      pm.environment.set('otpEmail', `postman-${Date.now().toString(36)}@student.aiub.edu`);
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('status is 202 (429: wait Retry-After seconds)', () => pm.response.to.have.status(202));
+      pm.test('says how long the code lives, nothing else', () =>
+        pm.expect(pm.response.json()).to.eql({ expiresInSec: 600 }),
+      );
+    language: text/javascript
+examples: .resources/Request code.resources/examples
+order: 1000

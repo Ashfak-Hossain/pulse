@@ -1,0 +1,3 @@
+$kind: collection
+description: 'Email one-time-code sign-in (no session yet: that comes with S29). Run Request code, copy the 6-digit code from the API log ("Sign-in code for …"), paste it as otpCode in the Pulse local environment, then run Verify code. Request code picks a fresh AIUB address each send, so Verify answers isNew true the first time. Limits per hour: 5 codes and 5 verifies per address, 60 requests and 120 verifies per IP; over a limit the API answers 429 with Retry-After.'
+order: 6000

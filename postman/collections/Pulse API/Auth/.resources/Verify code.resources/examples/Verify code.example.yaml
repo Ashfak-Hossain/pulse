@@ -1,0 +1,30 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/auth/otp/verify"
+  method: POST
+  headers:
+    Accept: application/json
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {"email": "postman-mi0k2x7a@student.aiub.edu", "code": "048213"}
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    content-type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "user": {
+          "id": "5d2c8e41-7b3a-4f0e-9c6d-1a2b3c4d5e6f",
+          "campusId": "9e1f2a3b-4c5d-4e6f-8a7b-0c1d2e3f4a5b",
+          "email": "postman-mi0k2x7a@student.aiub.edu",
+          "role": "student",
+          "status": "pending_profile"
+        },
+        "isNew": true
+      }
+order: 1000
