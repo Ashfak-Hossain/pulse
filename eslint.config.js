@@ -58,6 +58,12 @@ export default defineConfig(
     },
   },
   {
+    // The Drizzle schema is one declaration per table with no logic, and it grows with every
+    // table the plan adds; its length is not the mess max-lines looks for
+    files: ['packages/db/src/schema.ts'],
+    rules: { 'max-lines': 'off' },
+  },
+  {
     // CLAUDE.md rule 5: the algorithm packages take clocks and seeds as parameters. Imports are
     // checked by dependency-cruiser (.dependency-cruiser.js)
     files: [
