@@ -47,17 +47,22 @@ export function signAccessToken(
     .sign(key);
 }
 
-/** The claims of a valid signed token or undefined for anything else */
+/**
+ * The claims of a valid signed token or undefined for anything else. toleranceSec accepts a
+ * token that long past its expiry (sign-out only: it needs to know the device, not trust it).
+ */
 export async function verifyAccessToken(
   key: Uint8Array,
   token: string,
   now = new Date(),
+  toleranceSec = 0,
 ): Promise<AccessClaims | undefined> {
   try {
     const { payload } = await jwtVerify(token, key, {
       algorithms: ['HS256'],
       requiredClaims: ['exp', 'iat', 'sub'],
       currentDate: now,
+      clockTolerance: toleranceSec,
     });
     const parsed = payloadSchema.safeParse(payload);
 

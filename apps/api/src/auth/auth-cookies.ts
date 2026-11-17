@@ -1,12 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { CookieOptions, Response } from 'express';
+import type { CookieOptions, Request, Response } from 'express';
 import type { Env } from '../config/env.js';
 import { ACCESS_TOKEN_TTL_SEC, REFRESH_TOKEN_TTL_SEC } from './auth-tokens.js';
 import type { SessionTokens } from './session.service.js';
 
 export const ACCESS_COOKIE = 'pulse_at';
 export const REFRESH_COOKIE = 'pulse_rt';
+
+/** The sign-in cookies this request carries, each only if it is a string. */
+export function readAuthCookies(req: Request): Partial<SessionTokens> {
+  const cookies: Record<string, unknown> = req.cookies ?? {};
+  const access = cookies[ACCESS_COOKIE];
+  const refresh = cookies[REFRESH_COOKIE];
+  return {
+    accessToken: typeof access === 'string' ? access : undefined,
+    refreshToken: typeof refresh === 'string' ? refresh : undefined,
+  };
+}
 
 /** Sets and clears the two sign-in cookies. Page scripts can never read them (httpOnly). */
 @Injectable()
