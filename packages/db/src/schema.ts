@@ -405,3 +405,62 @@ export const emailOtp = pgTable(
     }),
   ],
 );
+
+// One row per refresh token. Reusing an old (rotated) token revokes its whole family.
+export const authSession = pgTable(
+  'auth_session',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`uuidv7()`),
+    campusId: uuid('campus_id')
+      .notNull()
+      .references(() => campus.id),
+    userId: uuid('user_id').notNull(),
+    familyId: uuid('family_id').notNull(),
+    tokenHash: text('token_hash').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    // The database sets these times itself
+    rotatedAt: timestamp('rotated_at', { withTimezone: true }),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    revokeReason: text('revoke_reason', {
+      enum: ['sign_out', 'sign_out_all', 'reuse_detected', 'suspended', 'deleted'],
+    }),
+    userAgent: text('user_agent'),
+    ipHash: text('ip_hash').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // Refresh finds the row by this hash, inside the campus the token's prefix names
+    unique('auth_session_token_hash_unique').on(table.tokenHash),
+    // The user must belong to the session's campus (app_user has a unique (id, campus_id))
+    foreignKey({
+      name: 'auth_session_user_campus_fk',
+      columns: [table.userId, table.campusId],
+      foreignColumns: [appUser.id, appUser.campusId],
+    }),
+    index('auth_session_campus_user_idx').on(table.campusId, table.userId),
+    index('auth_session_family_idx').on(table.familyId),
+    check('auth_session_token_hash_hex', sql`${table.tokenHash} ~ '^[0-9a-f]{64}$'`),
+    check('auth_session_ip_hash_hex', sql`${table.ipHash} ~ '^[0-9a-f]{64}$'`),
+    check(
+      'auth_session_expires_window',
+      sql`${table.expiresAt} > ${table.createdAt} and ${table.expiresAt} <= ${table.createdAt} + interval '30 days'`,
+    ),
+    check('auth_session_user_agent_length', sql`char_length(${table.userAgent}) <= 200`),
+    check(
+      'auth_session_revoke_reason_valid',
+      sql`${table.revokeReason} in ('sign_out', 'sign_out_all', 'reuse_detected', 'suspended', 'deleted')`,
+    ),
+    check(
+      'auth_session_revoked_with_reason',
+      sql`(${table.revokedAt} is null) = (${table.revokeReason} is null)`,
+    ),
+    pgPolicy('auth_session_campus', {
+      for: 'all',
+      to: pulseApp,
+      using: sql`${table.campusId} = ${currentCampusId}`,
+      withCheck: sql`${table.campusId} = ${currentCampusId}`,
+    }),
+  ],
+);

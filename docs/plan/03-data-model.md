@@ -184,7 +184,7 @@ Sessions, devices and exports:
 
 ```mermaid
 erDiagram
-  app_user ||--o{ session : has
+  app_user ||--o{ auth_session : has
   app_user ||--o{ push_subscription : has
   app_user ||--o{ data_export : requests
 ```
@@ -236,7 +236,7 @@ Indexes: unique (email); (campus_id, role).
 
 Index: (email, created_at desc). Retention: deleted after 24 h by `retention.purge`.
 
-### 5.3 `session`
+### 5.3 `auth_session`
 
 One row per refresh token. Rotation creates a child; reusing a rotated token revokes the family.
 
@@ -246,7 +246,6 @@ One row per refresh token. Rotation creates a child; reusing a rotated token rev
 | campus_id     | uuid → campus   |                                                                      |
 | user_id       | uuid → app_user |                                                                      |
 | family_id     | uuid            | same for every token descended from one sign-in                      |
-| parent_id     | uuid → session  | nullable                                                             |
 | token_hash    | text            | SHA-256 of the opaque token; unique                                  |
 | expires_at    | timestamptz     | created + 30 days                                                    |
 | rotated_at    | timestamptz     | set when a child is issued                                           |
@@ -1362,19 +1361,19 @@ Not campus-scoped (infrastructure); exempt from RLS, worker only.
 
 ## 14. Table count and owners
 
-| Domain                      | Tables                                                                                                                                          | Count  |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| Campus and geography        | campus, campus_gate, term, zone, meeting_point, cell_distance                                                                                   | 6      |
-| Identity and people         | app_user, email_otp, session, preference, vehicle, trusted_contact, push_subscription, reliability, fairness_balance, travel_habit, data_export | 11     |
-| Catalog, routine, calendar  | course, catalog_import, section, section_meeting, enrollment, schedule_block, calendar_event, class_change_report, class_change_confirmation    | 9      |
-| Requests                    | trip_request, recurring_plan, autopilot_suggestion, request_text_sample, route_waitlist                                                         | 5      |
-| Matching, crews, trips      | match_batch, crew, crew_member, trip, trip_participant, trip_transition, message                                                                | 7      |
-| Safety                      | sos_event, safety_check, rating, report, block, moderation_action, sim_sms                                                                      | 7      |
-| Money                       | fare_claim, fare_claim_vote, ledger_account, journal_entry, posting, dispute, settlement_run, settlement                                        | 8      |
-| Shuttles                    | operator, shuttle_vehicle, shuttle_route, shuttle_stop, shuttle_run, seat_booking, operator_payout, demand_snapshot                             | 8      |
-| Notifications               | notification, notification_attempt, calendar_feed_token                                                                                         | 3      |
-| Platform and infrastructure | file_object, onboarding_spec, ml_model, feature_flag, audit_log, analytics_daily, outbox_event, processed_event, idempotency_key, scheduled_run | 10     |
-| **Total**                   |                                                                                                                                                 | **74** |
+| Domain                      | Tables                                                                                                                                               | Count  |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| Campus and geography        | campus, campus_gate, term, zone, meeting_point, cell_distance                                                                                        | 6      |
+| Identity and people         | app_user, email_otp, auth_session, preference, vehicle, trusted_contact, push_subscription, reliability, fairness_balance, travel_habit, data_export | 11     |
+| Catalog, routine, calendar  | course, catalog_import, section, section_meeting, enrollment, schedule_block, calendar_event, class_change_report, class_change_confirmation         | 9      |
+| Requests                    | trip_request, recurring_plan, autopilot_suggestion, request_text_sample, route_waitlist                                                              | 5      |
+| Matching, crews, trips      | match_batch, crew, crew_member, trip, trip_participant, trip_transition, message                                                                     | 7      |
+| Safety                      | sos_event, safety_check, rating, report, block, moderation_action, sim_sms                                                                           | 7      |
+| Money                       | fare_claim, fare_claim_vote, ledger_account, journal_entry, posting, dispute, settlement_run, settlement                                             | 8      |
+| Shuttles                    | operator, shuttle_vehicle, shuttle_route, shuttle_stop, shuttle_run, seat_booking, operator_payout, demand_snapshot                                  | 8      |
+| Notifications               | notification, notification_attempt, calendar_feed_token                                                                                              | 3      |
+| Platform and infrastructure | file_object, onboarding_spec, ml_model, feature_flag, audit_log, analytics_daily, outbox_event, processed_event, idempotency_key, scheduled_run      | 10     |
+| **Total**                   |                                                                                                                                                      | **74** |
 
 Views: `v_account_balance`, `v_forecast_training` (anonymised: weekday, class gaps, offsets, no
 user ids), `v_week_schedule` (a user's meetings with calendar overrides applied).
@@ -1397,17 +1396,17 @@ Redis holds only short-lived or rebuildable data. Losing Redis loses no truth.
 
 ## 16. Retention summary
 
-| Data                       | Kept for                                                         | Job                         |
-| -------------------------- | ---------------------------------------------------------------- | --------------------------- |
-| Live locations             | trip duration (Redis TTL)                                        | Redis + trip end            |
-| Chat messages              | 30 days after the trip                                           | `retention.purge`           |
-| `email_otp`                | 24 h                                                             | `retention.purge`           |
-| Revoked/expired `session`  | 30 days                                                          | `retention.purge`           |
-| `idempotency_key`          | 24 h                                                             | `retention.purge`           |
-| Published `outbox_event`   | 7 days                                                           | `retention.purge`           |
-| `processed_event`          | 30 days                                                          | `retention.purge`           |
-| `notification`             | 90 days                                                          | `retention.purge`           |
-| SOS location               | 90 days, then nulled                                             | `retention.purge`           |
-| `match_batch` input/result | 60 days                                                          | `retention.purge`           |
-| Ledger, audit log          | forever (append-only)                                            | none                        |
-| Deleted account            | PII overwritten at once; ledger rows keep the anonymised user id | `export.user` / delete flow |
+| Data                           | Kept for                                                         | Job                         |
+| ------------------------------ | ---------------------------------------------------------------- | --------------------------- |
+| Live locations                 | trip duration (Redis TTL)                                        | Redis + trip end            |
+| Chat messages                  | 30 days after the trip                                           | `retention.purge`           |
+| `email_otp`                    | 24 h                                                             | `retention.purge`           |
+| Revoked/expired `auth_session` | 30 days                                                          | `retention.purge`           |
+| `idempotency_key`              | 24 h                                                             | `retention.purge`           |
+| Published `outbox_event`       | 7 days                                                           | `retention.purge`           |
+| `processed_event`              | 30 days                                                          | `retention.purge`           |
+| `notification`                 | 90 days                                                          | `retention.purge`           |
+| SOS location                   | 90 days, then nulled                                             | `retention.purge`           |
+| `match_batch` input/result     | 60 days                                                          | `retention.purge`           |
+| Ledger, audit log              | forever (append-only)                                            | none                        |
+| Deleted account                | PII overwritten at once; ledger rows keep the anonymised user id | `export.user` / delete flow |
