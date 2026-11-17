@@ -1,0 +1,26 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/auth/sessions"
+  method: GET
+  headers:
+    Accept: application/json
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    content-type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "sessions": [
+          {
+            "id": "0193f2a1-6c4e-7b8d-9e0f-1a2b3c4d5e6f",
+            "userAgent": "PostmanRuntime/7.43.0",
+            "lastActiveAt": "2026-11-18T09:12:44.512Z",
+            "expiresAt": "2026-12-18T09:12:44.512Z",
+            "current": true
+          }
+        ]
+      }
+order: 1000

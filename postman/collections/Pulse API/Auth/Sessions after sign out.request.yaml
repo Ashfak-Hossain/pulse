@@ -1,14 +1,13 @@
 $kind: http-request
-description: "Run right after Sign out: the session is gone, so the same request now answers 401."
-url: "{{baseUrl}}/auth/sign-out"
-method: POST
+description: "Run right after Sign out everywhere: no device is signed in any more, so the session list answers 401."
+url: "{{baseUrl}}/auth/sessions"
+method: GET
 headers:
   Accept: application/json
-  Origin: "{{appOrigin}}"
 scripts:
   - type: afterResponse
     code: |-
       pm.test('status is 401: no live session any more', () => pm.response.to.have.status(401));
     language: text/javascript
-examples: .resources/Sign out again.resources/examples
-order: 5000
+examples: .resources/Sessions after sign out.resources/examples
+order: 8000

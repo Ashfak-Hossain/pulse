@@ -1,0 +1,21 @@
+$kind: http-request
+description: "Swaps the pulse_rt cookie for a new pulse_at and pulse_rt pair; the web app calls it when the 15-minute access token runs out. The old refresh token is dead from now on: sent again within 10 s it gets a plain 401 (two tabs racing), later it counts as stolen and signs the whole device out."
+url: "{{baseUrl}}/auth/refresh"
+method: POST
+headers:
+  Accept: application/json
+  Origin: "{{appOrigin}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 204 (401: run Request code and Verify code first)', () =>
+        pm.response.to.have.status(204),
+      );
+      pm.test('sets a new pair of session cookies', () => {
+        const setCookie = pm.response.headers.filter((h) => h.key.toLowerCase() === 'set-cookie').map((h) => h.value);
+        pm.expect(setCookie.some((c) => /^pulse_at=[^;]+;/.test(c))).to.equal(true);
+        pm.expect(setCookie.some((c) => /^pulse_rt=[^;]+;/.test(c) && c.includes('Path=/auth'))).to.equal(true);
+      });
+    language: text/javascript
+examples: .resources/Refresh.resources/examples
+order: 5000

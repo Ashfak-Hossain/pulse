@@ -1,0 +1,26 @@
+$kind: http-request
+description: "Every device this user is signed in on, newest activity first. id names the device and stays the same across refreshes; current marks the one sending this request. Needs Verify code first."
+url: "{{baseUrl}}/auth/sessions"
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200 (401: run Request code and Verify code first)', () =>
+        pm.response.to.have.status(200),
+      );
+      pm.test('has exactly the contract fields', () => {
+        const body = pm.response.json();
+        pm.expect(Object.keys(body)).to.eql(['sessions']);
+        body.sessions.forEach((s) =>
+          pm.expect(Object.keys(s).sort()).to.eql(['current', 'expiresAt', 'id', 'lastActiveAt', 'userAgent']),
+        );
+      });
+      pm.test('marks exactly one device as this one', () => {
+        const current = pm.response.json().sessions.filter((s) => s.current);
+        pm.expect(current).to.have.length(1);
+      });
+    language: text/javascript
+examples: .resources/List sessions.resources/examples
+order: 4000
