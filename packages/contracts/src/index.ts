@@ -42,6 +42,9 @@ export {
   type SectionMeeting,
 } from './catalog.js';
 export {
+  authSessionListSchema,
+  authSessionParamsSchema,
+  authSessionSchema,
   authUserSchema,
   otpRequestAcceptedSchema,
   otpRequestBodySchema,
@@ -49,6 +52,9 @@ export {
   otpVerifyResultSchema,
   userRoleSchema,
   userStatusSchema,
+  type AuthSession,
+  type AuthSessionList,
+  type AuthSessionParams,
   type AuthUser,
   type OtpRequestAccepted,
   type OtpRequestBody,

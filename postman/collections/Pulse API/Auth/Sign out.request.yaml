@@ -1,5 +1,5 @@
 $kind: http-request
-description: "Ends this device's session (Verify code first). Both cookies are cleared, and the old access token stops working at once, even before its 15 minutes are up."
+description: "Ends the device these cookies belong to and clears both cookies. Public on purpose: it works after the access token expired, and answers 204 even when nothing is signed in, as here right after Sign out everywhere."
 url: "{{baseUrl}}/auth/sign-out"
 method: POST
 headers:
@@ -8,7 +8,7 @@ headers:
 scripts:
   - type: afterResponse
     code: |-
-      pm.test('status is 204 (401: run Request code and Verify code first)', () =>
+      pm.test('status is 204, signed in or not', () =>
         pm.response.to.have.status(204),
       );
       pm.test('clears both cookies', () => {
@@ -18,4 +18,4 @@ scripts:
       });
     language: text/javascript
 examples: .resources/Sign out.resources/examples
-order: 4000
+order: 9000

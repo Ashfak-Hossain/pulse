@@ -11,4 +11,4 @@ scripts:
       pm.test('status is 403: another site cannot act for you', () => pm.response.to.have.status(403));
     language: text/javascript
 examples: .resources/Cross-site sign out.resources/examples
-order: 6000
+order: 10000

@@ -10,7 +10,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import type { AuthUser } from '@pulse/contracts';
 import type { Request } from 'express';
-import { ACCESS_COOKIE } from './auth-cookies.js';
+import { readAuthCookies } from './auth-cookies.js';
 import { SessionService, type SignedInUser } from './session.service.js';
 
 const PUBLIC = 'auth:public';
@@ -50,8 +50,8 @@ export class AuthGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest<SignedInRequest>();
-    const token: unknown = request.cookies[ACCESS_COOKIE];
-    const user = typeof token === 'string' ? await this.sessions.authenticate(token) : undefined;
+    const { accessToken } = readAuthCookies(request);
+    const user = accessToken ? await this.sessions.authenticate(accessToken) : undefined;
 
     if (!user) {
       throw new UnauthorizedException();

@@ -1,0 +1,21 @@
+$kind: http-request
+description: "Signs this user out on every device at once and clears this browser's cookies. Needs a live session (Verify code first)."
+url: "{{baseUrl}}/auth/sign-out-all"
+method: POST
+headers:
+  Accept: application/json
+  Origin: "{{appOrigin}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 204 (401: run Request code and Verify code first)', () =>
+        pm.response.to.have.status(204),
+      );
+      pm.test('clears both cookies', () => {
+        const setCookie = pm.response.headers.filter((h) => h.key.toLowerCase() === 'set-cookie').map((h) => h.value);
+        pm.expect(setCookie.some((c) => c.startsWith('pulse_at=;'))).to.equal(true);
+        pm.expect(setCookie.some((c) => c.startsWith('pulse_rt=;'))).to.equal(true);
+      });
+    language: text/javascript
+examples: .resources/Sign out everywhere.resources/examples
+order: 7000

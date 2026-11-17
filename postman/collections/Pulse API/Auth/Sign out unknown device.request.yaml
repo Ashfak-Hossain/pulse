@@ -1,0 +1,16 @@
+$kind: http-request
+description: "DELETE /auth/sessions/:id signs out one device, by the id List sessions shows (204; your own id also clears your cookies). An id that is not one of your live devices, like this random one or another user's, answers 404."
+url: "{{baseUrl}}/auth/sessions/{{$randomUUID}}"
+method: DELETE
+headers:
+  Accept: application/json
+  Origin: "{{appOrigin}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 404 (401: run Request code and Verify code first)', () =>
+        pm.response.to.have.status(404),
+      );
+    language: text/javascript
+examples: .resources/Sign out unknown device.resources/examples
+order: 6000

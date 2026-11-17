@@ -20,7 +20,7 @@ const run = randomUUID().slice(0, 8);
 const domain = `session-${run}.test`;
 const origin = process.env.APP_ORIGIN ?? '';
 // What /probe/me answers: the user the guard attached, plus their session
-const signedInSchema = authUserSchema.extend({ sessionId: z.uuid() });
+const signedInSchema = authUserSchema.extend({ sessionId: z.uuid(), familyId: z.uuid() });
 
 // Routes that exist only in this test, to exercise the global guards
 @Controller('probe')
@@ -250,8 +250,10 @@ describe('Sessions, cookies and guards over HTTP', () => {
       await http().get('/probe/me').set('Cookie', phone.accessCookie).expect(200);
     });
 
-    it('needs a signed-in user', async () => {
-      await http().post('/auth/sign-out').set('Origin', origin).expect(401);
+    // Public since PR 3: a browser whose access token expired must still be able to sign out
+    it('answers 204 and clears the cookies even when nobody is signed in', async () => {
+      const res = await http().post('/auth/sign-out').set('Origin', origin).expect(204);
+      expect([res.headers['set-cookie'] ?? []].flat()).toHaveLength(2);
     });
   });
 

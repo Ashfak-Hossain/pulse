@@ -35,6 +35,15 @@ describe('access token', () => {
     expect(await verifyAccessToken(key, token, later(ACCESS_TOKEN_TTL_SEC + 1))).toBeUndefined();
   });
 
+  // Sign-out's tolerance: an expired token still names its device, but not forever
+  it('accepts an expired token only within the tolerance given', async () => {
+    const token = await signAccessToken(key, claims, now);
+    const day = 24 * 60 * 60;
+    const thirtyDays = 30 * day;
+    expect(await verifyAccessToken(key, token, later(29 * day), thirtyDays)).toEqual(claims);
+    expect(await verifyAccessToken(key, token, later(31 * day), thirtyDays)).toBeUndefined();
+  });
+
   it('refuses a token signed with another secret', async () => {
     const token = await signAccessToken(otherKey, claims, now);
     expect(await verifyAccessToken(key, token, now)).toBeUndefined();

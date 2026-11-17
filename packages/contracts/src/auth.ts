@@ -43,3 +43,24 @@ export type AuthUser = z.infer<typeof authUserSchema>;
 /** isNew is true when this verify created the account. Onboarding follows user.status. */
 export const otpVerifyResultSchema = z.strictObject({ user: authUserSchema, isNew: z.boolean() });
 export type OtpVerifyResult = z.infer<typeof otpVerifyResultSchema>;
+
+/**
+ * One signed-in device. id stays the same across refreshes (it is the session family).
+ * lastActiveAt is the device's last refresh, so up to 15 minutes behind its last request.
+ */
+export const authSessionSchema = z.strictObject({
+  id: z.uuid(),
+  userAgent: z.string().nullable(),
+  lastActiveAt: z.iso.datetime(),
+  expiresAt: z.iso.datetime(),
+  current: z.boolean(),
+});
+export type AuthSession = z.infer<typeof authSessionSchema>;
+
+/** Response of GET /auth/sessions, newest activity first. */
+export const authSessionListSchema = z.strictObject({ sessions: z.array(authSessionSchema) });
+export type AuthSessionList = z.infer<typeof authSessionListSchema>;
+
+/** Path of DELETE /auth/sessions/:id. */
+export const authSessionParamsSchema = z.strictObject({ id: z.uuid() });
+export type AuthSessionParams = z.infer<typeof authSessionParamsSchema>;

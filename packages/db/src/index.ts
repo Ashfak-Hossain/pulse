@@ -26,4 +26,5 @@ export {
   isNull,
   or,
   sql,
+  type SQL,
 } from 'drizzle-orm';
