@@ -11,6 +11,9 @@ import { configureApp } from '../src/app.setup.js';
 import { AppModule } from '../src/app.module.js';
 import { DATABASE } from '../src/db/db.module.js';
 
+// Every state-changing request must come from the app's own origin (OriginGuard)
+const origin = process.env.APP_ORIGIN ?? '';
+
 // Shared database, files run in parallel: every slug here carries this file's run id
 const run = randomUUID().slice(0, 8);
 // Set in vitest.config.e2e.ts
@@ -34,7 +37,7 @@ describe('POST /admin/campuses, against a real database', () => {
   const trigger = `e2e_fail_outbox_${run}`;
 
   const post = (body: unknown, authorization: string | null = auth) => {
-    const req = request(app.getHttpServer()).post('/admin/campuses');
+    const req = request(app.getHttpServer()).post('/admin/campuses').set('Origin', origin);
     return (authorization === null ? req : req.set('Authorization', authorization)).send(
       body as object,
     );

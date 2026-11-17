@@ -27,6 +27,7 @@ import {
 } from './otp-code.js';
 import { OTP_MAILER, type OtpMailer } from './otp-mailer.js';
 import { type RateLimit, RateLimiter } from './rate-limiter.js';
+import { SessionService, SIGN_IN_STATUSES, type SessionTokens } from './session.service.js';
 
 const CODE_TTL_SEC = 600;
 // The email_otp CHECK allows attempts 0–5, so a code dies at exactly this many wrong tries
@@ -51,7 +52,10 @@ const userColumns = {
   status: appUser.status,
 };
 
-/** Email one-time-code sign-in: send a code, swap a right code for an app_user. */
+/** What a right code gives: the response body and the new session's tokens (they become cookies). */
+export type SignInResult = { body: OtpVerifyResult; tokens: SessionTokens };
+
+/** Email one-time-code sign-in: send a code, swap a right code for an app_user and a session. */
 @Injectable()
 export class OtpService {
   private readonly keys: OtpKeys;
@@ -60,6 +64,7 @@ export class OtpService {
     @Inject(DATABASE) private readonly db: Database,
     config: ConfigService<Env, true>,
     private readonly limiter: RateLimiter,
+    private readonly sessions: SessionService,
     @Inject(OTP_MAILER) private readonly mailer: OtpMailer,
   ) {
     this.keys = deriveOtpKeys(config.get('OTP_PEPPER', { infer: true }));
@@ -93,26 +98,35 @@ export class OtpService {
   }
 
   /** A right code signs in (and creates the user the first time). Every failure is one 400. */
-  async verify(email: string, code: string, ip: string): Promise<OtpVerifyResult> {
+  async verify(
+    email: string,
+    code: string,
+    ip: string,
+    userAgent: string | undefined,
+  ): Promise<SignInResult> {
     await this.limiter.hit(LIMITS.verifyPerIp, this.hashedSubject('ip', ip));
     await this.limiter.hit(LIMITS.verifyPerEmail, this.hashedSubject('email', email));
 
     const campusId = await this.campusFor(email);
-    const result = campusId ? await this.redeemCode(campusId, email, code) : undefined;
-    if (!result) {
+    const signedIn = campusId
+      ? await this.redeemCode(campusId, email, code, ip, userAgent)
+      : undefined;
+    if (!signedIn) {
       // One message for unknown, expired, used, locked and wrong. The time taken can still
       // differ (no live code skips the hash), but that only hints at a recent request
       throw new BadRequestException('Invalid or expired code');
     }
-    return result;
+    return signedIn;
   }
 
-  /** The signed-in user (created on first sign-in), or undefined for any failure. */
+  /** The signed-in user (created on first sign-in) and a new session, or undefined for any failure. */
   private redeemCode(
     campusId: string,
     email: string,
     code: string,
-  ): Promise<OtpVerifyResult | undefined> {
+    ip: string,
+    userAgent: string | undefined,
+  ): Promise<SignInResult | undefined> {
     return withCampus(this.db, campusId, async (tx) => {
       // Every live code, not just the newest: someone requesting codes for this address must not
       // kill the one the owner is typing. Locked, so two verifies of one code queue here and the
@@ -149,7 +163,18 @@ export class OtpService {
         .update(emailOtp)
         .set({ consumedAt: sql`now()` })
         .where(inArray(emailOtp.id, ids));
-      return findOrCreateUser(tx, campusId, email);
+      const verified = await findOrCreateUser(tx, campusId, email);
+      // A blocked account gets the same 400 as a wrong code, and no session
+      if (!verified || !SIGN_IN_STATUSES.includes(verified.user.status)) return undefined;
+
+      // Same transaction: a new user and their first session commit together, or neither does
+      const tokens = await this.sessions.start(
+        tx,
+        verified.user,
+        this.hashedSubject('ip', ip),
+        userAgent,
+      );
+      return { body: verified, tokens };
     });
   }
 

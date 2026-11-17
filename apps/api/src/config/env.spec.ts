@@ -3,12 +3,15 @@ import { validateEnv } from './env.js';
 const appUrl = 'postgres://pulse_app:fake-test-pw@127.0.0.1:5432/pulse';
 const redisUrl = 'redis://127.0.0.1:6379';
 const pepper = 'ab'.repeat(32);
+const jwtSecret = 'cd'.repeat(32);
 // What every boot needs; each test adds or breaks one key
 const required = {
   NODE_ENV: 'development',
   DATABASE_URL: appUrl,
   REDIS_URL: redisUrl,
   OTP_PEPPER: pepper,
+  JWT_SECRET: jwtSecret,
+  APP_ORIGIN: 'http://localhost:5173',
 };
 
 describe('validateEnv', () => {
@@ -69,11 +72,14 @@ describe('validateEnv', () => {
   });
 
   // A deploy that forgets NODE_ENV must not boot as development, where codes go to the log
-  it.each(['NODE_ENV', 'REDIS_URL', 'OTP_PEPPER'])('rejects a missing %s', (key) => {
-    const env: Record<string, string> = { ...required };
-    delete env[key];
-    expect(() => validateEnv(env)).toThrow(new RegExp(key));
-  });
+  it.each(['NODE_ENV', 'REDIS_URL', 'OTP_PEPPER', 'JWT_SECRET', 'APP_ORIGIN'])(
+    'rejects a missing %s',
+    (key) => {
+      const env: Record<string, string> = { ...required };
+      delete env[key];
+      expect(() => validateEnv(env)).toThrow(new RegExp(key));
+    },
+  );
 
   it.each(['http://127.0.0.1:6379', 'not a url'])('rejects REDIS_URL=%s', (url) => {
     expect(() => validateEnv({ ...required, REDIS_URL: url })).toThrow(/REDIS_URL/);
@@ -91,6 +97,23 @@ describe('validateEnv', () => {
     ['empty', ''],
   ])('rejects an OTP_PEPPER that is %s', (_, value) => {
     expect(() => validateEnv({ ...required, OTP_PEPPER: value })).toThrow(/OTP_PEPPER/);
+  });
+
+  // The Origin header is exactly scheme://host[:port]; a path or slash would never match it
+  it.each(['localhost:5173', 'http://localhost:5173/', 'http://localhost:5173/app', 'not a url'])(
+    'rejects APP_ORIGIN=%s',
+    (value) => {
+      expect(() => validateEnv({ ...required, APP_ORIGIN: value })).toThrow(/APP_ORIGIN/);
+    },
+  );
+
+  // Anyone who knows the JWT secret can sign in as anyone: same strength rule as the pepper
+  it('rejects a JWT_SECRET equal to OTP_PEPPER', () => {
+    expect(() => validateEnv({ ...required, JWT_SECRET: pepper })).toThrow(/JWT_SECRET/);
+  });
+
+  it('rejects a short JWT_SECRET', () => {
+    expect(() => validateEnv({ ...required, JWT_SECRET: 'x'.repeat(42) })).toThrow(/JWT_SECRET/);
   });
 
   // The only OTP mailer writes codes to the log; production must wait for the email one

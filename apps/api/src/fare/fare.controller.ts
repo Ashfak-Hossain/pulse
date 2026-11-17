@@ -6,8 +6,10 @@ import {
 } from '@pulse/contracts';
 import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import { FareService } from './fare.service.js';
+import { Public } from '../auth/auth.guard.js';
 
 // Public preview only: this neither records a payment nor changes a ledger.
+@Public()
 @Controller('fares')
 export class FareController {
   constructor(private readonly fares: FareService) {}

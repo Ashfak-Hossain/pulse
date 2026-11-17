@@ -6,12 +6,18 @@ import { apiErrorSchema } from '@pulse/contracts';
 import { z } from 'zod';
 import { configureApp } from '../src/app.setup.js';
 import { AppModule } from '../src/app.module.js';
+import { Public } from '../src/auth/auth.guard.js';
 import { ZodValidationPipe } from '../src/common/zod-validation.pipe.js';
 import { DATABASE } from '../src/db/db.module.js';
+
+// Every state-changing request must come from the app's own origin (OriginGuard)
+const origin = process.env.APP_ORIGIN ?? '';
 
 // Test-only endpoint, so the pipe is checked through real HTTP before any real endpoint uses it
 const echoSchema = z.strictObject({ name: z.string().min(1) });
 
+// Public: these cases check the pipe and the error filter, not sign-in
+@Public()
 @Controller('echo')
 class EchoController {
   @Post()
@@ -78,6 +84,7 @@ describe('API over HTTP', () => {
   it('a valid body passes the pipe', async () => {
     const res = await request(app.getHttpServer())
       .post('/echo')
+      .set('Origin', origin)
       .send({ name: 'Kuril' })
       .expect(201);
     expect(res.body).toEqual({ name: 'Kuril' });
@@ -86,6 +93,7 @@ describe('API over HTTP', () => {
   it('an invalid body gets 400 with the issues', async () => {
     const res = await request(app.getHttpServer())
       .post('/echo')
+      .set('Origin', origin)
       .send({ name: '', extra: 1 })
       .expect(400);
     const body = res.body as { message: string; issues: { path: string; code: string }[] };
@@ -98,6 +106,7 @@ describe('API over HTTP', () => {
     it('malformed JSON answers 400', async () => {
       const res = await request(app.getHttpServer())
         .post('/echo')
+        .set('Origin', origin)
         .set('Content-Type', 'application/json')
         .send('{"name":')
         .expect(400);
@@ -107,6 +116,7 @@ describe('API over HTTP', () => {
     it('a body over the 100 kB limit answers 413', async () => {
       const res = await request(app.getHttpServer())
         .post('/echo')
+        .set('Origin', origin)
         .send({ name: 'x'.repeat(200_000) })
         .expect(413);
       expect(apiErrorSchema.parse(res.body)).toMatchObject({ error: 'Payload Too Large' });
@@ -118,7 +128,11 @@ describe('API over HTTP', () => {
     });
 
     it('a validation error keeps its issues', async () => {
-      const res = await request(app.getHttpServer()).post('/echo').send({}).expect(400);
+      const res = await request(app.getHttpServer())
+        .post('/echo')
+        .set('Origin', origin)
+        .send({})
+        .expect(400);
       expect(apiErrorSchema.parse(res.body).issues).toBeDefined();
     });
 

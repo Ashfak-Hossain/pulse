@@ -1,5 +1,6 @@
 import { BadRequestException, type INestApplication } from '@nestjs/common';
 import { ExpressAdapter } from '@nestjs/platform-express';
+import cookieParser from 'cookie-parser';
 import type { NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 
@@ -8,6 +9,8 @@ import helmet from 'helmet';
 export function configureApp(app: INestApplication): void {
   // Standard security headers (nosniff, HSTS, no framing…) and no "X-Powered-By: Express"
   app.use(helmet());
+  // Fills request.cookies, where the auth guard finds the access token
+  app.use(cookieParser());
 
   // Install the same JSON parser before the sanitizer so Nest skips its duplicate.
   // Its default error mapping would expose excerpts from malformed request bodies.

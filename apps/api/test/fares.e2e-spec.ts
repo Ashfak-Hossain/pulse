@@ -9,6 +9,9 @@ import { configureApp } from '../src/app.setup.js';
 import { AppModule } from '../src/app.module.js';
 import { DATABASE } from '../src/db/db.module.js';
 
+// Every state-changing request must come from the app's own origin (OriginGuard)
+const origin = process.env.APP_ORIGIN ?? '';
+
 describe('Fare split previews over HTTP', () => {
   let app: INestApplication<App>;
   beforeAll(async () => {
@@ -37,6 +40,7 @@ describe('Fare split previews over HTTP', () => {
   ])('returns 200 and exact paisa shares: %o', async ({ totalPaisa, weights, shares }) => {
     const res = await request(app.getHttpServer())
       .post('/fares/split-preview')
+      .set('Origin', origin)
       .send({ totalPaisa, weights })
       .expect(200);
     const body = fareSplitPreviewSchema.parse(res.body);
@@ -62,6 +66,7 @@ describe('Fare split previews over HTTP', () => {
   ])('returns 400 with issues, never 500, for %o', async (body) => {
     const res = await request(app.getHttpServer())
       .post('/fares/split-preview')
+      .set('Origin', origin)
       .send(body)
       .expect(400);
     const error = apiErrorSchema.parse(res.body);
@@ -73,10 +78,12 @@ describe('Fare split previews over HTTP', () => {
     const body = { totalPaisa: 2, weights: [1, 1, 1] };
     const first = await request(app.getHttpServer())
       .post('/fares/split-preview')
+      .set('Origin', origin)
       .send(body)
       .expect(200);
     const second = await request(app.getHttpServer())
       .post('/fares/split-preview')
+      .set('Origin', origin)
       .send(body)
       .expect(200);
     expect(fareSplitPreviewSchema.parse(first.body)).toEqual({ totalPaisa: 2, shares: [1, 1, 0] });

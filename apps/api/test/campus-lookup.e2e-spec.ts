@@ -10,6 +10,9 @@ import { configureApp } from '../src/app.setup.js';
 import { AppModule } from '../src/app.module.js';
 import { DATABASE } from '../src/db/db.module.js';
 
+// Every state-changing request must come from the app's own origin (OriginGuard)
+const origin = process.env.APP_ORIGIN ?? '';
+
 const run = randomUUID().slice(0, 8);
 const domain = `student.lookup-${run}.test`;
 const duplicateDomain = `duplicate.lookup-${run}.test`;
@@ -50,6 +53,7 @@ describe('Campus lookup over HTTP', () => {
   it.each([domain, domain.toUpperCase()])('looks up the exact domain %s', async (emailDomain) => {
     const res = await request(app.getHttpServer())
       .post('/campuses/lookup')
+      .set('Origin', origin)
       .send({ email: `name@${emailDomain}` })
       .expect(200);
     expect(campusLookupResultSchema.parse(res.body)).toEqual({
@@ -63,6 +67,7 @@ describe('Campus lookup over HTTP', () => {
       const email = `name@${emailDomain}`;
       const res = await request(app.getHttpServer())
         .post('/campuses/lookup')
+        .set('Origin', origin)
         .send({ email })
         .expect(200);
       expect(campusLookupResultSchema.parse(res.body)).toEqual({ campus: null });
@@ -74,6 +79,7 @@ describe('Campus lookup over HTTP', () => {
     const email = `name@${duplicateDomain}`;
     const res = await request(app.getHttpServer())
       .post('/campuses/lookup')
+      .set('Origin', origin)
       .send({ email })
       .expect(409);
     expect(apiErrorSchema.parse(res.body)).toEqual({
@@ -93,6 +99,7 @@ describe('Campus lookup over HTTP', () => {
   ])('answers 400 with issues for %o', async (payload) => {
     const res = await request(app.getHttpServer())
       .post('/campuses/lookup')
+      .set('Origin', origin)
       .send(payload)
       .expect(400);
     const body = apiErrorSchema.parse(res.body);
@@ -103,6 +110,7 @@ describe('Campus lookup over HTTP', () => {
   it('returns a fixed message for malformed JSON without echoing the submitted email', async () => {
     const res = await request(app.getHttpServer())
       .post('/campuses/lookup')
+      .set('Origin', origin)
       .type('json')
       .send('{"email": somebody@example.test}')
       .expect(400);
@@ -117,6 +125,7 @@ describe('Campus lookup over HTTP', () => {
     const extra = 'somebody@example.test';
     const res = await request(app.getHttpServer())
       .post('/campuses/lookup')
+      .set('Origin', origin)
       .send({ email: 'name@' + domain, [extra]: true })
       .expect(400);
     expect(apiErrorSchema.parse(res.body).issues).toEqual([

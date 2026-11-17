@@ -9,7 +9,9 @@ import {
 } from '@pulse/contracts';
 import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import { CatalogService } from './catalog.service.js';
+import { Public } from '../auth/auth.guard.js';
 
+@Public()
 @Controller('campuses/:slug')
 export class CatalogController {
   constructor(private readonly catalog: CatalogService) {}

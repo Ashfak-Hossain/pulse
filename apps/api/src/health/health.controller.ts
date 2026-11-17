@@ -2,11 +2,13 @@ import { Controller, Get, HttpStatus, Inject, Logger, Res } from '@nestjs/common
 import type { Response } from 'express';
 import { DATABASE } from '../db/db.module.js';
 import { sql, type Database } from '@pulse/db';
+import { Public } from '../auth/auth.guard.js';
 
 type Readiness =
   { status: 'ok'; checks: { database: 'up' } } | { status: 'error'; checks: { database: 'down' } };
 
 // /health is liveness: the process runs. /health/ready is readiness: it can also reach PostgreSQL
+@Public()
 @Controller('health')
 export class HealthController {
   private readonly logger = new Logger(HealthController.name);

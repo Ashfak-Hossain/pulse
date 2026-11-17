@@ -14,6 +14,9 @@ import { OTP_MAILER, type OtpMailer } from '../src/auth/otp-mailer.js';
 import { RateLimiter } from '../src/auth/rate-limiter.js';
 import { DATABASE } from '../src/db/db.module.js';
 
+// Every state-changing request must come from the app's own origin (OriginGuard)
+const origin = process.env.APP_ORIGIN ?? '';
+
 const run = randomUUID().slice(0, 8);
 const domain = `auth-${run}.test`;
 const ambiguousDomain = `shared-auth-${run}.test`;
@@ -50,9 +53,10 @@ describe('Sign-in with an email code over HTTP', () => {
   };
 
   const http = () => request(app.getHttpServer());
-  const requestCode = (email: string) => http().post('/auth/otp/request').send({ email });
+  const requestCode = (email: string) =>
+    http().post('/auth/otp/request').set('Origin', origin).send({ email });
   const verify = (email: string, code: string) =>
-    http().post('/auth/otp/verify').send({ email, code });
+    http().post('/auth/otp/verify').set('Origin', origin).send({ email, code });
   // A fresh address per test: rows and Redis counts never leak between cases
   const newEmail = (host = domain) => `student-${randomUUID().slice(0, 8)}@${host}`;
   const wrong = (code: string) => (code === '000000' ? '000001' : '000000');
@@ -181,7 +185,7 @@ describe('Sign-in with an email code over HTTP', () => {
       ['an unknown field', { email: 'student@aiub.edu', remember: true }],
       ['a plus address', { email: `student+1@${domain}` }],
     ])('rejects %s with 400 and sends nothing', async (_, body) => {
-      await http().post('/auth/otp/request').send(body).expect(400);
+      await http().post('/auth/otp/request').set('Origin', origin).send(body).expect(400);
       expect(sent).toHaveLength(0);
     });
   });
@@ -328,7 +332,7 @@ describe('Sign-in with an email code over HTTP', () => {
       ['an unknown field', { email: 'student@aiub.edu', code: '123456', remember: true }],
       ['a five-digit code', { email: 'student@aiub.edu', code: '12345' }],
     ])('rejects %s with 400', async (_, body) => {
-      await http().post('/auth/otp/verify').send(body).expect(400);
+      await http().post('/auth/otp/verify').set('Origin', origin).send(body).expect(400);
     });
   });
 });
