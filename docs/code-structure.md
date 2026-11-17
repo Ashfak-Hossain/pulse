@@ -82,7 +82,8 @@ and being under them does not make code good.
 | Nesting depth         | 10      |
 | Parameters            | 10      |
 
-Blank lines, comments and test files do not count.
+Blank lines, comments and test files do not count. The Drizzle schema (`packages/db/src/schema.ts`)
+has no file-length limit: it is one declaration per table with no logic, and it grows with every table.
 
 When you hit one, look for a natural seam: a place where the code already does two separate things.
 Never split just to get under a number. If there is no seam, raise it with the team rather than

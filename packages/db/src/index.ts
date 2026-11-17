@@ -11,6 +11,7 @@ export {
   sectionMeeting,
   appUser,
   emailOtp,
+  authSession,
 } from './schema.js';
 export { assertRestrictedRole } from './role-check.js';
 export {

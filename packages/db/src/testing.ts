@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { PostgreSqlContainer } from '@testcontainers/postgresql';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { Wait } from 'testcontainers';
 
 const initFolder = new URL('../../../infra/compose/postgres/init/', import.meta.url);
 const roleScripts = [
@@ -32,6 +33,10 @@ export type TestDatabase = {
 export async function startTestDatabase(): Promise<TestDatabase> {
   const container = await new PostgreSqlContainer('postgis/postgis:18-3.6')
     .withPlatform('linux/amd64')
+    // Wait only for the pg_isready health check this module adds. Its default also waits for the
+    // port by exec-ing into the container, which some Docker-compatible runtimes (Kiri 0.2.1)
+    // never answer
+    .withWaitStrategy(Wait.forHealthCheck())
     .withUsername('pulse')
     // Random: the owner bypasses row-level security, and Docker may publish the port on the LAN
     .withPassword(randomUUID())

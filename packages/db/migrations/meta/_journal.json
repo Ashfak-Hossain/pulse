@@ -113,6 +113,20 @@
       "when": 1794381360487,
       "tag": "0015_auth-privileges",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1794906975695,
+      "tag": "0016_auth-session",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1794906976133,
+      "tag": "0017_auth-session-privileges",
+      "breakpoints": true
     }
   ]
 }
