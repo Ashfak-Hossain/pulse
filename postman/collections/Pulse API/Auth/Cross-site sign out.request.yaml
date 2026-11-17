@@ -1,0 +1,14 @@
+$kind: http-request
+description: "A request that changes something, sent with another site's Origin, as a hidden form on evil.example would. The API refuses it with 403 before looking at the session (CSRF guard)."
+url: "{{baseUrl}}/auth/sign-out"
+method: POST
+headers:
+  Accept: application/json
+  Origin: "https://evil.example"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 403: another site cannot act for you', () => pm.response.to.have.status(403));
+    language: text/javascript
+examples: .resources/Cross-site sign out.resources/examples
+order: 6000

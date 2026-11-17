@@ -5,6 +5,7 @@ method: POST
 headers:
   Accept: application/json
   Content-Type: application/json
+  Origin: "{{appOrigin}}"
 body:
   type: json
   content: '{"email": "{{otpEmail}}", "code": "{{otpCode}}"}'
@@ -25,6 +26,12 @@ scripts:
         pm.expect(body.user.email).to.equal(pm.environment.get('otpEmail'));
         pm.expect(body.user.role).to.equal('student');
         pm.expect(body.user.status).to.equal('pending_profile');
+      });
+      pm.test('sets both session cookies, hidden from page scripts', () => {
+        pm.expect(pm.cookies.has('pulse_at')).to.equal(true);
+        const setCookie = pm.response.headers.filter((h) => h.key.toLowerCase() === 'set-cookie').map((h) => h.value);
+        pm.expect(setCookie.some((c) => c.startsWith('pulse_at=') && c.includes('HttpOnly') && c.includes('Path=/;'))).to.equal(true);
+        pm.expect(setCookie.some((c) => c.startsWith('pulse_rt=') && c.includes('HttpOnly') && c.includes('Path=/auth'))).to.equal(true);
       });
     language: text/javascript
 examples: .resources/Verify code.resources/examples

@@ -1,0 +1,21 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/auth/sign-out"
+  method: POST
+  headers:
+    Accept: application/json
+    Origin: https://evil.example
+response:
+  statusCode: 403
+  statusText: Forbidden
+  headers:
+    content-type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "statusCode": 403,
+        "error": "Forbidden",
+        "message": "Cross-site request refused"
+      }
+order: 1000
