@@ -6,6 +6,7 @@ method: POST
 headers:
   Accept: application/json
   Content-Type: application/json
+  Origin: "{{appOrigin}}"
 body:
   type: json
   content: |-

@@ -13,9 +13,11 @@ import {
 } from '@pulse/contracts';
 import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import { CampusService } from './campus.service.js';
+import { Public } from '../auth/auth.guard.js';
 
 // HTTP only: validate the request, call the service, return its answer.
 // Public (no sign-in): the app needs campus facts before anyone has signed in
+@Public()
 @Controller('campuses')
 export class CampusController {
   constructor(private readonly campuses: CampusService) {}

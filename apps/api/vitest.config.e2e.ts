@@ -16,6 +16,8 @@ export default defineConfig({
       ADMIN_TOKEN: 'e2e-admin-token-not-a-secret-0123456789abcdef',
       REDIS_URL: 'redis://127.0.0.1:1',
       OTP_PEPPER: 'e2e-otp-pepper-not-a-secret-0123456789abcdefgh',
+      JWT_SECRET: 'e2e-jwt-secret-not-a-secret-0123456789abcdefgh',
+      APP_ORIGIN: 'http://localhost:5173',
     },
   },
 });

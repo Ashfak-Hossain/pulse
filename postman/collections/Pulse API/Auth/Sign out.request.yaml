@@ -1,0 +1,21 @@
+$kind: http-request
+description: "Ends this device's session (Verify code first). Both cookies are cleared, and the old access token stops working at once, even before its 15 minutes are up."
+url: "{{baseUrl}}/auth/sign-out"
+method: POST
+headers:
+  Accept: application/json
+  Origin: "{{appOrigin}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 204 (401: run Request code and Verify code first)', () =>
+        pm.response.to.have.status(204),
+      );
+      pm.test('clears both cookies', () => {
+        const setCookie = pm.response.headers.filter((h) => h.key.toLowerCase() === 'set-cookie').map((h) => h.value);
+        pm.expect(setCookie.some((c) => c.startsWith('pulse_at=;'))).to.equal(true);
+        pm.expect(setCookie.some((c) => c.startsWith('pulse_rt=;'))).to.equal(true);
+      });
+    language: text/javascript
+examples: .resources/Sign out.resources/examples
+order: 4000

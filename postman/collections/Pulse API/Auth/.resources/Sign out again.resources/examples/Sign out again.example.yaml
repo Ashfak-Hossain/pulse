@@ -1,0 +1,21 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/auth/sign-out"
+  method: POST
+  headers:
+    Accept: application/json
+    Origin: http://localhost:5173
+response:
+  statusCode: 401
+  statusText: Unauthorized
+  headers:
+    content-type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "statusCode": 401,
+        "error": "Unauthorized",
+        "message": "Unauthorized"
+      }
+order: 1000

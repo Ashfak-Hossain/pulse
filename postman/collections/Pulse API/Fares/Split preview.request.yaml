@@ -5,6 +5,7 @@ method: POST
 headers:
   Accept: application/json
   Content-Type: application/json
+  Origin: "{{appOrigin}}"
 body:
   type: json
   content: '{"totalPaisa": 10000, "weights": [1, 1, 1]}'

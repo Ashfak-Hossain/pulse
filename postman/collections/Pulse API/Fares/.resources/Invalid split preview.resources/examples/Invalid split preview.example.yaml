@@ -1,11 +1,10 @@
 $kind: http-example
-name: '400 Bad Request'
 request:
   method: POST
   url: '{{baseUrl}}/fares/split-preview'
   headers:
-    - key: Content-Type
-      value: application/json
+    Content-Type: application/json
+    Origin: http://localhost:5173
   body:
     type: json
     content: '{"totalPaisa": 10000, "weights": [0, 0]}'
@@ -13,8 +12,7 @@ response:
   statusCode: 400
   statusText: 'Bad Request'
   headers:
-    - key: Content-Type
-      value: application/json; charset=utf-8
+    Content-Type: application/json; charset=utf-8
   body:
     type: json
     content: |-

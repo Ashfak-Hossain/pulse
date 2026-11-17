@@ -5,6 +5,7 @@ request:
   headers:
     Accept: application/json
     Content-Type: application/json
+    Origin: http://localhost:5173
   body:
     type: json
     content: |-

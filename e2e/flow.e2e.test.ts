@@ -13,6 +13,9 @@ import { inject, vi } from 'vitest';
 import { emailsWithSubject } from './support/mailpit.js';
 import { freePort, startApp, type LogLine, type RunningApp } from './support/processes.js';
 
+// Every state-changing request must come from the app's own origin (OriginGuard)
+const appOrigin = 'http://localhost:5173';
+
 // The whole backbone with the real programs: POST /admin/campuses on the built API → outbox →
 // relay → Kafka → notifier → RabbitMQ → mailer → Mailpit. Then two crashes are replayed by
 // putting the database back the way the crash would have left it, and the email still goes out
@@ -72,6 +75,8 @@ beforeAll(async () => {
     // Required at boot; this flow never signs in, so nothing ever connects to the port
     REDIS_URL: 'redis://127.0.0.1:1',
     OTP_PEPPER: 'flow-e2e-otp-pepper-not-a-secret-0123456789ab',
+    JWT_SECRET: 'flow-e2e-jwt-secret-not-a-secret-0123456789ab',
+    APP_ORIGIN: appOrigin,
   });
   // The worker starts the notifier after Kafka topics and RabbitMQ are ready, so it is "ready"
   await Promise.all([
@@ -121,7 +126,11 @@ describe('a new campus, from the API to one email', () => {
   it('sends exactly one email for a campus created through the API', async () => {
     const response = await fetch(`${apiUrl}/admin/campuses`, {
       method: 'POST',
-      headers: { authorization: `Bearer ${adminToken}`, 'content-type': 'application/json' },
+      headers: {
+        authorization: `Bearer ${adminToken}`,
+        'content-type': 'application/json',
+        origin: appOrigin,
+      },
       body: JSON.stringify(newCampus),
     });
     expect(response.status).toBe(201);

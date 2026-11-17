@@ -6,6 +6,7 @@ request:
     Accept: application/json
     Content-Type: application/json
     Authorization: Bearer {{adminToken}}
+    Origin: http://localhost:5173
   body:
     type: json
     content: |-
