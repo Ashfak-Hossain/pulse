@@ -36,10 +36,11 @@ apps/worker/src/
 apps/api/src/
   main.ts          starts the API
   app.module.ts    joins the modules; app.setup.ts sets up what every request goes through
-  campus/ course/ fare/ health/
+  auth/ campus/ catalog/ course/ fare/ health/
                    one Nest module per domain: x.module.ts, x.controller.ts, x.service.ts
-                   (only the files it needs: health/ has no service)
-  common/ config/ db/  used across the app
+                   (only the files it needs: health/ has no service; auth/ has several)
+                   A module uses another's exported service, e.g. CampusService.idBySlug
+  common/ config/ db/  used across the app (common/ holds the Zod pipe and page cursors)
 ```
 
 The relay and notifier both use `run.ts` to start and stop, and `loop.ts` to repeat their work. A
