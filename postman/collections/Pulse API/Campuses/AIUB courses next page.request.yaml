@@ -1,0 +1,22 @@
+$kind: http-request
+description: 'The page after "AIUB courses", from its nextCursor. The last page answers nextCursor null.'
+url: '{{baseUrl}}/campuses/aiub/courses?limit=2&cursor={{courseNextCursor}}'
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  - key: limit
+    value: '2'
+  - key: cursor
+    value: '{{courseNextCursor}}'
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200', () => pm.response.to.have.status(200));
+      const page = pm.response.json();
+      pm.test('continues after the first page and ends the list', () => {
+        pm.expect(page.items.map(item => item.code)).to.eql(['CSC4161']);
+        pm.expect(page.nextCursor).to.equal(null);
+      });
+    language: text/javascript
+order: 11500

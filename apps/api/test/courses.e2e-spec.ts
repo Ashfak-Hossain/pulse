@@ -79,28 +79,55 @@ describe('Campus course lists over HTTP', () => {
         { id: courseA.id, code: courseA.code, title: courseA.title },
         { id: courseZ.id, code: courseZ.code, title: courseZ.title },
       ],
+      nextCursor: null,
     });
   });
   it('never includes campus A courses in campus B, even when codes repeat', async () => {
     const res = await request(app.getHttpServer()).get(`/campuses/${b.slug}/courses`).expect(200);
     expect(courseListSchema.parse(res.body)).toEqual({
       items: [{ id: courseB.id, code: courseB.code, title: courseB.title }],
+      nextCursor: null,
     });
   });
   it('returns an empty wrapped list for a campus without courses', async () => {
     const res = await request(app.getHttpServer())
       .get(`/campuses/${empty.slug}/courses`)
       .expect(200);
-    expect(courseListSchema.parse(res.body)).toEqual({ items: [] });
+    expect(courseListSchema.parse(res.body)).toEqual({ items: [], nextCursor: null });
   });
-  it('caps the ordered result at 500 courses', async () => {
+  it('walks every course exactly once, in code order, with nextCursor', async () => {
+    const codes: string[] = [];
+    let cursor: string | null | undefined;
+    do {
+      const res = await request(app.getHttpServer())
+        .get(`/campuses/${large.slug}/courses`)
+        .query({ limit: '200', ...(cursor ? { cursor } : {}) })
+        .expect(200);
+      const page = courseListSchema.parse(res.body);
+      codes.push(...page.items.map((item) => item.code));
+      cursor = page.nextCursor;
+    } while (cursor);
+    const expected = Array.from({ length: 501 }, (_, i) => `CODE${i.toString().padStart(3, '0')}`);
+    expect(codes).toEqual(expected);
+  });
+
+  it('defaults to 100 courses a page and says when more exist', async () => {
     const res = await request(app.getHttpServer())
       .get(`/campuses/${large.slug}/courses`)
       .expect(200);
-    const body = courseListSchema.parse(res.body);
-    expect(body.items).toHaveLength(500);
-    expect(body.items[0]?.code).toBe('CODE000');
-    expect(body.items[499]?.code).toBe('CODE499');
+    const page = courseListSchema.parse(res.body);
+    expect(page.items).toHaveLength(100);
+    expect(page.nextCursor).not.toBeNull();
+  });
+
+  it.each([
+    ['a token that is not ours', { cursor: 'bm90LWpzb24' }],
+    ['a limit over 500', { limit: '501' }],
+  ])('returns 400 for %s', async (_name, query) => {
+    await request(app.getHttpServer())
+      .get(`/campuses/${large.slug}/courses`)
+      .query(query)
+      .expect(400);
   });
   it('returns 404 for an unknown campus', async () => {
     const res = await request(app.getHttpServer())

@@ -408,12 +408,18 @@ importers:
 
   packages/catalog-adapters:
     dependencies:
+      '@pulse/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       fflate:
         specifier: ^0.8.3
         version: 0.8.3
       read-excel-file:
         specifier: ^9.3.14
         version: 9.3.14
+      saxen:
+        specifier: ^11.2.0
+        version: 11.2.0
       zod:
         specifier: 'catalog:'
         version: 4.6.7

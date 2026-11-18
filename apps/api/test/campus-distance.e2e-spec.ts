@@ -75,16 +75,9 @@ describe('Campus distance over HTTP', () => {
     });
   });
 
+  // The contract tests cover each rule; here only that the route answers 400, never 500
   it.each([
-    { lat: '', lng: '0' },
-    { lat: ' ', lng: '0' },
     { lat: '91', lng: '0' },
-    { lat: '0', lng: '181' },
-    { lat: '0', lng: '' },
-    { lat: 'abc', lng: '0' },
-    { lng: '0' },
-    { lat: '0' },
-    { lat: ['0', '1'], lng: '0' },
     { lat: '0', lng: '0', extra: 'unexpected' },
   ])('answers 400 with issues for %o', async (query) => {
     const res = await request(app.getHttpServer())

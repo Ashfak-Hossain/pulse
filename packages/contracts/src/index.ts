@@ -18,7 +18,16 @@ export {
   type CampusParams,
   type CreateCampus,
 } from './campus.js';
-export { courseSchema, courseListSchema, type Course, type CourseList } from './course.js';
+export { catalogLimits } from './catalog-limits.js';
+export {
+  courseSchema,
+  courseCursorSchema,
+  courseListSchema,
+  courseQuerySchema,
+  type Course,
+  type CourseList,
+  type CourseQuery,
+} from './course.js';
 export {
   fareSplitRequestSchema,
   fareSplitPreviewSchema,

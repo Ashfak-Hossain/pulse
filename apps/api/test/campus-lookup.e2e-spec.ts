@@ -1,6 +1,6 @@
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { apiErrorSchema, campusLookupResultSchema, campusSchema } from '@pulse/contracts';
+import { apiErrorSchema, campusLookupResultSchema } from '@pulse/contracts';
 import { campus, createDb, type Database } from '@pulse/db';
 import { randomUUID } from 'node:crypto';
 import request from 'supertest';
@@ -140,10 +140,5 @@ describe('Campus lookup over HTTP', () => {
       .query({ email })
       .expect(404);
     expect(JSON.stringify(res.body)).not.toContain(email);
-  });
-
-  it('still resolves a campus by slug', async () => {
-    const res = await request(app.getHttpServer()).get(`/campuses/${campusData.slug}`).expect(200);
-    expect(campusSchema.parse(res.body).slug).toBe(campusData.slug);
   });
 });

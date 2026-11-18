@@ -1,28 +1,36 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import type { CourseList } from '@pulse/contracts';
-import { asc, campus, course, eq, withCampus, type Database } from '@pulse/db';
+import { Inject, Injectable } from '@nestjs/common';
+import { courseCursorSchema, type CourseList, type CourseQuery } from '@pulse/contracts';
+import { asc, course, gt, withCampus, type Database } from '@pulse/db';
+import { CampusService } from '../campus/campus.service.js';
+import { decodeCursor, encodeCursor } from '../common/cursor.js';
 import { DATABASE } from '../db/db.module.js';
-
-const COURSE_LIST_LIMIT = 500;
 
 @Injectable()
 export class CourseService {
-  constructor(@Inject(DATABASE) private readonly db: Database) {}
+  constructor(
+    @Inject(DATABASE) private readonly db: Database,
+    private readonly campuses: CampusService,
+  ) {}
 
-  async list(slug: string): Promise<CourseList> {
-    const [tenant] = await this.db
-      .select({ id: campus.id })
-      .from(campus)
-      .where(eq(campus.slug, slug))
-      .limit(1);
-    if (!tenant) throw new NotFoundException('Campus not found');
-    const rows = await withCampus(this.db, tenant.id, (tx) =>
+  /** One page of a campus's courses in code order; nextCursor is null on the last page. */
+  async list(slug: string, query: CourseQuery): Promise<CourseList> {
+    const cursor = query.cursor ? decodeCursor(query.cursor, courseCursorSchema) : null;
+    const campusId = await this.campuses.idBySlug(slug);
+    const rows = await withCampus(this.db, campusId, (tx) =>
       tx
         .select({ id: course.id, code: course.code, title: course.title })
         .from(course)
-        .orderBy(asc(course.code), asc(course.id))
-        .limit(COURSE_LIST_LIMIT),
+        // The (campus_id, code) unique index serves both the filter and the order
+        .where(cursor ? gt(course.code, cursor.code) : undefined)
+        .orderBy(asc(course.code))
+        // One extra row says whether another page exists, without a count query
+        .limit(query.limit + 1),
     );
-    return { items: rows.map((row) => ({ id: row.id, code: row.code, title: row.title })) };
+    const page = rows.slice(0, query.limit);
+    const last = page.at(-1);
+    return {
+      items: page,
+      nextCursor: rows.length > query.limit && last ? encodeCursor({ code: last.code }) : null,
+    };
   }
 }

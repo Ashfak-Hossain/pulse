@@ -1,0 +1,9 @@
+ALTER TABLE "section_meeting" ADD CONSTRAINT "section_meeting_slot_unique" UNIQUE("section_id","weekday","start_time","kind");--> statement-breakpoint
+ALTER TABLE "course" ADD CONSTRAINT "course_code_clean" CHECK ("course"."code" = btrim("course"."code") and length("course"."code") between 1 and 32);--> statement-breakpoint
+ALTER TABLE "course" ADD CONSTRAINT "course_title_clean" CHECK ("course"."title" = btrim("course"."title") and length("course"."title") between 1 and 200);--> statement-breakpoint
+ALTER TABLE "section" ADD CONSTRAINT "section_external_class_id_clean" CHECK ("section"."external_class_id" = btrim("section"."external_class_id") and length("section"."external_class_id") between 1 and 32);--> statement-breakpoint
+ALTER TABLE "section" ADD CONSTRAINT "section_label_clean" CHECK ("section"."section_label" = btrim("section"."section_label") and length("section"."section_label") between 1 and 32);--> statement-breakpoint
+ALTER TABLE "section" ADD CONSTRAINT "section_title_clean" CHECK ("section"."title" = btrim("section"."title") and length("section"."title") between 1 and 200);--> statement-breakpoint
+ALTER TABLE "section" ADD CONSTRAINT "section_instructor_name_clean" CHECK ("section"."instructor_name" = btrim("section"."instructor_name") and length("section"."instructor_name") between 1 and 200);--> statement-breakpoint
+ALTER TABLE "section_meeting" ADD CONSTRAINT "section_meeting_room_clean" CHECK ("section_meeting"."room" = btrim("section_meeting"."room") and length("section_meeting"."room") between 1 and 64);--> statement-breakpoint
+ALTER TABLE "term" ADD CONSTRAINT "term_name_clean" CHECK ("term"."name" = btrim("term"."name") and length("term"."name") between 1 and 100);

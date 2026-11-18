@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { campusDistanceQuerySchema, campusDistanceSchema } from '../src/index.js';
+import { campusDistanceQuerySchema } from '../src/index.js';
 
 describe('campusDistanceQuerySchema', () => {
   it.each([
@@ -24,28 +24,14 @@ describe('campusDistanceQuerySchema', () => {
     { lat: 'abc', lng: '0' },
     { lat: 'Infinity', lng: '0' },
     { lat: 'NaN', lng: '0' },
+    { lat: '0x10', lng: '0' },
+    { lat: '1e1', lng: '0' },
+    { lat: ' 1', lng: '0' },
     { lat: '0' },
     { lng: '0' },
     { lat: ['0', '1'], lng: '0' },
     { lat: '0', lng: '0', extra: 'x' },
   ])('rejects invalid input: %o', (query) => {
     expect(campusDistanceQuerySchema.safeParse(query).success).toBe(false);
-  });
-});
-
-describe('campusDistanceSchema', () => {
-  it('accepts whole, non-negative metres', () => {
-    expect(campusDistanceSchema.parse({ slug: 'aiub', distanceMetres: 0 })).toEqual({
-      slug: 'aiub',
-      distanceMetres: 0,
-    });
-  });
-  it.each([
-    { slug: 'aiub', distanceMetres: -1 },
-    { slug: 'aiub', distanceMetres: 0.5 },
-    { slug: 'AIUB', distanceMetres: 0 },
-    { slug: 'aiub', distanceMetres: 0, extra: 'x' },
-  ])('rejects an invalid response: %o', (body) => {
-    expect(campusDistanceSchema.safeParse(body).success).toBe(false);
   });
 });

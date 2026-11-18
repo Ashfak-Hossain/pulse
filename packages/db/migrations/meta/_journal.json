@@ -127,6 +127,13 @@
       "when": 1794906976133,
       "tag": "0017_auth-session-privileges",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1794983013887,
+      "tag": "0018_catalog-text-and-meeting-key",
+      "breakpoints": true
     }
   ]
 }

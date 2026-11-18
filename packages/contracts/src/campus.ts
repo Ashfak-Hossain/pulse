@@ -6,14 +6,17 @@ export const campusSlugSchema = z
   .max(64)
   .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/);
 
-// JSON body for the public email-domain lookup. Never include the email in errors.
-export const campusLookupBodySchema = z.strictObject({ email: z.email() });
+// JSON body for the public email-domain lookup. Never include the email in errors. Lowercased
+// here like sign-in's, and 254 is the longest address SMTP can deliver
+export const campusLookupBodySchema = z.strictObject({ email: z.email().max(254).toLowerCase() });
 export type CampusLookupBody = z.infer<typeof campusLookupBodySchema>;
 
-// Query strings arrive as text. Reject blanks before coercion, which would turn them into 0.
+// Query strings arrive as text. Plain decimals only: Number() would also take '', '0x10' and
+// '1e1', so blanks would become 0 and odd spellings would slip past the range check
+const decimal = /^-?\d{1,3}(?:\.\d{1,15})?$/;
 export const campusDistanceQuerySchema = z.strictObject({
-  lat: z.string().trim().min(1).pipe(z.coerce.number<string>().min(-90).max(90)),
-  lng: z.string().trim().min(1).pipe(z.coerce.number<string>().min(-180).max(180)),
+  lat: z.string().regex(decimal).pipe(z.coerce.number<string>().min(-90).max(90)),
+  lng: z.string().regex(decimal).pipe(z.coerce.number<string>().min(-180).max(180)),
 });
 export const campusDistanceSchema = z.strictObject({
   slug: campusSlugSchema,

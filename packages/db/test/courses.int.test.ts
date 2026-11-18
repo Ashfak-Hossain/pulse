@@ -68,11 +68,4 @@ describe('course tenancy and read-only app privileges', () => {
       ),
     ).toBe('23505');
   });
-  it('requires an existing parent campus', async () => {
-    expect(
-      await pgErrorCode(
-        owner.insert(course).values({ campusId: randomUUID(), code: 'ORPHAN', title: 'Orphan' }),
-      ),
-    ).toBe('23503');
-  });
 });

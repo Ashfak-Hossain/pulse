@@ -45,7 +45,8 @@ export class CampusService {
   }
 
   async lookup(email: string): Promise<CampusLookupResult> {
-    const domain = email.slice(email.lastIndexOf('@') + 1).toLowerCase();
+    // The contract has lowercased the address already
+    const domain = email.slice(email.lastIndexOf('@') + 1);
     // Two rows suffice to detect ambiguity; never log the address or return it in an error.
     const rows = await this.db
       .select({ slug: campus.slug, name: campus.name })
@@ -68,6 +69,19 @@ export class CampusService {
       .limit(1);
     if (!row) throw new NotFoundException('Campus not found');
     return { slug: row.slug, distanceMetres: row.distanceMetres };
+  }
+
+  /** The id of the campus with this slug, for modules that scope their queries to it. 404 if none. */
+  async idBySlug(slug: string): Promise<string> {
+    const [row] = await this.db
+      .select({ id: campus.id })
+      .from(campus)
+      .where(eq(campus.slug, slug))
+      .limit(1);
+    if (!row) {
+      throw new NotFoundException('Campus not found');
+    }
+    return row.id;
   }
 
   async getBySlug(slug: string): Promise<Campus> {

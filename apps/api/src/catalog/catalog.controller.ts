@@ -11,6 +11,8 @@ import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import { CatalogService } from './catalog.service.js';
 import { Public } from '../auth/auth.guard.js';
 
+// Public: the same terms and sections AIUB posts as its offered-course list, instructor names
+// included, so students can plan before they sign in
 @Public()
 @Controller('campuses/:slug')
 export class CatalogController {

@@ -1,7 +1,7 @@
 $kind: http-example
 request:
   method: GET
-  url: '{{baseUrl}}/campuses/aiub/courses'
+  url: '{{baseUrl}}/campuses/aiub/courses?limit=2'
 response:
   statusCode: 200
   statusText: 'OK'
@@ -21,12 +21,8 @@ response:
             "id": "6decb191-9455-4caa-8bd8-4aa1738773e7",
             "code": "CSC2209",
             "title": "Object Oriented Programming 1"
-          },
-          {
-            "id": "9c6d335f-78b0-4ce6-8a51-686d58263fb2",
-            "code": "CSC4161",
-            "title": "Advanced Programming in Web Technology"
           }
-        ]
+        ],
+        "nextCursor": "eyJjb2RlIjoiQ1NDMjIwOSJ9"
       }
 order: 1000
