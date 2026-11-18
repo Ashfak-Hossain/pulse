@@ -1,10 +1,17 @@
-import { Controller, Get, Param } from '@nestjs/common';
-import { campusParamsSchema, type CampusParams, type CourseList } from '@pulse/contracts';
+import { Controller, Get, Param, Query } from '@nestjs/common';
+import {
+  campusParamsSchema,
+  courseQuerySchema,
+  type CampusParams,
+  type CourseList,
+  type CourseQuery,
+} from '@pulse/contracts';
 import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import { CourseService } from './course.service.js';
 import { Public } from '../auth/auth.guard.js';
 
-// Public catalog facts only. Every query still runs inside the selected campus scope.
+// Public: AIUB publishes its course list, and the app shows it before sign-in. Every query
+// still runs inside the selected campus scope
 @Public()
 @Controller('campuses/:slug/courses')
 export class CourseController {
@@ -13,7 +20,8 @@ export class CourseController {
   @Get()
   list(
     @Param(new ZodValidationPipe(campusParamsSchema)) params: CampusParams,
+    @Query(new ZodValidationPipe(courseQuerySchema)) query: CourseQuery,
   ): Promise<CourseList> {
-    return this.courses.list(params.slug);
+    return this.courses.list(params.slug, query);
   }
 }

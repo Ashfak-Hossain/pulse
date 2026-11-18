@@ -1,15 +1,21 @@
 $kind: http-request
-description: 'Public courses from one campus, with a stable code order and a 500-row cap. Run pnpm infra:seed:courses for the AIUB example.'
-url: '{{baseUrl}}/campuses/aiub/courses'
+description: 'Public courses from one campus, in code order, paged with limit and cursor. Run pnpm infra:seed:courses for the AIUB example.'
+url: '{{baseUrl}}/campuses/aiub/courses?limit=2'
 method: GET
 headers:
   Accept: application/json
+queryParams:
+  - key: limit
+    value: '2'
 scripts:
   - type: afterResponse
     code: |-
       pm.test('status is 200', () => pm.response.to.have.status(200));
-      pm.test('returns the seeded courses in code order', () => pm.expect(pm.response.json().items.map(item => item.code)).to.eql(['CSC2105', 'CSC2209', 'CSC4161']));
-      pm.test('exposes only public course fields', () => pm.response.json().items.forEach(item => pm.expect(Object.keys(item).sort()).to.eql(['code', 'id', 'title'])));
+      const page = pm.response.json();
+      pm.test('returns the first two seeded courses in code order', () => pm.expect(page.items.map(item => item.code)).to.eql(['CSC2105', 'CSC2209']));
+      pm.test('exposes only public course fields', () => page.items.forEach(item => pm.expect(Object.keys(item).sort()).to.eql(['code', 'id', 'title'])));
+      pm.test('says another page exists', () => pm.expect(page.nextCursor).to.be.a('string'));
+      if (page.nextCursor) pm.collectionVariables.set('courseNextCursor', page.nextCursor);
     language: text/javascript
 examples: '.resources/AIUB courses.resources/examples'
 order: 11000

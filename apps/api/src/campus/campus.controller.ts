@@ -27,7 +27,7 @@ export class CampusController {
     return this.campuses.list();
   }
 
-  // Static routes precede :slug so "lookup" cannot be interpreted as a campus slug.
+  // POST keeps the email out of URLs and logs. A GET /campuses/lookup reaches :slug and is a 404
   @Post('lookup')
   @HttpCode(200)
   lookup(

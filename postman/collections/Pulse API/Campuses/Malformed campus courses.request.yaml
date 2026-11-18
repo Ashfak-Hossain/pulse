@@ -1,5 +1,5 @@
 $kind: http-request
-description: 'Public courses from one campus, with a stable code order and a 500-row cap. Run pnpm infra:seed:courses for the AIUB example.'
+description: 'Public courses from one campus, in code order, paged with limit and cursor. Run pnpm infra:seed:courses for the AIUB example.'
 url: '{{baseUrl}}/campuses/INVALID/courses'
 method: GET
 headers:

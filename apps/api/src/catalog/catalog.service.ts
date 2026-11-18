@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   sectionCursorSchema,
   sectionListSchema,
@@ -11,7 +11,6 @@ import {
 import {
   and,
   asc,
-  campus,
   course,
   desc,
   eq,
@@ -25,26 +24,22 @@ import {
   withCampus,
   type Database,
 } from '@pulse/db';
+import { CampusService } from '../campus/campus.service.js';
+import { decodeCursor, encodeCursor } from '../common/cursor.js';
 import { DATABASE } from '../db/db.module.js';
 
+// A draft term is still being imported, so students see only active and past terms
 const visibleTerm = inArray(term.status, ['active', 'archived']);
 
 @Injectable()
 export class CatalogService {
-  constructor(@Inject(DATABASE) private readonly db: Database) {}
-
-  private async campusId(slug: string): Promise<string> {
-    const [tenant] = await this.db
-      .select({ id: campus.id })
-      .from(campus)
-      .where(eq(campus.slug, slug))
-      .limit(1);
-    if (!tenant) throw new NotFoundException('Campus not found');
-    return tenant.id;
-  }
+  constructor(
+    @Inject(DATABASE) private readonly db: Database,
+    private readonly campuses: CampusService,
+  ) {}
 
   async terms(slug: string): Promise<TermList> {
-    const campusId = await this.campusId(slug);
+    const campusId = await this.campuses.idBySlug(slug);
     const items = await withCampus(this.db, campusId, (tx) =>
       tx
         .select({
@@ -62,8 +57,9 @@ export class CatalogService {
   }
 
   async sections(slug: string, query: SectionQuery): Promise<SectionList> {
-    const cursor = query.cursor ? decodeCursor(query.cursor) : null;
-    const campusId = await this.campusId(slug);
+    const cursor = query.cursor ? decodeCursor(query.cursor, sectionCursorSchema) : null;
+    const campusId = await this.campuses.idBySlug(slug);
+    // \, % and _ are LIKE wildcards; escaped, a search for "100%" matches that text literally
     const pattern =
       query.q === undefined ? undefined : '%' + query.q.replace(/[\\%_]/g, '\\$&') + '%';
 
@@ -92,6 +88,7 @@ export class CatalogService {
             instructorName: section.instructorName,
           })
           .from(section)
+          // The campus in the join keeps the composite foreign key's index in play
           .innerJoin(
             course,
             and(eq(course.id, section.courseId), eq(course.campusId, section.campusId)),
@@ -106,6 +103,7 @@ export class CatalogService {
                     ilike(course.title, pattern),
                     ilike(section.title, pattern),
                   ),
+              // Row comparison: everything after the last row of the previous page, in sort order
               cursor
                 ? sql`(${course.code}, ${section.sectionLabel}, ${section.id})
             > (${cursor.code}, ${cursor.sectionLabel}, ${cursor.id})`
@@ -113,6 +111,7 @@ export class CatalogService {
             ),
           )
           .orderBy(asc(course.code), asc(section.sectionLabel), asc(section.id))
+          // One extra row says whether another page exists, without a count query
           .limit(query.limit + 1);
         const page = rows.slice(0, query.limit);
         const last = page.at(-1);
@@ -139,12 +138,13 @@ export class CatalogService {
             asc(sectionMeeting.startTime),
             asc(sectionMeeting.id),
           );
+        // One query for the whole page's meetings, grouped here, instead of one query per section
         const meetings = new Map<string, SectionMeeting[]>();
         for (const { sectionId, ...row } of meetingRows) {
           const meeting = {
             ...row,
-            startTime: minuteTime(row.startTime),
-            endTime: minuteTime(row.endTime),
+            startTime: dropZeroSeconds(row.startTime),
+            endTime: dropZeroSeconds(row.endTime),
           };
           const list = meetings.get(sectionId);
           if (list) list.push(meeting);
@@ -153,7 +153,14 @@ export class CatalogService {
 
         return sectionListSchema.parse({
           items: page.map((row) => ({ ...row, meetings: meetings.get(row.id) ?? [] })),
-          nextCursor: rows.length > query.limit ? encodeCursor(last) : null,
+          nextCursor:
+            rows.length > query.limit
+              ? encodeCursor({
+                  code: last.course.code,
+                  sectionLabel: last.sectionLabel,
+                  id: last.id,
+                })
+              : null,
         });
       },
       { isolationLevel: 'repeatable read', accessMode: 'read only' },
@@ -161,22 +168,7 @@ export class CatalogService {
   }
 }
 
-function encodeCursor(last: { course: { code: string }; sectionLabel: string; id: string }) {
-  const position = { code: last.course.code, sectionLabel: last.sectionLabel, id: last.id };
-  return Buffer.from(JSON.stringify(position)).toString('base64url');
-}
-
-function decodeCursor(token: string) {
-  const bytes = Buffer.from(token, 'base64url');
-  if (bytes.toString('base64url') !== token) throw new BadRequestException('Invalid cursor');
-  try {
-    const input: unknown = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
-    return sectionCursorSchema.parse(input);
-  } catch {
-    throw new BadRequestException('Invalid cursor');
-  }
-}
-
-function minuteTime(value: string): string {
+// PostgreSQL prints time as 14:00:00; the app shows 14:00. Real seconds (rare) are kept
+function dropZeroSeconds(value: string): string {
   return value.replace(/^(\d{2}:\d{2}):00$/, '$1');
 }

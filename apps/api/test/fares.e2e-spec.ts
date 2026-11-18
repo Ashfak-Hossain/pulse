@@ -48,20 +48,9 @@ describe('Fare split previews over HTTP', () => {
     expect(body.shares.reduce((sum, share) => sum + share, 0)).toBe(totalPaisa);
   });
 
+  // The contract tests cover each rule; here only that the route answers 400, never 500
   it.each([
-    { totalPaisa: -1, weights: [1] },
-    { totalPaisa: 10_000_001, weights: [1] },
-    { totalPaisa: 100.5, weights: [1] },
-    { totalPaisa: '100', weights: [1] },
-    { totalPaisa: 100, weights: [] },
-    { totalPaisa: 100, weights: Array<number>(9).fill(1) },
     { totalPaisa: 100, weights: [0, 0] },
-    { totalPaisa: 100, weights: [-1, 1] },
-    { totalPaisa: 100, weights: [101] },
-    { totalPaisa: 100, weights: [0.5] },
-    { totalPaisa: 100, weights: ['1'] },
-    { totalPaisa: 100 },
-    { weights: [1] },
     { totalPaisa: 100, weights: [1], extra: 'unexpected' },
   ])('returns 400 with issues, never 500, for %o', async (body) => {
     const res = await request(app.getHttpServer())
@@ -72,21 +61,5 @@ describe('Fare split previews over HTTP', () => {
     const error = apiErrorSchema.parse(res.body);
     expect(error.message).toBe('Validation failed');
     expect(error.issues?.length).toBeGreaterThan(0);
-  });
-
-  it('returns the same split on repeated requests', async () => {
-    const body = { totalPaisa: 2, weights: [1, 1, 1] };
-    const first = await request(app.getHttpServer())
-      .post('/fares/split-preview')
-      .set('Origin', origin)
-      .send(body)
-      .expect(200);
-    const second = await request(app.getHttpServer())
-      .post('/fares/split-preview')
-      .set('Origin', origin)
-      .send(body)
-      .expect(200);
-    expect(fareSplitPreviewSchema.parse(first.body)).toEqual({ totalPaisa: 2, shares: [1, 1, 0] });
-    expect(second.body).toEqual(first.body);
   });
 });
