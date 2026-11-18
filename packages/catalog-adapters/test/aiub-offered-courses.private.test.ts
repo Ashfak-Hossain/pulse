@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { ParsedCatalog, parseAiubOfferedCourses } from '../src/index.js';
+import { parsedCatalogSchema, parseAiubOfferedCourses } from '../src/index.js';
 
 const path = new URL('./fixtures/private/aiub-offered-courses.xlsx', import.meta.url);
 
@@ -10,7 +10,7 @@ describe.skipIf(!existsSync(path))('private AIUB offered-course report', () => {
     const start = performance.now();
     const result = await parseAiubOfferedCourses(file);
     expect(performance.now() - start).toBeLessThan(2000);
-    const parsed = ParsedCatalog.parse(result);
+    const parsed = parsedCatalogSchema.parse(result);
     expect(parsed.termName).toBe('Fall 2026-2027');
     expect(parsed.stats).toEqual({
       sections: 2921,
