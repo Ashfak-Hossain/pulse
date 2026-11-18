@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import {
+  type AnyPgColumn,
   bigint,
   check,
   date,
@@ -27,6 +28,12 @@ const pulseMailer = pgRole('pulse_mailer').existing();
 
 // Set by withCampus(). A reused connection holds '' instead of NULL, so turn it back into NULL
 const currentCampusId = sql`nullif(current_setting('app.campus_id', true), '')::uuid`;
+
+// Catalog text as the app shows it: no edge spaces, not empty, at most `max` characters (the
+// numbers match catalogLimits in @pulse/contracts; change both). NULL passes, so optional columns stay optional
+function cleanTextCheck(column: AnyPgColumn, max: number) {
+  return sql`${column} = btrim(${column}) and length(${column}) between 1 and ${sql.raw(String(max))}`;
+}
 
 export const campus = pgTable(
   'campus',
@@ -157,6 +164,8 @@ export const course = pgTable(
     unique('course_campus_code_unique').on(table.campusId, table.code),
     unique('course_id_campus_unique').on(table.id, table.campusId),
     index('course_title_trgm_idx').using('gin', table.title.op('gin_trgm_ops')),
+    check('course_code_clean', cleanTextCheck(table.code, 32)),
+    check('course_title_clean', cleanTextCheck(table.title, 200)),
     pgPolicy('course_read', {
       for: 'select',
       to: pulseApp,
@@ -190,6 +199,7 @@ export const term = pgTable(
     uniqueIndex('term_one_active_per_campus')
       .on(table.campusId)
       .where(sql`${table.status} = 'active'`),
+    check('term_name_clean', cleanTextCheck(table.name, 100)),
     check('term_dates_ordered', sql`${table.endsOn} > ${table.startsOn}`),
     check('term_status_valid', sql`${table.status} in ('draft', 'active', 'archived')`),
     pgPolicy('term_read', {
@@ -241,6 +251,10 @@ export const section = pgTable(
     index('section_term_campus_idx').on(table.termId, table.campusId),
     index('section_course_campus_idx').on(table.courseId, table.campusId),
     index('section_title_trgm_idx').using('gin', table.title.op('gin_trgm_ops')),
+    check('section_external_class_id_clean', cleanTextCheck(table.externalClassId, 32)),
+    check('section_label_clean', cleanTextCheck(table.sectionLabel, 32)),
+    check('section_title_clean', cleanTextCheck(table.title, 200)),
+    check('section_instructor_name_clean', cleanTextCheck(table.instructorName, 200)),
     check('section_capacity_nonnegative', sql`${table.capacity} >= 0`),
     check('section_enrolled_nonnegative', sql`${table.enrolled} >= 0`),
     check(
@@ -266,6 +280,7 @@ export const sectionMeeting = pgTable(
       .references(() => campus.id),
     sectionId: uuid('section_id').notNull(),
     kind: text('kind', { enum: ['theory', 'lab', 'other'] }).notNull(),
+    // 0 = Sunday … 6 = Saturday, as JavaScript's getDay()
     weekday: smallint('weekday').notNull(),
     startTime: time('start_time').notNull(),
     endTime: time('end_time').notNull(),
@@ -277,11 +292,20 @@ export const sectionMeeting = pgTable(
       columns: [table.sectionId, table.campusId],
       foreignColumns: [section.id, section.campusId],
     }).onDelete('cascade'),
+    // One class cannot hold the same kind of meeting twice at one time; also makes re-imports
+    // and the seed skip rows they already wrote
+    unique('section_meeting_slot_unique').on(
+      table.sectionId,
+      table.weekday,
+      table.startTime,
+      table.kind,
+    ),
     index('section_meeting_section_campus_idx').on(table.sectionId, table.campusId),
     index('section_meeting_departure_idx').on(table.campusId, table.weekday, table.endTime),
     check('section_meeting_kind_valid', sql`${table.kind} in ('theory', 'lab', 'other')`),
     check('section_meeting_weekday_valid', sql`${table.weekday} between 0 and 6`),
     check('section_meeting_times_ordered', sql`${table.endTime} > ${table.startTime}`),
+    check('section_meeting_room_clean', cleanTextCheck(table.room, 64)),
     pgPolicy('section_meeting_read', {
       for: 'select',
       to: pulseApp,

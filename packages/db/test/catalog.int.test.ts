@@ -137,7 +137,8 @@ describe('catalog timetable constraints and tenancy', () => {
       await pgErrorCode(
         owner
           .insert(sectionMeeting)
-          .values({ ...meetingA, id: randomUUID(), sectionId: sectionB.id }),
+          // Another weekday, so the slot key (meetingB holds this slot) cannot answer first
+          .values({ ...meetingA, id: randomUUID(), sectionId: sectionB.id, weekday: 5 }),
       ),
     ).toBe('23503');
   });
@@ -152,6 +153,70 @@ describe('catalog timetable constraints and tenancy', () => {
       ).toBe('23514');
     },
   );
+
+  it('rejects a second meeting of the same kind at the same slot', async () => {
+    expect(
+      await pgErrorCode(
+        owner.insert(sectionMeeting).values({ ...meetingA, id: randomUUID(), endTime: '16:00' }),
+      ),
+    ).toBe('23505');
+  });
+
+  // Edge spaces, empty and over-long values: what the parser never sends must not get in by psql
+  it.each([
+    [
+      'course code',
+      () => owner.insert(course).values({ ...courseA, id: randomUUID(), code: ' X' }),
+    ],
+    [
+      'course title',
+      () =>
+        owner
+          .insert(course)
+          .values({ ...courseA, id: randomUUID(), code: 'T1', title: 'x'.repeat(201) }),
+    ],
+    [
+      'term name',
+      () => owner.insert(term).values({ ...termA, id: randomUUID(), status: 'draft', name: '' }),
+    ],
+    [
+      'class id',
+      () =>
+        owner
+          .insert(section)
+          .values({ ...sectionA, id: randomUUID(), externalClassId: '1'.repeat(33) }),
+    ],
+    [
+      'section label',
+      () =>
+        owner
+          .insert(section)
+          .values({ ...sectionA, id: randomUUID(), externalClassId: 'L1', sectionLabel: 'A ' }),
+    ],
+    [
+      'section title',
+      () =>
+        owner
+          .insert(section)
+          .values({ ...sectionA, id: randomUUID(), externalClassId: 'T1', title: ' ' }),
+    ],
+    [
+      'instructor',
+      () =>
+        owner
+          .insert(section)
+          .values({ ...sectionA, id: randomUUID(), externalClassId: 'I1', instructorName: '' }),
+    ],
+    [
+      'room',
+      () =>
+        owner
+          .insert(sectionMeeting)
+          .values({ ...meetingA, id: randomUUID(), weekday: 3, room: 'r'.repeat(65) }),
+    ],
+  ])('rejects unclean text in %s', async (_name, insert) => {
+    expect(await pgErrorCode(insert())).toBe('23514');
+  });
 
   it('stores unscheduled sections and keeps over-capacity enrollment', async () => {
     const result = await withCampus(app, a.id, async (tx) => ({

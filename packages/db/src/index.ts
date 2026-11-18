@@ -21,6 +21,7 @@ export {
   desc,
   DrizzleQueryError,
   eq,
+  gt,
   ilike,
   inArray,
   isNull,
