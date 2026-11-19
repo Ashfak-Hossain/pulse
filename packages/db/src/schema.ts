@@ -621,3 +621,53 @@ export const meetingPoint = pgTable(
     }),
   ],
 );
+
+// Who changed what, one row per admin write, in the same transaction as the change. Append-only:
+// the policies allow select and insert, and grants (migration 0020) take away update and delete
+export const auditLog = pgTable(
+  'audit_log',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`uuidv7()`),
+    campusId: uuid('campus_id')
+      .notNull()
+      .references(() => campus.id),
+    actorId: uuid('actor_id').notNull(),
+    // e.g. gate.create, term.activate
+    action: text('action').notNull(),
+    entity: text('entity').notNull(),
+    entityId: uuid('entity_id').notNull(),
+    // Ids and non-personal before/after values only, never names, emails or phone numbers
+    metadata: jsonb('metadata').$type<Record<string, unknown>>().notNull().default({}),
+    // Same keyed hash as email_otp.ip_hash, never the IP itself
+    ipHash: text('ip_hash'),
+    at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // The actor must belong to the row's campus
+    foreignKey({
+      name: 'audit_log_actor_campus_fk',
+      columns: [table.actorId, table.campusId],
+      foreignColumns: [appUser.id, appUser.campusId],
+    }),
+    // The admin list, newest first; also covers the campus foreign key
+    index('audit_log_campus_at_idx').on(table.campusId, table.at.desc()),
+    index('audit_log_actor_campus_idx').on(table.actorId, table.campusId),
+    check('audit_log_action_shape', sql`${table.action} ~ '^[a-z_]+\.[a-z_]+$'`),
+    check('audit_log_action_short', sql`length(${table.action}) <= 64`),
+    check('audit_log_entity_clean', cleanTextCheck(table.entity, 64)),
+    check('audit_log_metadata_object', sql`jsonb_typeof(${table.metadata}) = 'object'`),
+    check('audit_log_ip_hash_hex', sql`${table.ipHash} ~ '^[0-9a-f]{64}$'`),
+    pgPolicy('audit_log_read', {
+      for: 'select',
+      to: pulseApp,
+      using: sql`${table.campusId} = ${currentCampusId}`,
+    }),
+    pgPolicy('audit_log_insert', {
+      for: 'insert',
+      to: pulseApp,
+      withCheck: sql`${table.campusId} = ${currentCampusId}`,
+    }),
+  ],
+);
