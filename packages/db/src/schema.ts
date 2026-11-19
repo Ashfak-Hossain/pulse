@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import {
   type AnyPgColumn,
   bigint,
+  boolean,
   check,
   date,
   foreignKey,
@@ -33,6 +34,11 @@ const currentCampusId = sql`nullif(current_setting('app.campus_id', true), '')::
 // numbers match catalogLimits in @pulse/contracts; change both). NULL passes, so optional columns stay optional
 function cleanTextCheck(column: AnyPgColumn, max: number) {
   return sql`${column} = btrim(${column}) and length(${column}) between 1 and ${sql.raw(String(max))}`;
+}
+
+// A coarse place: an H3 cell at resolution 8 is exactly 15 lowercase hex characters
+function h3CellCheck(column: AnyPgColumn) {
+  return sql`${column} ~ '^[0-9a-f]{15}$'`;
 }
 
 export const campus = pgTable(
@@ -481,6 +487,44 @@ export const authSession = pgTable(
       sql`(${table.revokedAt} is null) = (${table.revokeReason} is null)`,
     ),
     pgPolicy('auth_session_campus', {
+      for: 'all',
+      to: pulseApp,
+      using: sql`${table.campusId} = ${currentCampusId}`,
+      withCheck: sql`${table.campusId} = ${currentCampusId}`,
+    }),
+  ],
+);
+
+// Where trips start or end on campus. The service sets cell from location; clients never send it
+export const campusGate = pgTable(
+  'campus_gate',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`uuidv7()`),
+    campusId: uuid('campus_id')
+      .notNull()
+      .references(() => campus.id),
+    name: text('name').notNull(),
+    // x = longitude, y = latitude (WGS 84)
+    location: geometry('location', { type: 'point', mode: 'xy', srid: 4326 }).notNull(),
+    cell: text('cell').notNull(),
+    isPrimary: boolean('is_primary').notNull().default(false),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    // Set by the set_updated_at trigger (migration 0020); never write it
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // Lets trips (a later slice) point at a gate of the same campus
+    unique('campus_gate_id_campus_unique').on(table.id, table.campusId),
+    // Also indexes the campus foreign key
+    unique('campus_gate_campus_name_unique').on(table.campusId, table.name),
+    uniqueIndex('campus_gate_one_primary_per_campus')
+      .on(table.campusId)
+      .where(sql`${table.isPrimary}`),
+    check('campus_gate_name_clean', cleanTextCheck(table.name, 100)),
+    check('campus_gate_cell_h3', h3CellCheck(table.cell)),
+    pgPolicy('campus_gate_campus', {
       for: 'all',
       to: pulseApp,
       using: sql`${table.campusId} = ${currentCampusId}`,
