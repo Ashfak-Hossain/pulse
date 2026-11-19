@@ -1,4 +1,4 @@
-import { findPlaces, type PlaceMatch } from './gazetteer.js';
+import { findPlaces, type GazetteerPlace, type PlaceMatch } from './gazetteer.js';
 import { hasRun, range, tokenise } from './tokenise.js';
 import { findTimes, type TimeRef } from './time.js';
 
@@ -20,6 +20,8 @@ export interface ParsedRequest {
 export interface ParseContext {
   /** The user's sections today, so "ML class" can become a course code */
   courses?: readonly { code: string; title: string }[];
+  /** The caller's campus places (gazetteerFor(slug)); AIUB's when left out */
+  gazetteer?: readonly GazetteerPlace[];
 }
 
 /**
@@ -30,7 +32,7 @@ export interface ParseContext {
  */
 export function parseRequest(text: string, context: ParseContext = {}): ParsedRequest {
   const tokens = tokenise(text);
-  const places = findPlaces(tokens);
+  const places = findPlaces(tokens, context.gazetteer);
   // A number inside a place name ("mirpur 10") is never a time or a wait
   const inPlace = new Set(places.flatMap((m) => range(m.start, m.end)));
   const times = findTimes(tokens, inPlace, context.courses ?? []);
