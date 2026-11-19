@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { parsedRequestSchema } from '../src/index.js';
+import {
+  parsedRequestSchema,
+  requestParseBodySchema,
+  requestParseResultSchema,
+} from '../src/index.js';
 
 describe('parsedRequestSchema', () => {
   it.each([
@@ -36,5 +40,33 @@ describe('parsedRequestSchema', () => {
     { confidence: 0.5, text: 'never echoed back' },
   ])('rejects %o', (parsed) => {
     expect(parsedRequestSchema.safeParse(parsed).success).toBe(false);
+  });
+});
+
+describe('requestParseBodySchema', () => {
+  it.each(['a', 'x'.repeat(280), 'ML class er por Mirpur 10 jabo'])('accepts %s', (text) => {
+    expect(requestParseBodySchema.parse({ text })).toEqual({ text });
+  });
+
+  it.each([
+    {},
+    { text: '' },
+    { text: 'x'.repeat(281) },
+    { text: 5 },
+    { text: 'hi', campusId: 'x' },
+  ])('rejects %o', (body) => {
+    expect(requestParseBodySchema.safeParse(body).success).toBe(false);
+  });
+});
+
+describe('requestParseResultSchema', () => {
+  it('needs the parser name', () => {
+    expect(requestParseResultSchema.safeParse({ confidence: 0, parser: 'rule@1' }).success).toBe(
+      true,
+    );
+    expect(requestParseResultSchema.safeParse({ confidence: 0 }).success).toBe(false);
+    expect(requestParseResultSchema.safeParse({ confidence: 0, parser: 'model@9' }).success).toBe(
+      false,
+    );
   });
 });
