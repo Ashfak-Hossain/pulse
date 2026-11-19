@@ -12,6 +12,10 @@ export {
   appUser,
   emailOtp,
   authSession,
+  campusGate,
+  zone,
+  meetingPoint,
+  auditLog,
 } from './schema.js';
 export { assertRestrictedRole } from './role-check.js';
 export {
