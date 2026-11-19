@@ -1,0 +1,22 @@
+$kind: http-request
+description: "A bow tie: well-formed GeoJSON whose edges cross. Only PostgreSQL (ST_IsValid) can tell, and the API answers 422, never 500."
+url: "{{baseUrl}}/admin/zones"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+  Origin: "{{appOrigin}}"
+body:
+  type: json
+  content: |-
+    {"name": "Postman knot", "area": {"type": "MultiPolygon", "coordinates": [[[[90, 23], [90.01, 23.01], [90.01, 23], [90, 23.01], [90, 23]]]]}}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 422', () => pm.response.to.have.status(422));
+      pm.test('says why, in fixed text', () =>
+        pm.expect(pm.response.json().message).to.equal('The zone area crosses itself'),
+      );
+    language: text/javascript
+examples: .resources/Self-crossing zone.resources/examples
+order: 5000

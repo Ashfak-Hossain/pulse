@@ -1,0 +1,14 @@
+$kind: http-request
+description: "Hides the point (is_active = false) instead of deleting it, because trips will point at meeting points. It leaves every list; a second delete answers 404."
+url: "{{baseUrl}}/admin/meeting-points/{{meetingPointId}}"
+method: DELETE
+headers:
+  Accept: application/json
+  Origin: "{{appOrigin}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 204', () => pm.response.to.have.status(204));
+    language: text/javascript
+examples: .resources/Delete meeting point.resources/examples
+order: 8000
