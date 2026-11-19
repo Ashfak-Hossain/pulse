@@ -418,8 +418,8 @@ importers:
         specifier: ^9.3.17
         version: 9.3.17
       saxen:
-        specifier: ^11.2.0
-        version: 11.2.0
+        specifier: ^12.0.0
+        version: 12.0.0
       zod:
         specifier: 'catalog:'
         version: 4.6.7
@@ -3365,6 +3365,10 @@ packages:
 
   saxen@11.2.0:
     resolution: {integrity: sha512-2bG564AAJcm/3vyZC0Uhs/mACrH+4AHMaKHKAB2M5xMqomUZa27FQ7MYaQGFKVcJk/MVzSEQ34A8QZWW+eiWEw==}
+    engines: {node: '>= 20.12'}
+
+  saxen@12.0.0:
+    resolution: {integrity: sha512-qjvLqxNJrb39GW/ixPalpAzNiYPZL7Qjyc4knYSHvX/3P9QTc03BVdQPKiPJSNnRk/AFaIWeDdgZivl7CAezsA==}
     engines: {node: '>= 20.12'}
 
   scule@1.3.0:
@@ -6441,6 +6445,8 @@ snapshots:
   safer-buffer@2.1.2: {}
 
   saxen@11.2.0: {}
+
+  saxen@12.0.0: {}
 
   scule@1.3.0: {}
 
