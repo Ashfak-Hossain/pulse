@@ -573,3 +573,51 @@ export const zone = pgTable(
     }),
   ],
 );
+
+// Where a crew gathers. Deleting one only sets is_active = false: trips will point at it later
+export const meetingPoint = pgTable(
+  'meeting_point',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`uuidv7()`),
+    campusId: uuid('campus_id')
+      .notNull()
+      .references(() => campus.id),
+    // Null for gate-side points, which belong to no home area
+    zoneId: uuid('zone_id'),
+    name: text('name').notNull(),
+    kind: text('kind', { enum: ['gate', 'landmark', 'bus_stop', 'junction'] }).notNull(),
+    // x = longitude, y = latitude (WGS 84)
+    location: geometry('location', { type: 'point', mode: 'xy', srid: 4326 }).notNull(),
+    cell: text('cell').notNull(),
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    // Set by the set_updated_at trigger (migration 0020); never write it
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    unique('meeting_point_id_campus_unique').on(table.id, table.campusId),
+    // A null zone_id skips the check, so gate-side points need no zone
+    foreignKey({
+      name: 'meeting_point_zone_campus_fk',
+      columns: [table.zoneId, table.campusId],
+      foreignColumns: [zone.id, zone.campusId],
+    }),
+    index('meeting_point_campus_idx').on(table.campusId),
+    index('meeting_point_zone_campus_idx').on(table.zoneId, table.campusId),
+    index('meeting_point_location_gist_idx').using('gist', table.location),
+    check('meeting_point_name_clean', cleanTextCheck(table.name, 100)),
+    check(
+      'meeting_point_kind_valid',
+      sql`${table.kind} in ('gate', 'landmark', 'bus_stop', 'junction')`,
+    ),
+    check('meeting_point_cell_h3', h3CellCheck(table.cell)),
+    pgPolicy('meeting_point_campus', {
+      for: 'all',
+      to: pulseApp,
+      using: sql`${table.campusId} = ${currentCampusId}`,
+      withCheck: sql`${table.campusId} = ${currentCampusId}`,
+    }),
+  ],
+);
