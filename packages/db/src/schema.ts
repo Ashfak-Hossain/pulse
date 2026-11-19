@@ -654,7 +654,7 @@ export const auditLog = pgTable(
     // The admin list, newest first; also covers the campus foreign key
     index('audit_log_campus_at_idx').on(table.campusId, table.at.desc()),
     index('audit_log_actor_campus_idx').on(table.actorId, table.campusId),
-    check('audit_log_action_shape', sql`${table.action} ~ '^[a-z_]+\.[a-z_]+$'`),
+    check('audit_log_action_shape', sql`${table.action} ~ '^[a-z_]+[.][a-z_]+$'`),
     check('audit_log_action_short', sql`length(${table.action}) <= 64`),
     check('audit_log_entity_clean', cleanTextCheck(table.entity, 64)),
     check('audit_log_metadata_object', sql`jsonb_typeof(${table.metadata}) = 'object'`),
