@@ -4,6 +4,7 @@ import {
   bigint,
   boolean,
   check,
+  customType,
   date,
   foreignKey,
   geometry,
@@ -40,6 +41,12 @@ function cleanTextCheck(column: AnyPgColumn, max: number) {
 function h3CellCheck(column: AnyPgColumn) {
   return sql`${column} ~ '^[0-9a-f]{15}$'`;
 }
+
+// Drizzle's geometry() only parses points. An area stays PostGIS's own value (hex EWKB) in
+// TypeScript; queries read and write it as GeoJSON with ST_AsGeoJSON and ST_GeomFromGeoJSON
+const multiPolygon = customType<{ data: string; driverData: string }>({
+  dataType: () => 'geometry(MultiPolygon,4326)',
+});
 
 export const campus = pgTable(
   'campus',
@@ -525,6 +532,40 @@ export const campusGate = pgTable(
     check('campus_gate_name_clean', cleanTextCheck(table.name, 100)),
     check('campus_gate_cell_h3', h3CellCheck(table.cell)),
     pgPolicy('campus_gate_campus', {
+      for: 'all',
+      to: pulseApp,
+      using: sql`${table.campusId} = ${currentCampusId}`,
+      withCheck: sql`${table.campusId} = ${currentCampusId}`,
+    }),
+  ],
+);
+
+// Named home areas drawn by the campus admin, e.g. Mirpur 10
+export const zone = pgTable(
+  'zone',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`uuidv7()`),
+    campusId: uuid('campus_id')
+      .notNull()
+      .references(() => campus.id),
+    name: text('name').notNull(),
+    area: multiPolygon('area').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    // Set by the set_updated_at trigger (migration 0020); never write it
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // Lets meeting points and preferences point at a zone of the same campus
+    unique('zone_id_campus_unique').on(table.id, table.campusId),
+    // Also indexes the campus foreign key
+    unique('zone_campus_name_unique').on(table.campusId, table.name),
+    index('zone_area_gist_idx').using('gist', table.area),
+    check('zone_name_clean', cleanTextCheck(table.name, 100)),
+    // A self-crossing polygon breaks ST_Contains, so the database refuses it
+    check('zone_area_valid', sql`ST_IsValid(${table.area})`),
+    pgPolicy('zone_campus', {
       for: 'all',
       to: pulseApp,
       using: sql`${table.campusId} = ${currentCampusId}`,
