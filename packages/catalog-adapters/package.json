@@ -23,7 +23,7 @@
   "dependencies": {
     "@pulse/contracts": "workspace:*",
     "fflate": "^0.8.3",
-    "read-excel-file": "^9.3.14",
+    "read-excel-file": "^9.3.17",
     "saxen": "^11.2.0",
     "zod": "catalog:"
   }

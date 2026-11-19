@@ -13,10 +13,10 @@
     "test:e2e": "vitest run --config vitest.config.e2e.ts"
   },
   "dependencies": {
-    "@nestjs/common": "^12.4.0",
+    "@nestjs/common": "^12.5.0",
     "@nestjs/config": "^12.1.1",
-    "@nestjs/core": "^12.4.0",
-    "@nestjs/platform-express": "^12.4.0",
+    "@nestjs/core": "^12.5.0",
+    "@nestjs/platform-express": "^12.5.0",
     "@pulse/contracts": "workspace:*",
     "@pulse/db": "workspace:*",
     "@pulse/events": "workspace:*",
@@ -30,9 +30,9 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@nestjs/cli": "^12.0.12",
+    "@nestjs/cli": "^12.0.13",
     "@nestjs/schematics": "^12.0.13",
-    "@nestjs/testing": "^12.4.0",
+    "@nestjs/testing": "^12.5.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.0",
     "@types/supertest": "^7.2.1",
