@@ -28,5 +28,7 @@ import { SessionService } from './session.service.js';
     // Global: every route in the app needs a session unless it is @Public()
     { provide: APP_GUARD, useClass: AuthGuard },
   ],
+  // Other modules count their own limits in the same Redis (requests: 30 parses a minute)
+  exports: [RateLimiter],
 })
 export class AuthModule {}
