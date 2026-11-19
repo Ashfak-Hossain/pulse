@@ -1,0 +1,31 @@
+$kind: http-request
+description: 'Reads an English ride request: a clock time (a bare 1 to 7 means pm), a wait and the place. Needs Verify code first.'
+url: '{{baseUrl}}/requests/parse'
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+  Origin: '{{appOrigin}}'
+body:
+  type: json
+  content: '{"text": "going home to Uttara at 5:30, 10 min wait"}'
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200 (401: run Request code and Verify code first)', () =>
+        pm.response.to.have.status(200),
+      );
+      pm.test('has only contract fields', () => {
+        const allowed = ['confidence', 'direction', 'genderPref', 'maxWaitMin', 'modes', 'parser', 'place', 'timeRef'];
+        Object.keys(pm.response.json()).forEach((key) => pm.expect(allowed).to.include(key));
+      });
+      pm.test('reads the time as 17:30 and the wait as 10 minutes', () => {
+        const body = pm.response.json();
+        pm.expect(body.direction).to.equal('from_campus');
+        pm.expect(body.place.name).to.equal('Uttara');
+        pm.expect(body.timeRef).to.eql({ kind: 'clock', time: '17:30' });
+        pm.expect(body.maxWaitMin).to.equal(10);
+      });
+    language: text/javascript
+examples: '.resources/Parse English.resources/examples'
+order: 2000

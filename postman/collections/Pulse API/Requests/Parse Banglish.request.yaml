@@ -1,0 +1,34 @@
+$kind: http-request
+description: 'Reads a Banglish ride request with the rule parser. The text is never stored or logged. 30 a minute per user. Needs Verify code first.'
+url: '{{baseUrl}}/requests/parse'
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+  Origin: '{{appOrigin}}'
+body:
+  type: json
+  content: '{"text": "class er por Mirpur 10 jabo, shudhu meye rider"}'
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200 (401: run Request code and Verify code first)', () =>
+        pm.response.to.have.status(200),
+      );
+      pm.test('reads direction, place, time and gender', () => {
+        const body = pm.response.json();
+        pm.expect(body.direction).to.equal('from_campus');
+        pm.expect(body.place.name).to.equal('Mirpur 10');
+        pm.expect(body.place.cell).to.match(/^88[0-9a-f]{13}$/);
+        pm.expect(body.timeRef).to.eql({ kind: 'after_class' });
+        pm.expect(body.genderPref).to.equal('same_gender');
+        pm.expect(body.confidence).to.equal(1);
+      });
+      pm.test('names the parser and never echoes the text', () => {
+        const body = pm.response.json();
+        pm.expect(body.parser).to.equal('rule@1');
+        pm.expect(body).to.not.have.property('text');
+      });
+    language: text/javascript
+examples: '.resources/Parse Banglish.resources/examples'
+order: 1000

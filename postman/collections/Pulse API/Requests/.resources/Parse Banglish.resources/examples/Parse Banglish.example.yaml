@@ -1,0 +1,32 @@
+$kind: http-example
+request:
+  method: POST
+  url: '{{baseUrl}}/requests/parse'
+  headers:
+    Content-Type: application/json
+    Origin: http://localhost:5173
+  body:
+    type: json
+    content: '{"text": "class er por Mirpur 10 jabo, shudhu meye rider"}'
+response:
+  statusCode: 200
+  statusText: 'OK'
+  headers:
+    Content-Type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "direction": "from_campus",
+        "place": {
+          "name": "Mirpur 10",
+          "cell": "883cf10eb1fffff"
+        },
+        "timeRef": {
+          "kind": "after_class"
+        },
+        "genderPref": "same_gender",
+        "confidence": 1,
+        "parser": "rule@1"
+      }
+order: 1000
