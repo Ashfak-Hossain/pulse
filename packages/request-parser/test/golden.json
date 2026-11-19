@@ -1,0 +1,873 @@
+{
+  "about": "Hand-written ride requests and what each one means: the baseline the trained model must beat (objective O3). Add sentences; never change an expected answer just to suit the parser. place is the gazetteer name, and the test adds its cell.",
+  "courses": [
+    {
+      "code": "CSC4233",
+      "title": "Machine Learning"
+    },
+    {
+      "code": "CSC2210",
+      "title": "Object Oriented Programming 1"
+    },
+    {
+      "code": "CSC2211",
+      "title": "Data Structure"
+    },
+    {
+      "code": "CSC3113",
+      "title": "Theory of Computation"
+    },
+    {
+      "code": "CSC4118",
+      "title": "Computer Graphics"
+    },
+    {
+      "code": "MAT1205",
+      "title": "Differential Calculus and Coordinate Geometry"
+    }
+  ],
+  "cases": [
+    {
+      "text": "ML class er por Mirpur 10 jabo, shudhu meye rider",
+      "lang": "banglish",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Mirpur 10",
+        "timeRef": {
+          "kind": "after_class",
+          "course": "CSC4233"
+        },
+        "genderPref": "same_gender",
+        "confidence": 1
+      }
+    },
+    {
+      "text": "class er por Mirpur 10 jabo",
+      "lang": "banglish",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Mirpur 10",
+        "timeRef": {
+          "kind": "after_class"
+        },
+        "confidence": 1
+      }
+    },
+    {
+      "text": "Uttara theke campus e ashbo 8 tay",
+      "lang": "banglish",
+      "expected": {
+        "direction": "to_campus",
+        "place": "Uttara",
+        "timeRef": {
+          "kind": "clock",
+          "time": "08:00"
+        },
+        "confidence": 1
+      }
+    },
+    {
+      "text": "5 tay Banani jabo, cng te",
+      "lang": "banglish",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Banani",
+        "timeRef": {
+          "kind": "clock",
+          "time": "17:00"
+        },
+        "modes": ["cng"],
+        "confidence": 1
+      }
+    },
+    {
+      "text": "bashundhara theke ashbo sokal 9 tay, rickshaw",
+      "lang": "banglish",
+      "expected": {
+        "direction": "to_campus",
+        "place": "Bashundhara R/A",
+        "timeRef": {
+          "kind": "clock",
+          "time": "09:00"
+        },
+        "modes": ["rickshaw"],
+        "confidence": 1
+      }
+    },
+    {
+      "text": "ekhon kuril jabo keu ache?",
+      "lang": "banglish",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Kuril",
+        "timeRef": {
+          "kind": "now"
+        },
+        "confidence": 1
+      }
+    },
+    {
+      "text": "DS class sheshe Notun Bazar jabo, 15 min opekkha korte parbo",
+      "lang": "banglish",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Notun Bazar",
+        "timeRef": {
+          "kind": "after_class",
+          "course": "CSC2211"
+        },
+        "maxWaitMin": 15,
+        "confidence": 1
+      }
+    },
+    {
+      "text": "basay jabo sare 5 tay, ladies only",
+      "lang": "banglish",
+      "expected": {
+        "direction": "from_campus",
+        "timeRef": {
+          "kind": "clock",
+          "time": "17:30"
+        },
+        "genderPref": "same_gender",
+        "confidence": 0.67
+      }
+    },
+    {
+      "text": "Mirpur 12 jaabo 6 tay, uber share korbo",
+      "lang": "banglish",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Mirpur 12",
+        "timeRef": {
+          "kind": "clock",
+          "time": "18:00"
+        },
+        "modes": ["ride_hail_car"],
+        "confidence": 1
+      }
+    },
+    {
+      "text": "kalke na, aj bikal 4 tay jamuna future park jabo",
+      "lang": "banglish",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Jamuna Future Park",
+        "timeRef": {
+          "kind": "clock",
+          "time": "16:00"
+        },
+        "confidence": 1
+      }
+    },
+    {
+      "text": "raat 8 tay campus theke Badda jabo",
+      "lang": "banglish",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Badda",
+        "timeRef": {
+          "kind": "clock",
+          "time": "20:00"
+        },
+        "confidence": 1
+      }
+    },
+    {
+      "text": "Gulshan 2 theke varsity te ashbo, 10 minute wait korbo",
+      "lang": "banglish",
+      "expected": {
+        "direction": "to_campus",
+        "place": "Gulshan 2",
+        "maxWaitMin": 10,
+        "confidence": 0.67
+      }
+    },
+    {
+      "text": "OOP class er pore Rampura jabo, cng or rickshaw",
+      "lang": "banglish",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Rampura",
+        "timeRef": {
+          "kind": "after_class",
+          "course": "CSC2210"
+        },
+        "modes": ["cng", "rickshaw"],
+        "confidence": 1
+      }
+    },
+    {
+      "text": "shudhu meye rider chai, Mohakhali jabo 3 tay",
+      "lang": "banglish",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Mohakhali",
+        "timeRef": {
+          "kind": "clock",
+          "time": "15:00"
+        },
+        "genderPref": "same_gender",
+        "confidence": 1
+      }
+    },
+    {
+      "text": "Khilkhet theke aschi, poune 8 tay pouchabo",
+      "lang": "banglish",
+      "expected": {
+        "direction": "to_campus",
+        "place": "Khilkhet",
+        "timeRef": {
+          "kind": "clock",
+          "time": "07:45"
+        },
+        "confidence": 1
+      }
+    },
+    {
+      "text": "Airport jabo ekhoni, pathao car",
+      "lang": "banglish",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Airport",
+        "timeRef": {
+          "kind": "now"
+        },
+        "modes": ["ride_hail_car"],
+        "confidence": 1
+      }
+    },
+    {
+      "text": "Nikunja 2 theke campus asbo 9:30 e",
+      "lang": "banglish",
+      "expected": {
+        "direction": "to_campus",
+        "place": "Nikunja",
+        "timeRef": {
+          "kind": "clock",
+          "time": "09:30"
+        },
+        "confidence": 1
+      }
+    },
+    {
+      "text": "class sesh hole Uttara sector 4 jabo, bus e",
+      "lang": "banglish",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Uttara Sector 4",
+        "timeRef": {
+          "kind": "after_class"
+        },
+        "modes": ["bus"],
+        "confidence": 1
+      }
+    },
+    {
+      "text": "Mirpur 1 theke ashbo, sudhu chele",
+      "lang": "banglish",
+      "expected": {
+        "direction": "to_campus",
+        "place": "Mirpur 1",
+        "genderPref": "same_gender",
+        "confidence": 0.67
+      }
+    },
+    {
+      "text": "TOC class er por Kuratoli jabo",
+      "lang": "banglish",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Kuratoli",
+        "timeRef": {
+          "kind": "after_class",
+          "course": "CSC3113"
+        },
+        "confidence": 1
+      }
+    },
+    {
+      "text": "baro tay Badda theke ashbo",
+      "lang": "banglish",
+      "expected": {
+        "direction": "to_campus",
+        "place": "Badda",
+        "timeRef": {
+          "kind": "clock",
+          "time": "12:00"
+        },
+        "confidence": 1
+      }
+    },
+    {
+      "text": "dera tay class shesh, tarpor Banani jabo",
+      "lang": "banglish",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Banani",
+        "timeRef": {
+          "kind": "clock",
+          "time": "13:30"
+        },
+        "confidence": 0.83
+      }
+    },
+    {
+      "text": "aftabnagar jabo, adha ghonta opekkha korbo",
+      "lang": "banglish",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Aftabnagar",
+        "maxWaitMin": 30,
+        "confidence": 0.67
+      }
+    },
+    {
+      "text": "Shahjadpur theke asbo 10 tay, any gender ok",
+      "lang": "banglish",
+      "expected": {
+        "direction": "to_campus",
+        "place": "Shahjadpur",
+        "timeRef": {
+          "kind": "clock",
+          "time": "10:00"
+        },
+        "genderPref": "any",
+        "confidence": 1
+      }
+    },
+    {
+      "text": "Graphics class er por Dhanmondi jabo 2 jon, cng",
+      "lang": "banglish",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Dhanmondi",
+        "timeRef": {
+          "kind": "after_class",
+          "course": "CSC4118"
+        },
+        "modes": ["cng"],
+        "confidence": 1
+      }
+    },
+    {
+      "text": "basa theke ashtesi, 20 min lagbe",
+      "lang": "banglish",
+      "expected": {
+        "direction": "to_campus",
+        "confidence": 0.33
+      }
+    },
+    {
+      "text": "Kawla jabo choy tay, only female, 5 min wait",
+      "lang": "banglish",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Kawla",
+        "timeRef": {
+          "kind": "clock",
+          "time": "18:00"
+        },
+        "genderPref": "same_gender",
+        "maxWaitMin": 5,
+        "confidence": 1
+      }
+    },
+    {
+      "text": "ami Motijheel jabo shondha 7 tay",
+      "lang": "banglish",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Motijheel",
+        "timeRef": {
+          "kind": "clock",
+          "time": "19:00"
+        },
+        "confidence": 1
+      }
+    },
+    {
+      "text": "Uttar Badda jabo ekhon, rickshaw",
+      "lang": "banglish",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Uttar Badda",
+        "timeRef": {
+          "kind": "now"
+        },
+        "modes": ["rickshaw"],
+        "confidence": 1
+      }
+    },
+    {
+      "text": "sokal 8:30 e Mirpur 2 theke campus",
+      "lang": "banglish",
+      "expected": {
+        "direction": "to_campus",
+        "place": "Mirpur 2",
+        "timeRef": {
+          "kind": "clock",
+          "time": "08:30"
+        },
+        "confidence": 1
+      }
+    },
+    {
+      "text": "amar car ache, Gulshan 1 jabo 6 tay, 2 seat khali",
+      "lang": "banglish",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Gulshan 1",
+        "timeRef": {
+          "kind": "clock",
+          "time": "18:00"
+        },
+        "modes": ["own_car"],
+        "confidence": 1
+      }
+    },
+    {
+      "text": "class er por basay jabo, bus",
+      "lang": "banglish",
+      "expected": {
+        "direction": "from_campus",
+        "timeRef": {
+          "kind": "after_class"
+        },
+        "modes": ["bus"],
+        "confidence": 0.67
+      }
+    },
+    {
+      "text": "Mirpur 10 golchottor theke ashbo",
+      "lang": "banglish",
+      "expected": {
+        "direction": "to_campus",
+        "place": "Mirpur 10",
+        "confidence": 0.67
+      }
+    },
+    {
+      "text": "Kuril bishwa road jabo ekhuni",
+      "lang": "banglish",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Kuril",
+        "timeRef": {
+          "kind": "now"
+        },
+        "confidence": 1
+      }
+    },
+    {
+      "text": "ECB chattar jabo 4:30 e, meye only",
+      "lang": "banglish",
+      "expected": {
+        "direction": "from_campus",
+        "place": "ECB Chattar",
+        "timeRef": {
+          "kind": "clock",
+          "time": "16:30"
+        },
+        "genderPref": "same_gender",
+        "confidence": 1
+      }
+    },
+    {
+      "text": "mirpur10 jabo panch tay, rikshaw",
+      "lang": "banglish",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Mirpur 10",
+        "timeRef": {
+          "kind": "clock",
+          "time": "17:00"
+        },
+        "modes": ["rickshaw"],
+        "confidence": 1
+      }
+    },
+    {
+      "text": "going home to Uttara at 5:30, 10 min wait",
+      "lang": "english",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Uttara",
+        "timeRef": {
+          "kind": "clock",
+          "time": "17:30"
+        },
+        "maxWaitMin": 10,
+        "confidence": 1
+      }
+    },
+    {
+      "text": "Heading to Mirpur 11 after my ML class",
+      "lang": "english",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Mirpur 11",
+        "timeRef": {
+          "kind": "after_class",
+          "course": "CSC4233"
+        },
+        "confidence": 1
+      }
+    },
+    {
+      "text": "Coming to campus from Bashundhara at 8:30 am",
+      "lang": "english",
+      "expected": {
+        "direction": "to_campus",
+        "place": "Bashundhara R/A",
+        "timeRef": {
+          "kind": "clock",
+          "time": "08:30"
+        },
+        "confidence": 1
+      }
+    },
+    {
+      "text": "Leaving campus now, going to Banani, ladies only",
+      "lang": "english",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Banani",
+        "timeRef": {
+          "kind": "now"
+        },
+        "genderPref": "same_gender",
+        "confidence": 1
+      }
+    },
+    {
+      "text": "Need a ride from Uttara sector 7 to campus by 9",
+      "lang": "english",
+      "expected": {
+        "direction": "to_campus",
+        "place": "Uttara Sector 7",
+        "timeRef": {
+          "kind": "clock",
+          "time": "09:00"
+        },
+        "confidence": 1
+      }
+    },
+    {
+      "text": "going home at 6 pm, rickshaw or cng",
+      "lang": "english",
+      "expected": {
+        "direction": "from_campus",
+        "timeRef": {
+          "kind": "clock",
+          "time": "18:00"
+        },
+        "modes": ["rickshaw", "cng"],
+        "confidence": 0.67
+      }
+    },
+    {
+      "text": "anyone going to Gulshan 2 around 5?",
+      "lang": "english",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Gulshan 2",
+        "timeRef": {
+          "kind": "clock",
+          "time": "17:00"
+        },
+        "confidence": 1
+      }
+    },
+    {
+      "text": "I can wait 10 minutes, going to Farmgate at 7",
+      "lang": "english",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Farmgate",
+        "timeRef": {
+          "kind": "clock",
+          "time": "19:00"
+        },
+        "maxWaitMin": 10,
+        "confidence": 1
+      }
+    },
+    {
+      "text": "After DS class heading to Khilgaon by uber",
+      "lang": "english",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Khilgaon",
+        "timeRef": {
+          "kind": "after_class",
+          "course": "CSC2211"
+        },
+        "modes": ["ride_hail_car"],
+        "confidence": 1
+      }
+    },
+    {
+      "text": "From home to campus at 10, female riders only",
+      "lang": "english",
+      "expected": {
+        "direction": "to_campus",
+        "timeRef": {
+          "kind": "clock",
+          "time": "10:00"
+        },
+        "genderPref": "same_gender",
+        "confidence": 0.67
+      }
+    },
+    {
+      "text": "Going to Tejgaon right now, no wait please",
+      "lang": "english",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Tejgaon",
+        "timeRef": {
+          "kind": "now"
+        },
+        "maxWaitMin": 0,
+        "confidence": 1
+      }
+    },
+    {
+      "text": "Bus to Abdullahpur after class",
+      "lang": "english",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Abdullahpur",
+        "timeRef": {
+          "kind": "after_class"
+        },
+        "modes": ["bus"],
+        "confidence": 1
+      }
+    },
+    {
+      "text": "Will come to campus from Mohakhali DOHS at 11",
+      "lang": "english",
+      "expected": {
+        "direction": "to_campus",
+        "place": "Mohakhali DOHS",
+        "timeRef": {
+          "kind": "clock",
+          "time": "11:00"
+        },
+        "confidence": 1
+      }
+    },
+    {
+      "text": "going to Baridhara DOHS at 4:15 pm, wait max 20 min",
+      "lang": "english",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Baridhara DOHS",
+        "timeRef": {
+          "kind": "clock",
+          "time": "16:15"
+        },
+        "maxWaitMin": 20,
+        "confidence": 1
+      }
+    },
+    {
+      "text": "same gender only, going to Nadda at 3",
+      "lang": "english",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Nadda",
+        "timeRef": {
+          "kind": "clock",
+          "time": "15:00"
+        },
+        "genderPref": "same_gender",
+        "confidence": 1
+      }
+    },
+    {
+      "text": "Coming from Kalshi, reaching around 9",
+      "lang": "english",
+      "expected": {
+        "direction": "to_campus",
+        "place": "Kalshi",
+        "timeRef": {
+          "kind": "clock",
+          "time": "09:00"
+        },
+        "confidence": 1
+      }
+    },
+    {
+      "text": "Who is going to Uttara 10 at 5:45?",
+      "lang": "english",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Uttara Sector 10",
+        "timeRef": {
+          "kind": "clock",
+          "time": "17:45"
+        },
+        "confidence": 1
+      }
+    },
+    {
+      "text": "going home after OOP class, any gender",
+      "lang": "english",
+      "expected": {
+        "direction": "from_campus",
+        "timeRef": {
+          "kind": "after_class",
+          "course": "CSC2210"
+        },
+        "genderPref": "any",
+        "confidence": 0.67
+      }
+    },
+    {
+      "text": "Need a shuttle to campus tomorrow at 8",
+      "lang": "english",
+      "expected": {
+        "direction": "to_campus",
+        "timeRef": {
+          "kind": "clock",
+          "time": "08:00"
+        },
+        "modes": ["shuttle"],
+        "confidence": 0.67
+      }
+    },
+    {
+      "text": "From Mirpur 14 to campus, 15 minutes wait is fine",
+      "lang": "english",
+      "expected": {
+        "direction": "to_campus",
+        "place": "Mirpur 14",
+        "maxWaitMin": 15,
+        "confidence": 0.67
+      }
+    },
+    {
+      "text": "my bike, going to Khilkhet at 2:30",
+      "lang": "english",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Khilkhet",
+        "timeRef": {
+          "kind": "clock",
+          "time": "14:30"
+        },
+        "modes": ["own_bike"],
+        "confidence": 1
+      }
+    },
+    {
+      "text": "Leaving for Banani at 5 or 5:30",
+      "lang": "english",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Banani",
+        "timeRef": {
+          "kind": "clock",
+          "time": "17:00"
+        },
+        "confidence": 0.83
+      }
+    },
+    {
+      "text": "Banani to Gulshan 1",
+      "lang": "english",
+      "expected": {
+        "place": "Banani",
+        "confidence": 0.17
+      }
+    },
+    {
+      "text": "hello",
+      "lang": "english",
+      "expected": {
+        "confidence": 0
+      }
+    },
+    {
+      "text": "Is anyone going to campus at 8:50 from Jamuna?",
+      "lang": "english",
+      "expected": {
+        "direction": "to_campus",
+        "place": "Jamuna Future Park",
+        "timeRef": {
+          "kind": "clock",
+          "time": "08:50"
+        },
+        "confidence": 1
+      }
+    },
+    {
+      "text": "Going to Rampura at 13:00",
+      "lang": "english",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Rampura",
+        "timeRef": {
+          "kind": "clock",
+          "time": "13:00"
+        },
+        "confidence": 1
+      }
+    },
+    {
+      "text": "Heading home at 9 tonight",
+      "lang": "english",
+      "expected": {
+        "direction": "from_campus",
+        "timeRef": {
+          "kind": "clock",
+          "time": "21:00"
+        },
+        "confidence": 0.67
+      }
+    },
+    {
+      "text": "Coming in from Badda by 10:30 am, cng",
+      "lang": "english",
+      "expected": {
+        "direction": "to_campus",
+        "place": "Badda",
+        "timeRef": {
+          "kind": "clock",
+          "time": "10:30"
+        },
+        "modes": ["cng"],
+        "confidence": 1
+      }
+    },
+    {
+      "text": "only girls please, going to Nikunja after class",
+      "lang": "english",
+      "expected": {
+        "direction": "from_campus",
+        "place": "Nikunja",
+        "timeRef": {
+          "kind": "after_class"
+        },
+        "genderPref": "same_gender",
+        "confidence": 1
+      }
+    },
+    {
+      "text": "Mirpur 6 to campus 9 am",
+      "lang": "english",
+      "expected": {
+        "direction": "to_campus",
+        "place": "Mirpur 6",
+        "timeRef": {
+          "kind": "clock",
+          "time": "09:00"
+        },
+        "confidence": 1
+      }
+    }
+  ]
+}
