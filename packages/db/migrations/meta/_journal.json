@@ -134,6 +134,13 @@
       "when": 1794983013887,
       "tag": "0018_catalog-text-and-meeting-key",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1795115218121,
+      "tag": "0019_campus-places",
+      "breakpoints": true
     }
   ]
 }
