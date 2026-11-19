@@ -14,8 +14,8 @@ import {
 } from '../src/index.js';
 import { newCampus, pgErrorCode } from './support/fixtures.js';
 
-// A real H3 resolution 8 cell near AIUB; the database only checks its shape
-const cell = '883c2a8d2bfffff';
+// The H3 resolution 8 cell of AIUB's main gate; the database only checks its shape
+const cell = '883cf13b03fffff';
 const square = (x: number, y: number) =>
   sql`ST_GeomFromText(${`MULTIPOLYGON(((${x} ${y}, ${x + 0.01} ${y}, ${x + 0.01} ${y + 0.01}, ${x} ${y + 0.01}, ${x} ${y})))`}, 4326)`;
 // A bow tie: its edges cross, so ST_IsValid is false
