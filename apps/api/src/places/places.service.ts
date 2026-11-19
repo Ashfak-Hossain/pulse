@@ -158,11 +158,15 @@ export class PlacesService {
   }
 
   async deleteZone(actor: Actor, id: string): Promise<void> {
-    await this.write(actor, async (tx) => {
-      const [row] = await tx.delete(zone).where(eq(zone.id, id)).returning({ name: zone.name });
-      if (!row) throw new NotFoundException('Zone not found');
-      await audit(tx, actor, 'zone.delete', 'zone', id, { name: row.name });
-    });
+    await this.write(
+      actor,
+      async (tx) => {
+        const [row] = await tx.delete(zone).where(eq(zone.id, id)).returning({ name: zone.name });
+        if (!row) throw new NotFoundException('Zone not found');
+        await audit(tx, actor, 'zone.delete', 'zone', id, { name: row.name });
+      },
+      true,
+    );
   }
 
   // ── Meeting points ────────────────────────────────────────────────────────────────────────
@@ -246,11 +250,17 @@ export class PlacesService {
 
   // One transaction in the actor's campus. Database refusals the client can fix become 409 or
   // 422 with fixed text (PostgreSQL's message would echo the input back); anything else is a 500
-  private async write<T>(actor: Actor, work: (tx: Transaction) => Promise<T>): Promise<T> {
+  // deletesZone: a zone delete and a meeting point write break the same foreign key, from
+  // opposite ends, and PostgreSQL reports both on meeting_point
+  private async write<T>(
+    actor: Actor,
+    work: (tx: Transaction) => Promise<T>,
+    deletesZone = false,
+  ): Promise<T> {
     try {
       return await withCampus(this.db, actor.campusId, work);
     } catch (error) {
-      throw toClientError(error);
+      throw toClientError(error, deletesZone);
     }
   }
 }
@@ -348,22 +358,20 @@ const conflicts: Record<string, string> = {
   meeting_point_zone_campus_fk: 'The zone still has meeting points',
 };
 
-function toClientError(error: unknown): unknown {
+function toClientError(error: unknown, deletesZone: boolean): unknown {
   const cause: unknown = error instanceof DrizzleQueryError ? error.cause : undefined;
   if (typeof cause !== 'object' || cause === null) return error;
   const code = 'code' in cause ? cause.code : undefined;
   const constraint = 'constraint' in cause ? cause.constraint : undefined;
-  const table = 'table' in cause ? cause.table : undefined;
 
   if (code === '23514' && constraint === 'zone_area_valid') {
     return new UnprocessableEntityException('The zone area crosses itself');
   }
   if (code === '23503' && constraint === 'meeting_point_zone_campus_fk') {
-    // Raised on meeting_point: the point names a zone this campus does not have. Raised on
-    // zone: a delete would leave points behind
-    return table === 'meeting_point'
-      ? new UnprocessableEntityException('Zone not found')
-      : new ConflictException(conflicts[constraint]);
+    // A delete would leave points behind; a point write names a zone this campus does not have
+    return deletesZone
+      ? new ConflictException(conflicts[constraint])
+      : new UnprocessableEntityException('Zone not found');
   }
   if (code === '23505' && typeof constraint === 'string' && constraint in conflicts) {
     return new ConflictException(conflicts[constraint]);
