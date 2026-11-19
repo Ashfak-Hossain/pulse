@@ -1,0 +1,17 @@
+$kind: http-request
+description: "A zone that meeting points still name (hidden ones too) cannot be deleted: 409."
+url: "{{baseUrl}}/admin/zones/{{zoneId}}"
+method: DELETE
+headers:
+  Accept: application/json
+  Origin: "{{appOrigin}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 409', () => pm.response.to.have.status(409));
+      pm.test('says why', () =>
+        pm.expect(pm.response.json().message).to.equal('The zone still has meeting points'),
+      );
+    language: text/javascript
+examples: .resources/Delete zone with points.resources/examples
+order: 9000

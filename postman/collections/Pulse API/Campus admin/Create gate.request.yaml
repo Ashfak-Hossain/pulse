@@ -1,0 +1,34 @@
+$kind: http-request
+description: "Adds a plain gate. The server computes its H3 cell from location; isPrimary true would take primary over from the current gate. 409 if the name exists, 403 for a non-admin."
+url: "{{baseUrl}}/admin/gates"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+  Origin: "{{appOrigin}}"
+body:
+  type: json
+  content: |-
+    {"name": "{{gateName}}", "location": {"lat": 23.8232, "lng": 90.4262}}
+scripts:
+  - type: beforeRequest
+    code: |-
+      pm.environment.set('gateName', `Postman gate ${Date.now().toString(36)}`);
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('status is 201 (403: make your user a campus_admin, see the folder)', () =>
+        pm.response.to.have.status(201),
+      );
+      pm.test('has exactly the contract fields, and no cell', () =>
+        pm.expect(Object.keys(pm.response.json()).sort()).to.eql(['id', 'isPrimary', 'location', 'name']),
+      );
+      pm.test('is a plain gate with the name sent', () => {
+        const gate = pm.response.json();
+        pm.expect(gate.name).to.equal(pm.environment.get('gateName'));
+        pm.expect(gate.isPrimary).to.equal(false);
+        pm.environment.set('gateId', gate.id);
+      });
+    language: text/javascript
+examples: .resources/Create gate.resources/examples
+order: 1000

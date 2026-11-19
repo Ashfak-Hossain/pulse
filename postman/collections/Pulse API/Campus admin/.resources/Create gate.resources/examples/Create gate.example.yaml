@@ -1,0 +1,30 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/admin/gates"
+  method: POST
+  headers:
+    Accept: application/json
+    Content-Type: application/json
+    Origin: http://localhost:5173
+  body:
+    type: json
+    content: |-
+      {"name": "{{gateName}}", "location": {"lat": 23.8232, "lng": 90.4262}}
+response:
+  statusCode: 201
+  statusText: Created
+  headers:
+    content-type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "id": "0193f2a1-7a10-7c3d-8e4f-5a6b7c8d9e01",
+        "name": "Postman gate mi4x2k",
+        "location": {
+          "lat": 23.8232,
+          "lng": 90.4262
+        },
+        "isPrimary": false
+      }
+order: 1000
