@@ -220,6 +220,18 @@ export const term = pgTable(
       to: pulseApp,
       using: sql`${table.campusId} = ${currentCampusId}`,
     }),
+    // Campus admins create and activate terms. Grants (migration 0022) limit updates to status
+    pgPolicy('term_insert', {
+      for: 'insert',
+      to: pulseApp,
+      withCheck: sql`${table.campusId} = ${currentCampusId}`,
+    }),
+    pgPolicy('term_update', {
+      for: 'update',
+      to: pulseApp,
+      using: sql`${table.campusId} = ${currentCampusId}`,
+      withCheck: sql`${table.campusId} = ${currentCampusId}`,
+    }),
   ],
 );
 
