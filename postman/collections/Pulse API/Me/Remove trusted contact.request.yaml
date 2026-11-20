@@ -1,0 +1,14 @@
+$kind: http-request
+description: "Removes the contact, freeing its slot. Someone else's contact id answers 404."
+url: "{{baseUrl}}/me/trusted-contacts/{{trustedContactId}}"
+method: DELETE
+headers:
+  Accept: application/json
+  Origin: "{{appOrigin}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 204', () => pm.response.to.have.status(204));
+    language: text/javascript
+examples: .resources/Remove trusted contact.resources/examples
+order: 12000

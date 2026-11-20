@@ -1,0 +1,14 @@
+$kind: http-request
+description: "Your trusted contacts, at most three."
+url: "{{baseUrl}}/me/trusted-contacts"
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200', () => pm.response.to.have.status(200));
+      pm.test('has at most three', () => pm.expect(pm.response.json().items.length).to.be.at.most(3));
+    language: text/javascript
+examples: .resources/List trusted contacts.resources/examples
+order: 11000
