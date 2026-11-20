@@ -24,7 +24,6 @@ import type {
 import {
   and,
   asc,
-  auditLog,
   campusGate,
   desc,
   DrizzleQueryError,
@@ -37,14 +36,14 @@ import {
   withCampus,
   zone,
 } from '@pulse/db';
-import type { SignedInUser } from '../auth/session.service.js';
+import { type AuditActor, writeAudit } from '../common/audit.js';
 import { DATABASE } from '../db/db.module.js';
 import { h3Cell } from './h3-cell.js';
 
 // Campuses have a handful of each; the cap only stops a list from ever returning a whole table
 const PLACE_LIST_LIMIT = 500;
 
-type Actor = Pick<SignedInUser, 'id' | 'campusId'>;
+type Actor = AuditActor;
 type Point = { lat: number; lng: number };
 
 // Gates, zones and meeting points of the caller's campus. Every query runs inside withCampus, so
@@ -82,7 +81,7 @@ export class PlacesService {
         })
         .returning(gateColumns);
       const gate = toGate(required(row));
-      await audit(tx, actor, 'gate.create', 'campus_gate', gate.id, {
+      await writeAudit(tx, actor, 'gate.create', 'campus_gate', gate.id, {
         name: gate.name,
         isPrimary: gate.isPrimary,
       });
@@ -107,7 +106,9 @@ export class PlacesService {
         .where(eq(campusGate.id, id))
         .returning(gateColumns);
       const gate = toGate(required(row));
-      await audit(tx, actor, 'gate.update', 'campus_gate', id, { changed: Object.keys(input) });
+      await writeAudit(tx, actor, 'gate.update', 'campus_gate', id, {
+        changed: Object.keys(input),
+      });
       return gate;
     });
   }
@@ -119,7 +120,7 @@ export class PlacesService {
         throw new ConflictException('The primary gate cannot be deleted');
       }
       await tx.delete(campusGate).where(eq(campusGate.id, id));
-      await audit(tx, actor, 'gate.delete', 'campus_gate', id, { name: current.name });
+      await writeAudit(tx, actor, 'gate.delete', 'campus_gate', id, { name: current.name });
     });
   }
 
@@ -139,7 +140,7 @@ export class PlacesService {
         .values({ campusId: actor.campusId, name: input.name, area: fromGeoJson(input.area) })
         .returning(zoneColumns);
       const created = required(row);
-      await audit(tx, actor, 'zone.create', 'zone', created.id, { name: created.name });
+      await writeAudit(tx, actor, 'zone.create', 'zone', created.id, { name: created.name });
       return created;
     });
   }
@@ -152,7 +153,7 @@ export class PlacesService {
         .where(eq(zone.id, id))
         .returning(zoneColumns);
       if (!row) throw new NotFoundException('Zone not found');
-      await audit(tx, actor, 'zone.update', 'zone', id, { changed: Object.keys(input) });
+      await writeAudit(tx, actor, 'zone.update', 'zone', id, { changed: Object.keys(input) });
       return row;
     });
   }
@@ -169,7 +170,7 @@ export class PlacesService {
           .where(and(eq(meetingPoint.zoneId, id), eq(meetingPoint.isActive, false)));
         const [row] = await tx.delete(zone).where(eq(zone.id, id)).returning({ name: zone.name });
         if (!row) throw new NotFoundException('Zone not found');
-        await audit(tx, actor, 'zone.delete', 'zone', id, { name: row.name });
+        await writeAudit(tx, actor, 'zone.delete', 'zone', id, { name: row.name });
       },
       true,
     );
@@ -208,7 +209,7 @@ export class PlacesService {
         })
         .returning(pointColumns);
       const point = toMeetingPoint(required(row));
-      await audit(tx, actor, 'meeting_point.create', 'meeting_point', point.id, {
+      await writeAudit(tx, actor, 'meeting_point.create', 'meeting_point', point.id, {
         name: point.name,
         kind: point.kind,
         zoneId: point.zoneId,
@@ -234,7 +235,7 @@ export class PlacesService {
         .where(and(eq(meetingPoint.id, id), eq(meetingPoint.isActive, true)))
         .returning(pointColumns);
       if (!row) throw new NotFoundException('Meeting point not found');
-      await audit(tx, actor, 'meeting_point.update', 'meeting_point', id, {
+      await writeAudit(tx, actor, 'meeting_point.update', 'meeting_point', id, {
         changed: Object.keys(input),
       });
       return toMeetingPoint(row);
@@ -250,7 +251,7 @@ export class PlacesService {
         .where(and(eq(meetingPoint.id, id), eq(meetingPoint.isActive, true)))
         .returning({ name: meetingPoint.name });
       if (!row) throw new NotFoundException('Meeting point not found');
-      await audit(tx, actor, 'meeting_point.delete', 'meeting_point', id, { name: row.name });
+      await writeAudit(tx, actor, 'meeting_point.delete', 'meeting_point', id, { name: row.name });
     });
   }
 
@@ -335,24 +336,6 @@ async function lockGate(tx: Transaction, id: string) {
 async function clearPrimaryGate(tx: Transaction): Promise<void> {
   // RLS keeps this to the transaction's campus
   await tx.update(campusGate).set({ isPrimary: false }).where(eq(campusGate.isPrimary, true));
-}
-
-async function audit(
-  tx: Transaction,
-  actor: Actor,
-  action: string,
-  entity: string,
-  entityId: string,
-  metadata: Record<string, unknown>,
-): Promise<void> {
-  await tx.insert(auditLog).values({
-    campusId: actor.campusId,
-    actorId: actor.id,
-    action,
-    entity,
-    entityId,
-    metadata,
-  });
 }
 
 // ── Database errors the client can fix ──────────────────────────────────────────────────────
