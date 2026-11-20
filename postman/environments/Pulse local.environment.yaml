@@ -10,3 +10,13 @@ values:
     value: ''
   - key: otpCode
     value: ''
+  - key: gateName
+    value: ''
+  - key: gateId
+    value: ''
+  - key: zoneName
+    value: ''
+  - key: zoneId
+    value: ''
+  - key: meetingPointId
+    value: ''

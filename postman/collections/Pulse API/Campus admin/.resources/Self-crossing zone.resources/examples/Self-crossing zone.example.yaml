@@ -1,0 +1,26 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/admin/zones"
+  method: POST
+  headers:
+    Accept: application/json
+    Content-Type: application/json
+    Origin: http://localhost:5173
+  body:
+    type: json
+    content: |-
+      {"name": "Postman knot", "area": {"type": "MultiPolygon", "coordinates": [[[[90, 23], [90.01, 23.01], [90.01, 23], [90, 23.01], [90, 23]]]]}}
+response:
+  statusCode: 422
+  statusText: Unprocessable Entity
+  headers:
+    content-type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "statusCode": 422,
+        "error": "Unprocessable Entity",
+        "message": "The zone area crosses itself"
+      }
+order: 1000
