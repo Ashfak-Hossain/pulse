@@ -93,26 +93,23 @@ describe('catalog timetable constraints and tenancy', () => {
     },
   );
 
-  it.each(['term', 'section', 'section_meeting'])(
-    'revokes writes on %s from pulse_app',
-    async (table) => {
-      const target = sql.identifier(table);
-      const result = await app.execute(sql`select
+  it.each(['section', 'section_meeting'])('revokes writes on %s from pulse_app', async (table) => {
+    const target = sql.identifier(table);
+    const result = await app.execute(sql`select
       has_table_privilege(current_user, ${table}, 'INSERT') as insert_allowed,
       has_table_privilege(current_user, ${table}, 'UPDATE') as update_allowed,
       has_table_privilege(current_user, ${table}, 'DELETE') as delete_allowed`);
-      expect(result.rows).toEqual([
-        { insert_allowed: false, update_allowed: false, delete_allowed: false },
-      ]);
-      for (const query of [
-        sql`insert into ${target} default values`,
-        sql`update ${target} set id = id`,
-        sql`delete from ${target}`,
-      ]) {
-        expect(await pgErrorCode(withCampus(app, a.id, (tx) => tx.execute(query)))).toBe('42501');
-      }
-    },
-  );
+    expect(result.rows).toEqual([
+      { insert_allowed: false, update_allowed: false, delete_allowed: false },
+    ]);
+    for (const query of [
+      sql`insert into ${target} default values`,
+      sql`update ${target} set id = id`,
+      sql`delete from ${target}`,
+    ]) {
+      expect(await pgErrorCode(withCampus(app, a.id, (tx) => tx.execute(query)))).toBe('42501');
+    }
+  });
 
   it('allows only one active term per campus', async () => {
     expect(
@@ -230,6 +227,34 @@ describe('catalog timetable constraints and tenancy', () => {
       expect.objectContaining({ id: unscheduled.id, capacity: 20, enrolled: 21 }),
     ]);
     expect(result.meetings).toEqual([]);
+  });
+
+  it('lets pulse_app add a term and change only its status, inside its own campus', async () => {
+    const draft = { campusId: a.id, startsOn: '2027-01-20', endsOn: '2027-05-30' };
+    const inA = (work: Parameters<typeof withCampus>[2]) =>
+      pgErrorCode(withCampus(app, a.id, work));
+    const id = randomUUID();
+
+    expect(
+      await inA((tx) => tx.insert(term).values({ ...draft, id, name: `Spring ${id}` })),
+    ).toBeUndefined();
+    expect(
+      await inA((tx) => tx.update(term).set({ status: 'archived' }).where(eq(term.id, id))),
+    ).toBeUndefined();
+    // Another campus's term is out of reach, and so are a term's name, dates and deletion
+    expect(
+      await inA((tx) => tx.insert(term).values({ ...draft, campusId: b.id, name: 'Spring' })),
+    ).toBe('42501');
+    expect(await inA((tx) => tx.update(term).set({ name: 'Renamed' }))).toBe('42501');
+    expect(await inA((tx) => tx.update(term).set({ endsOn: '2027-06-30' }))).toBe('42501');
+    expect(await inA((tx) => tx.delete(term))).toBe('42501');
+
+    // Scoped to A, a status change cannot reach B's term: RLS hides it, so zero rows change
+    await withCampus(app, a.id, (tx) =>
+      tx.update(term).set({ status: 'archived' }).where(eq(term.id, termB.id)),
+    );
+    const [b1] = await owner.select().from(term).where(eq(term.id, termB.id));
+    expect(b1?.status).toBe('active');
   });
 
   it('moves updated_at on a real change and keeps it on an unchanged rewrite', async () => {
