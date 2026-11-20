@@ -42,6 +42,11 @@ function h3CellCheck(column: AnyPgColumn) {
   return sql`${column} ~ '^[0-9a-f]{15}$'`;
 }
 
+// A phone number in E.164: a plus, a country code that does not start with 0, 8 to 15 digits
+function e164Check(column: AnyPgColumn) {
+  return sql`${column} ~ '^[+][1-9][0-9]{7,14}$'`;
+}
+
 // Drizzle's geometry() only parses points. An area stays PostGIS's own value (hex EWKB) in
 // TypeScript; queries read and write it as GeoJSON with ST_AsGeoJSON and ST_GeomFromGeoJSON
 const multiPolygon = customType<{ data: string; driverData: string }>({
@@ -360,6 +365,16 @@ export const appUser = pgTable(
     status: text('status', { enum: ['pending_profile', 'active', 'suspended', 'deleted'] })
       .notNull()
       .default('pending_profile'),
+    // Personal data from here down: never log these, never put them in a URL or a snapshot.
+    // Null until the user completes their profile; an active user has a name and a gender
+    firstName: text('first_name'),
+    // Never shown to other riders
+    lastName: text('last_name'),
+    // Self-declared, used only for the "same gender" preference
+    gender: text('gender', { enum: ['female', 'male', 'unspecified'] }),
+    department: text('department'),
+    // E.164 (+8801...); never shown to anyone
+    phoneE164: text('phone_e164'),
     createdAt: timestamp('created_at', {
       withTimezone: true,
     })
@@ -394,6 +409,16 @@ export const appUser = pgTable(
     check(
       'app_user_status_valid',
       sql`${table.status} in ('pending_profile', 'active', 'suspended', 'deleted')`,
+    ),
+    check('app_user_first_name_clean', cleanTextCheck(table.firstName, 100)),
+    check('app_user_last_name_clean', cleanTextCheck(table.lastName, 100)),
+    check('app_user_gender_valid', sql`${table.gender} in ('female', 'male', 'unspecified')`),
+    check('app_user_department_clean', cleanTextCheck(table.department, 100)),
+    check('app_user_phone_e164', e164Check(table.phoneE164)),
+    // The matcher needs a name to show and a gender to match on, so an active user has both
+    check(
+      'app_user_active_has_profile',
+      sql`${table.status} <> 'active' or (${table.firstName} is not null and ${table.lastName} is not null and ${table.gender} is not null)`,
     ),
     // Read and insert inside the campus set by withCampus(), nothing else. Updating and deleting
     // are taken away by grants (0015), not by this policy
@@ -679,6 +704,159 @@ export const auditLog = pgTable(
     pgPolicy('audit_log_insert', {
       for: 'insert',
       to: pulseApp,
+      withCheck: sql`${table.campusId} = ${currentCampusId}`,
+    }),
+  ],
+);
+
+// How a user likes to travel. One row per user (the key is user_id); deleted with the user
+export const preference = pgTable(
+  'preference',
+  {
+    userId: uuid('user_id').primaryKey(),
+    campusId: uuid('campus_id')
+      .notNull()
+      .references(() => campus.id),
+    // The H3 cell of the home pin. The exact point is never stored; never shown to others
+    homeCell: text('home_cell').notNull(),
+    // The zone containing the cell's centre, shown as "home zone"; null outside every zone
+    zoneId: uuid('zone_id'),
+    genderPref: text('gender_pref', { enum: ['any', 'same_gender'] })
+      .notNull()
+      .default('any'),
+    modes: text('modes').array().notNull(),
+    maxWaitMin: smallint('max_wait_min').notNull().default(10),
+    maxDetourPct: smallint('max_detour_pct').notNull().default(30),
+    autopilotOn: boolean('autopilot_on').notNull().default(false),
+    // No notifications between these times (campus timezone); both set or both null
+    quietStartTime: time('quiet_start_time'),
+    quietEndTime: time('quiet_end_time'),
+    // Most non-critical notifications a day; critical alerts ignore it
+    dailyNotifyBudget: smallint('daily_notify_budget').notNull().default(6),
+    // Consent to keep typed ride requests for training the parser
+    shareTextForTraining: boolean('share_text_for_training').notNull().default(false),
+    // Set by the set_updated_at trigger (migration 0024); never write it
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    foreignKey({
+      name: 'preference_user_campus_fk',
+      columns: [table.userId, table.campusId],
+      foreignColumns: [appUser.id, appUser.campusId],
+    }).onDelete('cascade'),
+    foreignKey({
+      name: 'preference_zone_campus_fk',
+      columns: [table.zoneId, table.campusId],
+      foreignColumns: [zone.id, zone.campusId],
+    }),
+    index('preference_user_campus_idx').on(table.userId, table.campusId),
+    index('preference_zone_campus_idx').on(table.zoneId, table.campusId),
+    check('preference_home_cell_h3', h3CellCheck(table.homeCell)),
+    check('preference_gender_pref_valid', sql`${table.genderPref} in ('any', 'same_gender')`),
+    check(
+      'preference_modes_valid',
+      sql`cardinality(${table.modes}) > 0 and ${table.modes} <@ array['cng', 'rickshaw', 'ride_hail_car', 'own_car', 'own_bike', 'bus', 'shuttle']::text[]`,
+    ),
+    check('preference_max_wait_range', sql`${table.maxWaitMin} between 0 and 60`),
+    check('preference_max_detour_range', sql`${table.maxDetourPct} between 0 and 50`),
+    check(
+      'preference_quiet_hours_paired',
+      sql`(${table.quietStartTime} is null) = (${table.quietEndTime} is null)`,
+    ),
+    check('preference_notify_budget_range', sql`${table.dailyNotifyBudget} between 1 and 20`),
+    // Which user may see which row is checked in the services; RLS is the campus wall
+    pgPolicy('preference_campus', {
+      for: 'all',
+      to: pulseApp,
+      using: sql`${table.campusId} = ${currentCampusId}`,
+      withCheck: sql`${table.campusId} = ${currentCampusId}`,
+    }),
+  ],
+);
+
+// A driver's car or bike. Kept when the user is deleted: trips will point at vehicles later
+export const vehicle = pgTable(
+  'vehicle',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`uuidv7()`),
+    campusId: uuid('campus_id')
+      .notNull()
+      .references(() => campus.id),
+    ownerId: uuid('owner_id').notNull(),
+    type: text('type', { enum: ['car', 'bike'] }).notNull(),
+    // Free seats for riders
+    seats: smallint('seats').notNull(),
+    // Personal data: shown to the crew only
+    plate: text('plate').notNull(),
+    color: text('color').notNull(),
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    // Set by the set_updated_at trigger (migration 0024); never write it
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    foreignKey({
+      name: 'vehicle_owner_campus_fk',
+      columns: [table.ownerId, table.campusId],
+      foreignColumns: [appUser.id, appUser.campusId],
+    }),
+    index('vehicle_owner_campus_idx').on(table.ownerId, table.campusId),
+    check('vehicle_type_valid', sql`${table.type} in ('car', 'bike')`),
+    check(
+      'vehicle_seats_fit_type',
+      sql`(${table.type} = 'car' and ${table.seats} between 1 and 6) or (${table.type} = 'bike' and ${table.seats} = 1)`,
+    ),
+    check('vehicle_plate_clean', cleanTextCheck(table.plate, 32)),
+    check('vehicle_color_clean', cleanTextCheck(table.color, 30)),
+    pgPolicy('vehicle_campus', {
+      for: 'all',
+      to: pulseApp,
+      using: sql`${table.campusId} = ${currentCampusId}`,
+      withCheck: sql`${table.campusId} = ${currentCampusId}`,
+    }),
+  ],
+);
+
+// People to alert in an emergency, at most three per user. Deleted with the user
+export const trustedContact = pgTable(
+  'trusted_contact',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`uuidv7()`),
+    campusId: uuid('campus_id')
+      .notNull()
+      .references(() => campus.id),
+    userId: uuid('user_id').notNull(),
+    // 1, 2 or 3. Counting contacts in code breaks when two requests arrive together; with a slot
+    // and a unique key, the database itself refuses a fourth contact
+    slot: smallint('slot').notNull(),
+    // Personal data: never log it
+    name: text('name').notNull(),
+    phoneE164: text('phone_e164').notNull(),
+    // e.g. mother, roommate
+    relation: text('relation').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // Also indexes user_id for the foreign key
+    unique('trusted_contact_user_slot_unique').on(table.userId, table.slot),
+    foreignKey({
+      name: 'trusted_contact_user_campus_fk',
+      columns: [table.userId, table.campusId],
+      foreignColumns: [appUser.id, appUser.campusId],
+    }).onDelete('cascade'),
+    index('trusted_contact_user_campus_idx').on(table.userId, table.campusId),
+    check('trusted_contact_slot_range', sql`${table.slot} between 1 and 3`),
+    check('trusted_contact_name_clean', cleanTextCheck(table.name, 100)),
+    check('trusted_contact_phone_e164', e164Check(table.phoneE164)),
+    check('trusted_contact_relation_clean', cleanTextCheck(table.relation, 40)),
+    pgPolicy('trusted_contact_campus', {
+      for: 'all',
+      to: pulseApp,
+      using: sql`${table.campusId} = ${currentCampusId}`,
       withCheck: sql`${table.campusId} = ${currentCampusId}`,
     }),
   ],

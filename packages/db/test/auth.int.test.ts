@@ -88,8 +88,13 @@ describe('app_user and email_otp', () => {
 
     expect(await inA((tx) => tx.update(emailOtp).set({ codeHash: hash('c') }))).toBe('42501');
     expect(await inA((tx) => tx.update(emailOtp).set({ expiresAt: new Date() }))).toBe('42501');
-    // Sign-in only inserts users. Later slices grant the column they change
-    for (const change of [{ status: 'active' }, { role: 'faculty' }, { campusId: a.id }] as const)
+    // Profile columns and status are granted (migration 0024); who a user is, what they may do
+    // and which campus they belong to never are
+    for (const change of [
+      { email: 'x@aiub.edu' },
+      { role: 'faculty' },
+      { campusId: a.id },
+    ] as const)
       expect(await inA((tx) => tx.update(appUser).set(change))).toBe('42501');
   });
 
