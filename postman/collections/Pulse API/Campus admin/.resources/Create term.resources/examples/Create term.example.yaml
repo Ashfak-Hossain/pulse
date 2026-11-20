@@ -1,0 +1,28 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/admin/terms"
+  method: POST
+  headers:
+    Accept: application/json
+    Content-Type: application/json
+    Origin: http://localhost:5173
+  body:
+    type: json
+    content: |-
+      {"name": "{{termName}}", "startsOn": "2027-01-20", "endsOn": "2027-05-30"}
+response:
+  statusCode: 201
+  statusText: Created
+  headers:
+    content-type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "id": "0193f2a1-8d40-7f60-b172-8d9e0f1a2b34",
+        "name": "Postman term mi4x2k",
+        "startsOn": "2027-01-20",
+        "endsOn": "2027-05-30",
+        "status": "draft"
+      }
+order: 1000
