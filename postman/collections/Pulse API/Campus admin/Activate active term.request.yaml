@@ -1,0 +1,17 @@
+$kind: http-request
+description: "Only a draft can be activated: the same call again answers 409 and writes nothing."
+url: "{{baseUrl}}/admin/terms/{{termId}}/activate"
+method: POST
+headers:
+  Accept: application/json
+  Origin: "{{appOrigin}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 409', () => pm.response.to.have.status(409));
+      pm.test('says why', () =>
+        pm.expect(pm.response.json().message).to.equal('Only a draft term can be activated'),
+      );
+    language: text/javascript
+examples: .resources/Activate active term.resources/examples
+order: 13000

@@ -1,0 +1,15 @@
+$kind: http-request
+description: "Makes the draft the campus's active term, archives the previous active one, and writes a TermActivated outbox row (topic campuses, key campusId) in the same transaction."
+url: "{{baseUrl}}/admin/terms/{{termId}}/activate"
+method: POST
+headers:
+  Accept: application/json
+  Origin: "{{appOrigin}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200', () => pm.response.to.have.status(200));
+      pm.test('is now active', () => pm.expect(pm.response.json().status).to.equal('active'));
+    language: text/javascript
+examples: .resources/Activate term.resources/examples
+order: 12000

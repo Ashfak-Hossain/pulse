@@ -1,0 +1,29 @@
+$kind: http-request
+description: "Adds a term as a draft; activating it is its own call. endsOn must be after startsOn (400 otherwise); 409 if the name exists."
+url: "{{baseUrl}}/admin/terms"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+  Origin: "{{appOrigin}}"
+body:
+  type: json
+  content: |-
+    {"name": "{{termName}}", "startsOn": "2027-01-20", "endsOn": "2027-05-30"}
+scripts:
+  - type: beforeRequest
+    code: |-
+      pm.environment.set('termName', `Postman term ${Date.now().toString(36)}`);
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('status is 201', () => pm.response.to.have.status(201));
+      pm.test('is a draft with exactly the contract fields', () => {
+        const t = pm.response.json();
+        pm.expect(Object.keys(t).sort()).to.eql(['endsOn', 'id', 'name', 'startsOn', 'status']);
+        pm.expect(t.status).to.equal('draft');
+        pm.environment.set('termId', t.id);
+      });
+    language: text/javascript
+examples: .resources/Create term.resources/examples
+order: 11000
