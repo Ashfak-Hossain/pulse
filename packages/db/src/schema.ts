@@ -809,7 +809,7 @@ export const vehicle = pgTable(
       'vehicle_seats_fit_type',
       sql`(${table.type} = 'car' and ${table.seats} between 1 and 6) or (${table.type} = 'bike' and ${table.seats} = 1)`,
     ),
-    check('vehicle_plate_clean', cleanTextCheck(table.plate, 20)),
+    check('vehicle_plate_clean', cleanTextCheck(table.plate, 32)),
     check('vehicle_color_clean', cleanTextCheck(table.color, 30)),
     pgPolicy('vehicle_campus', {
       for: 'all',

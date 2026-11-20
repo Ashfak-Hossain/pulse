@@ -53,7 +53,7 @@ CREATE TABLE "vehicle" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "vehicle_type_valid" CHECK ("vehicle"."type" in ('car', 'bike')),
 	CONSTRAINT "vehicle_seats_fit_type" CHECK (("vehicle"."type" = 'car' and "vehicle"."seats" between 1 and 6) or ("vehicle"."type" = 'bike' and "vehicle"."seats" = 1)),
-	CONSTRAINT "vehicle_plate_clean" CHECK ("vehicle"."plate" = btrim("vehicle"."plate") and length("vehicle"."plate") between 1 and 20),
+	CONSTRAINT "vehicle_plate_clean" CHECK ("vehicle"."plate" = btrim("vehicle"."plate") and length("vehicle"."plate") between 1 and 32),
 	CONSTRAINT "vehicle_color_clean" CHECK ("vehicle"."color" = btrim("vehicle"."color") and length("vehicle"."color") between 1 and 30)
 );
 --> statement-breakpoint
