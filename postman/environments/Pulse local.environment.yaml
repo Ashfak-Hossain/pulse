@@ -24,3 +24,7 @@ values:
     value: ''
   - key: termId
     value: ''
+  - key: vehicleId
+    value: ''
+  - key: trustedContactId
+    value: ''

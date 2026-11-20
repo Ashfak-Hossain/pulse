@@ -94,6 +94,8 @@ against a PostGIS container, so Docker must be running).
 | `POST /admin/terms/:id/activate`              | Campus admins only. Activates a draft, archives the previous active term and writes a `TermActivated` outbox row; 409 for a term that is not a draft                                                        |
 | `GET · PATCH /me`                             | Your profile, role, status and campus (any signed-in user). PATCH sets names, gender, department and an E.164 phone; a pending profile becomes active once name and gender are set. Writes `ProfileChanged` |
 | `GET · PUT /me/preferences`                   | Your travel preferences (404 before the first PUT). The home pin becomes an H3 cell and zone; the pin itself is never stored, logged or returned. Writes `ProfileChanged`                                   |
+| `GET · POST · PATCH · DELETE /me/vehicles`    | Your own cars (1–6 free seats) and bikes (1). Riders only (not operators). DELETE hides the vehicle; another user's id answers 404                                                                          |
+| `GET · POST · DELETE /me/trusted-contacts`    | Up to three emergency contacts with E.164 phones. A fourth answers 422 with `code: TRUSTED_CONTACT_LIMIT`; another user's id answers 404                                                                    |
 
 There is no sign-in yet. `/admin/*` routes need `Authorization: Bearer <ADMIN_TOKEN>` (from
 `.env`, a stand-in until sign-in); every other route is public. Campuses are public on purpose (the app needs

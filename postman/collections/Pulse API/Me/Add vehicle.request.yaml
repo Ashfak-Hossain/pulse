@@ -1,0 +1,20 @@
+$kind: http-request
+description: "Adds a car (1 to 6 free seats) or a bike (exactly 1). Riders only (not operators)."
+url: "{{baseUrl}}/me/vehicles"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+  Origin: "{{appOrigin}}"
+body:
+  type: json
+  content: |-
+    {"type": "car", "seats": 3, "plate": "DHAKA METRO GA 11-2233", "color": "White"}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 201', () => pm.response.to.have.status(201));
+      pm.test('saves the vehicle id', () => pm.environment.set('vehicleId', pm.response.json().id));
+    language: text/javascript
+examples: .resources/Add vehicle.resources/examples
+order: 6000

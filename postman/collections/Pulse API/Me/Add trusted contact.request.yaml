@@ -1,0 +1,20 @@
+$kind: http-request
+description: "Adds someone to alert in an emergency. At most three: a fourth answers 422 with code TRUSTED_CONTACT_LIMIT."
+url: "{{baseUrl}}/me/trusted-contacts"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+  Origin: "{{appOrigin}}"
+body:
+  type: json
+  content: |-
+    {"name": "Ayesha", "phone": "+8801711000000", "relation": "mother"}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 201 (422: you already have three)', () => pm.response.to.have.status(201));
+      pm.test('saves the contact id', () => pm.environment.set('trustedContactId', pm.response.json().id));
+    language: text/javascript
+examples: .resources/Add trusted contact.resources/examples
+order: 10000
