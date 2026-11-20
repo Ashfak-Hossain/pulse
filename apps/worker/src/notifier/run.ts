@@ -77,8 +77,9 @@ export async function runNotifier(options: RunNotifierOptions): Promise<void> {
         }
         return;
       }
-      // Shares the campuses topic but sends no email; its consumers come in later slices
+      // No email for these; their consumers come in later slices
       case 'TermActivated':
+      case 'ProfileChanged':
         return;
     }
   };

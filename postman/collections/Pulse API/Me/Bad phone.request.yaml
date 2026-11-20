@@ -1,0 +1,20 @@
+$kind: http-request
+description: "A phone without its country code answers 400: use international format (+8801...)."
+url: "{{baseUrl}}/me"
+method: PATCH
+headers:
+  Accept: application/json
+  Content-Type: application/json
+  Origin: "{{appOrigin}}"
+body:
+  type: json
+  content: |-
+    {"phone": "01711223344"}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 400', () => pm.response.to.have.status(400));
+      pm.test('names the field', () => pm.expect(pm.response.json().issues[0].path).to.equal('phone'));
+    language: text/javascript
+examples: .resources/Bad phone.resources/examples
+order: 3000

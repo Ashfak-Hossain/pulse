@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { campusCreatedEventSchema } from './campus-created.js';
+import { profileChangedEventSchema } from './profile-changed.js';
 import { termActivatedEventSchema } from './term-activated.js';
 import { eventEnvelopeSchema } from './envelope.js';
 import { topics, type TopicName } from './topics.js';
@@ -11,6 +12,7 @@ import { topics, type TopicName } from './topics.js';
 export const eventSchema = z.discriminatedUnion('type', [
   campusCreatedEventSchema,
   termActivatedEventSchema,
+  profileChangedEventSchema,
 ]);
 
 export type PulseEvent = z.infer<typeof eventSchema>;
@@ -18,10 +20,11 @@ export type EventType = PulseEvent['type'];
 type EventOf<T extends EventType> = Extract<PulseEvent, { type: T }>;
 
 // The version createEvent writes today
-const currentVersions = { CampusCreated: 1, TermActivated: 1 } as const satisfies Record<
-  EventType,
-  number
->;
+const currentVersions = {
+  CampusCreated: 1,
+  TermActivated: 1,
+  ProfileChanged: 1,
+} as const satisfies Record<EventType, number>;
 
 export interface EventMeta {
   // The outbox row's id
@@ -84,6 +87,11 @@ export function routeFor(event: PulseEvent): Route {
       return {
         topic: topics.campuses.name,
         key: event.payload.campusId,
+      };
+    case 'ProfileChanged':
+      return {
+        topic: topics.profiles.name,
+        key: event.payload.userId,
       };
   }
 }

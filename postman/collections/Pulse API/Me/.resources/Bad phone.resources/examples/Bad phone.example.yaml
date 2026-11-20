@@ -1,0 +1,33 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/me"
+  method: PATCH
+  headers:
+    Accept: application/json
+    Content-Type: application/json
+    Origin: http://localhost:5173
+  body:
+    type: json
+    content: |-
+      {"phone": "01711223344"}
+response:
+  statusCode: 400
+  statusText: Bad Request
+  headers:
+    content-type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "statusCode": 400,
+        "error": "Bad Request",
+        "message": "Validation failed",
+        "issues": [
+          {
+            "path": "phone",
+            "code": "invalid_format",
+            "message": "Use international format, e.g. +8801711223344"
+          }
+        ]
+      }
+order: 1000

@@ -13,6 +13,12 @@ export {
   type TermActivatedPayload,
 } from './term-activated.js';
 export {
+  profileChangedEventSchema,
+  profileChangedPayloadSchema,
+  type ProfileChangedEvent,
+  type ProfileChangedPayload,
+} from './profile-changed.js';
+export {
   createEvent,
   eventSchema,
   parseEvent,
