@@ -1,0 +1,11 @@
+{
+  // Used by `pnpm build` only: compiles src (never test) into dist
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    // src/cells.ts becomes dist/cells.js, not dist/src/cells.js
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src"]
+}
