@@ -1,7 +1,7 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { createEvent, parseEvent, routeFor, topics } from '../src/index.js';
-import { aiubCreated, fall2026Activated, meta } from './fixtures.js';
+import { aiubCreated, fall2026Activated, meta, nusratProfile } from './fixtures.js';
 
 describe('createEvent', () => {
   it('wraps the payload in an envelope with the current version', () => {
@@ -104,6 +104,26 @@ describe('routeFor', () => {
       expect(() =>
         createEvent('TermActivated', { ...fall2026Activated, startsOn }, meta),
       ).toThrow();
+  });
+
+  it('sends ProfileChanged to profiles, keyed by the user id', () => {
+    const event = createEvent('ProfileChanged', nusratProfile, meta);
+    expect(routeFor(event)).toEqual({ topic: 'profiles', key: nusratProfile.userId });
+  });
+
+  it('accepts a ProfileChanged before preferences exist, and refuses a home that is not a cell', () => {
+    const bare = {
+      ...nusratProfile,
+      zoneId: null,
+      homeCell: null,
+      genderPref: null,
+      modes: null,
+      autopilotOn: null,
+    };
+    expect(createEvent('ProfileChanged', bare, meta).payload).toEqual(bare);
+    expect(() =>
+      createEvent('ProfileChanged', { ...nusratProfile, homeCell: '23.8223,90.4274' }, meta),
+    ).toThrow();
   });
 
   // The key a route uses must be the payload field the topic table names
