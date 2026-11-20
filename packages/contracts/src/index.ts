@@ -70,3 +70,15 @@ export {
   type OtpVerifyBody,
   type OtpVerifyResult,
 } from './auth.js';
+export {
+  h3Res8CellSchema,
+  parsedPlaceSchema,
+  parsedRequestSchema,
+  timeRefSchema,
+  travelModeSchema,
+  travelModes,
+  type ParsedPlace,
+  type ParsedRequest,
+  type TimeRef,
+  type TravelMode,
+} from './requests.js';

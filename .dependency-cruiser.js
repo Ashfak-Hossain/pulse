@@ -6,7 +6,7 @@ const API_BASE = 'common|config|db';
 const workerFeature = `^apps/worker/src/(?!(?:${WORKER_BASE})/)([^/]+)/`;
 const apiFeature = `^apps/api/src/(?!(?:${API_BASE})/)([^/]+)/`;
 
-const PURE = '^packages/(matching|money|geo)/src/';
+const PURE = '^packages/(matching|money|geo|request-parser)/src/';
 const TEST_FILE = '\\.spec\\.ts$';
 
 /** @type {import('dependency-cruiser').IConfiguration} */
@@ -42,10 +42,13 @@ export default {
     },
     {
       name: 'pure-packages-stay-pure',
-      comment: 'CLAUDE.md rule 5: matching, money and geo touch no database, network or Node API.',
+      comment:
+        'CLAUDE.md rule 5: matching, money, geo and request-parser touch no database, network or Node API.',
       severity: 'error',
       from: { path: PURE, pathNot: TEST_FILE },
       to: {
+        // A pure package may import its own files ($1 is the package PURE matched)
+        pathNot: '^packages/$1/',
         path: [
           '^packages/(db|events|jobs|contracts|catalog-adapters|request-parser)/',
           // An import that does not resolve yet keeps its written name
