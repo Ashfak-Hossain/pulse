@@ -1,0 +1,4 @@
+$kind: collection
+name: Requests
+description: 'Reading a free-text ride request into fields. Needs a session: run Auth → Request code and Verify code first.'
+order: 5500

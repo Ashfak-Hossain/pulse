@@ -11,6 +11,7 @@ import { CatalogModule } from './catalog/catalog.module.js';
 import { CourseModule } from './course/course.module.js';
 import { FareModule } from './fare/fare.module.js';
 import { AuthModule } from './auth/auth.module.js';
+import { RequestModule } from './request/request.module.js';
 import { OriginGuard } from './common/origin.guard.js';
 
 // The repo-root .env
@@ -32,6 +33,7 @@ const rootEnvFile = fileURLToPath(new URL('../../../.env', import.meta.url));
     CatalogModule,
     FareModule,
     AuthModule,
+    RequestModule,
   ],
   providers: [
     // Registered here, not in main.ts, so every app built from AppModule (tests too) gets it

@@ -84,6 +84,7 @@ against a PostGIS container, so Docker must be running).
 | `GET /campuses/:slug/distance?lat=…&lng=…` | Distance from a point to campus, in whole metres; 400 for invalid coordinates, 404 for an unknown campus                                                                |
 | `GET /campuses/:slug`                      | One campus (`id`, `name`, `slug`, `emailDomains`, `timezone`, `location: { lat, lng }`); 404 if none                                                                    |
 | `POST /fares/split-preview`                | Preview an exact integer-paisa fare split for 1–8 riders; 200 on success, 400 for invalid input                                                                         |
+| `POST /requests/parse`                     | Signed in. Reads a ride request (English or Banglish, 1–280 characters) into fields; never stores or logs the text. 400, 401, 429 after 30 a minute                     |
 | `POST /admin/campuses`                     | Create a campus and its `CampusCreated` outbox row; 401 without the admin token, 409 if the slug exists                                                                 |
 
 There is no sign-in yet. `/admin/*` routes need `Authorization: Bearer <ADMIN_TOKEN>` (from

@@ -280,6 +280,9 @@ importers:
       '@pulse/money':
         specifier: workspace:*
         version: link:../../packages/money
+      '@pulse/request-parser':
+        specifier: workspace:*
+        version: link:../../packages/request-parser
       cookie-parser:
         specifier: ^1.4.7
         version: 1.4.7

@@ -1,0 +1,22 @@
+$kind: http-request
+description: 'Text over 280 characters is refused with 400 before the parser runs.'
+url: '{{baseUrl}}/requests/parse'
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+  Origin: '{{appOrigin}}'
+body:
+  type: json
+  content: '{"text": "Mirpur 10 jabo Mirpur 10 jabo Mirpur 10 jabo Mirpur 10 jabo Mirpur 10 jabo Mirpur 10 jabo Mirpur 10 jabo Mirpur 10 jabo Mirpur 10 jabo Mirpur 10 jabo Mirpur 10 jabo Mirpur 10 jabo Mirpur 10 jabo Mirpur 10 jabo Mirpur 10 jabo Mirpur 10 jabo Mirpur 10 jabo Mirpur 10 jabo Mirpur 10 jabo Mirpur 10 jabo "}'
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 400 (401: run Request code and Verify code first)', () =>
+        pm.response.to.have.status(400),
+      );
+      pm.test('says which field failed', () => {
+        pm.expect(pm.response.json().issues[0].path).to.equal('text');
+      });
+    language: text/javascript
+order: 3000

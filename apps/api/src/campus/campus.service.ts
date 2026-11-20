@@ -84,6 +84,19 @@ export class CampusService {
     return row.id;
   }
 
+  /** The slug of the campus with this id, e.g. the signed-in user's campus. 404 if none. */
+  async slugById(id: string): Promise<string> {
+    const [row] = await this.db
+      .select({ slug: campus.slug })
+      .from(campus)
+      .where(eq(campus.id, id))
+      .limit(1);
+    if (!row) {
+      throw new NotFoundException('Campus not found');
+    }
+    return row.slug;
+  }
+
   async getBySlug(slug: string): Promise<Campus> {
     const [row] = await this.db.select().from(campus).where(eq(campus.slug, slug)).limit(1);
     if (!row) {

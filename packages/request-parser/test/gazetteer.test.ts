@@ -1,6 +1,6 @@
 import { latLngToCell } from 'h3-js';
 import { describe, expect, it } from 'vitest';
-import { aiubGazetteer, findPlaces } from '../src/gazetteer.js';
+import { aiubGazetteer, findPlaces, gazetteerFor } from '../src/gazetteer.js';
 import { tokenise } from '../src/tokenise.js';
 
 describe('aiubGazetteer', () => {
@@ -52,5 +52,17 @@ describe('findPlaces', () => {
 
   it('matches whole words only', () => {
     expect(names('bananis')).toEqual([]);
+  });
+});
+
+describe('gazetteerFor', () => {
+  it('gives AIUB its places and an unknown campus none', () => {
+    expect(gazetteerFor('aiub')).toBe(aiubGazetteer);
+    expect(gazetteerFor('nsu')).toEqual([]);
+    expect(gazetteerFor('constructor')).toEqual([]);
+  });
+
+  it('finds no places with an empty gazetteer', () => {
+    expect(findPlaces(tokenise('mirpur 10 jabo'), [])).toEqual([]);
   });
 });

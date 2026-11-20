@@ -1,0 +1,33 @@
+$kind: http-example
+request:
+  method: POST
+  url: '{{baseUrl}}/requests/parse'
+  headers:
+    Content-Type: application/json
+    Origin: http://localhost:5173
+  body:
+    type: json
+    content: '{"text": "going home to Uttara at 5:30, 10 min wait"}'
+response:
+  statusCode: 200
+  statusText: 'OK'
+  headers:
+    Content-Type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "direction": "from_campus",
+        "place": {
+          "name": "Uttara",
+          "cell": "883cf10583fffff"
+        },
+        "timeRef": {
+          "kind": "clock",
+          "time": "17:30"
+        },
+        "maxWaitMin": 10,
+        "confidence": 1,
+        "parser": "rule@1"
+      }
+order: 1000

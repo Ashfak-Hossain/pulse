@@ -45,3 +45,14 @@ export type TravelMode = z.infer<typeof travelModeSchema>;
 export type ParsedPlace = z.infer<typeof parsedPlaceSchema>;
 export type TimeRef = z.infer<typeof timeRefSchema>;
 export type ParsedRequest = z.infer<typeof parsedRequestSchema>;
+
+// POST /requests/parse. The text is read and dropped: it is never stored or logged
+export const requestParseBodySchema = z.strictObject({ text: z.string().min(1).max(280) });
+
+// Which parser answered: the rule parser now, a model version later (docs/plan/09-ai-and-ml.md)
+export const requestParseResultSchema = parsedRequestSchema.extend({
+  parser: z.literal('rule@1'),
+});
+
+export type RequestParseBody = z.infer<typeof requestParseBodySchema>;
+export type RequestParseResult = z.infer<typeof requestParseResultSchema>;
