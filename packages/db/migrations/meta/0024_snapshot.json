@@ -2663,7 +2663,7 @@
         },
         "vehicle_plate_clean": {
           "name": "vehicle_plate_clean",
-          "value": "\"vehicle\".\"plate\" = btrim(\"vehicle\".\"plate\") and length(\"vehicle\".\"plate\") between 1 and 20"
+          "value": "\"vehicle\".\"plate\" = btrim(\"vehicle\".\"plate\") and length(\"vehicle\".\"plate\") between 1 and 32"
         },
         "vehicle_color_clean": {
           "name": "vehicle_color_clean",
