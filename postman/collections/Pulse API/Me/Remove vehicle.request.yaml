@@ -1,0 +1,14 @@
+$kind: http-request
+description: "Hides the vehicle (trips will point at vehicles later). It leaves the list."
+url: "{{baseUrl}}/me/vehicles/{{vehicleId}}"
+method: DELETE
+headers:
+  Accept: application/json
+  Origin: "{{appOrigin}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 204', () => pm.response.to.have.status(204));
+    language: text/javascript
+examples: .resources/Remove vehicle.resources/examples
+order: 9000

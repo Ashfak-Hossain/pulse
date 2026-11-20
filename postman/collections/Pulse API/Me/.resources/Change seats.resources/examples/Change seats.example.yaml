@@ -1,0 +1,28 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/me/vehicles/{{vehicleId}}"
+  method: PATCH
+  headers:
+    Accept: application/json
+    Content-Type: application/json
+    Origin: http://localhost:5173
+  body:
+    type: json
+    content: |-
+      {"seats": 2}
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    content-type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "id": "0193f2a1-af60-7182-9394-a0f1a2b3c4d5",
+        "type": "car",
+        "seats": 2,
+        "plate": "DHAKA METRO GA 11-2233",
+        "color": "White"
+      }
+order: 1000
