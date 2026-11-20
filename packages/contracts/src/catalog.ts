@@ -31,7 +31,7 @@ export const createTermSchema = z
       .trim()
       .min(1)
       .max(catalogLimits.termName)
-      .regex(/^[^\p{Cc}‪-‮⁦-⁩]+$/u, 'Name has hidden characters'),
+      .regex(/^[^\p{Cc}\u202A-\u202E\u2066-\u2069]+$/u, 'Name has hidden characters'),
     startsOn: z.iso.date(),
     endsOn: z.iso.date(),
   })
