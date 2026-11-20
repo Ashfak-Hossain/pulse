@@ -38,7 +38,7 @@ import {
 } from '@pulse/db';
 import { type AuditActor, writeAudit } from '../common/audit.js';
 import { DATABASE } from '../db/db.module.js';
-import { h3Cell } from './h3-cell.js';
+import { h3Cell } from '../common/h3-cell.js';
 
 // Campuses have a handful of each; the cap only stops a list from ever returning a whole table
 const PLACE_LIST_LIMIT = 500;
@@ -345,6 +345,7 @@ const conflicts: Record<string, string> = {
   campus_gate_one_primary_per_campus: 'Another gate became primary at the same time; try again',
   zone_campus_name_unique: 'A zone with this name already exists',
   meeting_point_zone_campus_fk: 'The zone still has meeting points',
+  preference_zone_campus_fk: 'The zone is still a home zone of some users',
 };
 
 function toClientError(error: unknown, deletesZone: boolean): unknown {
@@ -355,6 +356,10 @@ function toClientError(error: unknown, deletesZone: boolean): unknown {
 
   if (code === '23514' && constraint === 'zone_area_valid') {
     return new UnprocessableEntityException('The zone area crosses itself');
+  }
+  // Users' home zones block a zone delete the same way meeting points do
+  if (code === '23503' && constraint === 'preference_zone_campus_fk' && deletesZone) {
+    return new ConflictException(conflicts[constraint]);
   }
   if (code === '23503' && constraint === 'meeting_point_zone_campus_fk') {
     // A delete would leave points behind; a point write names a zone this campus does not have
