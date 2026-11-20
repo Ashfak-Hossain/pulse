@@ -10,7 +10,7 @@ const placeNameSchema = z
   .trim()
   .min(1)
   .max(100)
-  .regex(/^[^\p{Cc}‪-‮⁦-⁩]+$/u, 'Name has hidden characters');
+  .regex(/^[^\p{Cc}\u202A-\u202E\u2066-\u2069]+$/u, 'Name has hidden characters');
 
 const locationSchema = z.strictObject({
   lat: z.number().min(-90).max(90),
