@@ -42,6 +42,11 @@ function h3CellCheck(column: AnyPgColumn) {
   return sql`${column} ~ '^[0-9a-f]{15}$'`;
 }
 
+// A phone number in E.164: a plus, a country code that does not start with 0, 8 to 15 digits
+function e164Check(column: AnyPgColumn) {
+  return sql`${column} ~ '^[+][1-9][0-9]{7,14}$'`;
+}
+
 // Drizzle's geometry() only parses points. An area stays PostGIS's own value (hex EWKB) in
 // TypeScript; queries read and write it as GeoJSON with ST_AsGeoJSON and ST_GeomFromGeoJSON
 const multiPolygon = customType<{ data: string; driverData: string }>({
@@ -360,6 +365,16 @@ export const appUser = pgTable(
     status: text('status', { enum: ['pending_profile', 'active', 'suspended', 'deleted'] })
       .notNull()
       .default('pending_profile'),
+    // Personal data from here down: never log these, never put them in a URL or a snapshot.
+    // Null until the user completes their profile; an active user has a name and a gender
+    firstName: text('first_name'),
+    // Never shown to other riders
+    lastName: text('last_name'),
+    // Self-declared, used only for the "same gender" preference
+    gender: text('gender', { enum: ['female', 'male', 'unspecified'] }),
+    department: text('department'),
+    // E.164 (+8801...); never shown to anyone
+    phoneE164: text('phone_e164'),
     createdAt: timestamp('created_at', {
       withTimezone: true,
     })
@@ -394,6 +409,16 @@ export const appUser = pgTable(
     check(
       'app_user_status_valid',
       sql`${table.status} in ('pending_profile', 'active', 'suspended', 'deleted')`,
+    ),
+    check('app_user_first_name_clean', cleanTextCheck(table.firstName, 100)),
+    check('app_user_last_name_clean', cleanTextCheck(table.lastName, 100)),
+    check('app_user_gender_valid', sql`${table.gender} in ('female', 'male', 'unspecified')`),
+    check('app_user_department_clean', cleanTextCheck(table.department, 100)),
+    check('app_user_phone_e164', e164Check(table.phoneE164)),
+    // The matcher needs a name to show and a gender to match on, so an active user has both
+    check(
+      'app_user_active_has_profile',
+      sql`${table.status} <> 'active' or (${table.firstName} is not null and ${table.lastName} is not null and ${table.gender} is not null)`,
     ),
     // Read and insert inside the campus set by withCampus(), nothing else. Updating and deleting
     // are taken away by grants (0015), not by this policy
