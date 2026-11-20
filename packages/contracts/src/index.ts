@@ -36,6 +36,12 @@ export {
 } from './fare.js';
 export {
   termStatusSchema,
+  adminTermSchema,
+  createTermSchema,
+  termParamsSchema,
+  type AdminTerm,
+  type CreateTerm,
+  type TermParams,
   sectionStatusSchema,
   meetingKindSchema,
   termSchema,
