@@ -169,6 +169,13 @@
       "when": 1795170181965,
       "tag": "0023_user-profile",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1795170201944,
+      "tag": "0024_user-profile-privileges",
+      "breakpoints": true
     }
   ]
 }
