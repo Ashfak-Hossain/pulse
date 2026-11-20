@@ -1,0 +1,24 @@
+$kind: http-request
+description: "Saves the whole set. The home pin becomes an H3 cell on the server and is thrown away; the answer shows only the zone it falls in. Writes a ProfileChanged outbox row."
+url: "{{baseUrl}}/me/preferences"
+method: PUT
+headers:
+  Accept: application/json
+  Content-Type: application/json
+  Origin: "{{appOrigin}}"
+body:
+  type: json
+  content: |-
+    {"home": {"lat": 23.8183, "lng": 90.4209}, "genderPref": "same_gender", "modes": ["cng", "bus"], "maxWaitMin": 10, "maxDetourPct": 30, "autopilotOn": false, "quietHours": {"start": "22:00", "end": "07:00"}, "dailyNotifyBudget": 6, "shareTextForTraining": false}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200', () => pm.response.to.have.status(200));
+      pm.test('never sends the pin back', () => {
+        const body = pm.response.json();
+        pm.expect(body).to.not.have.property('home');
+        pm.expect(JSON.stringify(body)).to.not.include('23.8183');
+      });
+    language: text/javascript
+examples: .resources/Save preferences.resources/examples
+order: 4000

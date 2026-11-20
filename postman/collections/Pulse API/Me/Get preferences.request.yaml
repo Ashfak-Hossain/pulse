@@ -1,0 +1,14 @@
+$kind: http-request
+description: "Your saved preferences, or 404 before the first save."
+url: "{{baseUrl}}/me/preferences"
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200 (404: run Save preferences first)', () => pm.response.to.have.status(200));
+      pm.test('has the home zone, not the home', () => pm.expect(pm.response.json()).to.have.property('homeZone'));
+    language: text/javascript
+examples: .resources/Get preferences.resources/examples
+order: 5000

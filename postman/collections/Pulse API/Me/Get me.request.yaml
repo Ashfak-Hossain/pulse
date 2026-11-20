@@ -1,0 +1,18 @@
+$kind: http-request
+description: "Your profile, role, status and campus. Needs a session (Auth folder)."
+url: "{{baseUrl}}/me"
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200 (401: sign in with the Auth folder)', () => pm.response.to.have.status(200));
+      pm.test('has exactly the contract fields', () =>
+        pm.expect(Object.keys(pm.response.json()).sort()).to.eql(
+          ['campus', 'department', 'email', 'firstName', 'gender', 'id', 'lastName', 'phone', 'role', 'status'],
+        ),
+      );
+    language: text/javascript
+examples: .resources/Get me.resources/examples
+order: 1000

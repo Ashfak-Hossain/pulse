@@ -1,0 +1,41 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/me/preferences"
+  method: PUT
+  headers:
+    Accept: application/json
+    Content-Type: application/json
+    Origin: http://localhost:5173
+  body:
+    type: json
+    content: |-
+      {"home": {"lat": 23.8183, "lng": 90.4209}, "genderPref": "same_gender", "modes": ["cng", "bus"], "maxWaitMin": 10, "maxDetourPct": 30, "autopilotOn": false, "quietHours": {"start": "22:00", "end": "07:00"}, "dailyNotifyBudget": 6, "shareTextForTraining": false}
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    content-type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "genderPref": "same_gender",
+        "modes": [
+          "cng",
+          "bus"
+        ],
+        "maxWaitMin": 10,
+        "maxDetourPct": 30,
+        "autopilotOn": false,
+        "quietHours": {
+          "start": "22:00",
+          "end": "07:00"
+        },
+        "dailyNotifyBudget": 6,
+        "shareTextForTraining": false,
+        "homeZone": {
+          "id": "0193f2a1-7b20-7d4e-9f50-6b7c8d9e0f12",
+          "name": "Kuril"
+        }
+      }
+order: 1000
