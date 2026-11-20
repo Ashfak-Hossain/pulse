@@ -1,8 +1,7 @@
 import { auditLog, type Transaction } from '@pulse/db';
-import type { SignedInUser } from '../auth/session.service.js';
 
 /** Who did an admin write: their id is the actor, and the row goes to their campus. */
-export type AuditActor = Pick<SignedInUser, 'id' | 'campusId'>;
+export type AuditActor = { id: string; campusId: string };
 
 /**
  * Records one admin write in audit_log. Call it inside the transaction that makes the change, so
