@@ -1,5 +1,5 @@
 import type { Database } from '@pulse/db';
-import type { CampusCreatedEvent } from '@pulse/events';
+import type { PulseEvent } from '@pulse/events';
 import type { PulseJob } from '@pulse/jobs';
 import { consumeCommitted, type RecordConsumer } from '../kafka/client.js';
 import { createWorkerDb, currentRole } from '../shared/db.js';
@@ -63,16 +63,23 @@ export async function runNotifier(options: RunNotifierOptions): Promise<void> {
     },
     now: () => new Date(),
   };
-  // CampusCreated is the only event so far; a second one makes this a switch on event.type
-  const handleAndLogDuplicate = async (event: CampusCreatedEvent): Promise<void> => {
-    // A few are normal after a relay or notifier crash; a steady stream means something keeps
-    // crashing. result matches the mailer's duplicate log, so one search finds both
-    const result = await handleCampusCreated(deps, event);
-    if (result === 'duplicate') {
-      logger.info(
-        { eventId: event.eventId, type: event.type, result },
-        'Skipped an event already handled',
-      );
+  const handleAndLogDuplicate = async (event: PulseEvent): Promise<void> => {
+    switch (event.type) {
+      case 'CampusCreated': {
+        // A few are normal after a relay or notifier crash; a steady stream means something keeps
+        // crashing. result matches the mailer's duplicate log, so one search finds both
+        const result = await handleCampusCreated(deps, event);
+        if (result === 'duplicate') {
+          logger.info(
+            { eventId: event.eventId, type: event.type, result },
+            'Skipped an event already handled',
+          );
+        }
+        return;
+      }
+      // Shares the campuses topic but sends no email; its consumers come in later slices
+      case 'TermActivated':
+        return;
     }
   };
   await runNotifierLoop(stream, handleAndLogDuplicate, {
