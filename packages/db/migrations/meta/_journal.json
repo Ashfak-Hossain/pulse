@@ -162,6 +162,13 @@
       "when": 1795168717297,
       "tag": "0022_term-write-privileges",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1795170181965,
+      "tag": "0023_user-profile",
+      "breakpoints": true
     }
   ]
 }
