@@ -1,10 +1,18 @@
-import type { CampusCreatedPayload } from '../src/index.js';
+import type { CampusCreatedPayload, TermActivatedPayload } from '../src/index.js';
 
 export const aiubCreated: CampusCreatedPayload = {
   campusId: '6f1c2a9e-3b4d-4e5f-8a7b-9c0d1e2f3a4b',
   name: 'American International University-Bangladesh',
   slug: 'aiub',
   timezone: 'Asia/Dhaka',
+};
+
+export const fall2026Activated: TermActivatedPayload = {
+  campusId: aiubCreated.campusId,
+  termId: '0193f2a1-8d40-7f60-b172-8d9e0f1a2b34',
+  name: 'Fall 2026-2027',
+  startsOn: '2026-09-13',
+  endsOn: '2027-01-15',
 };
 
 // The id the outbox row got and the moment the change happened: the caller supplies both

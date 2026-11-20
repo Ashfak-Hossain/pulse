@@ -1,7 +1,7 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { createEvent, parseEvent, routeFor, topics } from '../src/index.js';
-import { aiubCreated, meta } from './fixtures.js';
+import { aiubCreated, fall2026Activated, meta } from './fixtures.js';
 
 describe('createEvent', () => {
   it('wraps the payload in an envelope with the current version', () => {
@@ -91,6 +91,19 @@ describe('routeFor', () => {
   it('sends CampusCreated to campuses, keyed by the campus id', () => {
     const event = createEvent('CampusCreated', aiubCreated, meta);
     expect(routeFor(event)).toEqual({ topic: 'campuses', key: aiubCreated.campusId });
+  });
+
+  it('sends TermActivated to campuses, keyed by the campus id', () => {
+    const event = createEvent('TermActivated', fall2026Activated, meta);
+    expect(event).toMatchObject({ type: 'TermActivated', version: 1 });
+    expect(routeFor(event)).toEqual({ topic: 'campuses', key: fall2026Activated.campusId });
+  });
+
+  it('refuses a TermActivated with a date that is not YYYY-MM-DD', () => {
+    for (const startsOn of ['2026-9-13', '13/09/2026', '2026-02-30'])
+      expect(() =>
+        createEvent('TermActivated', { ...fall2026Activated, startsOn }, meta),
+      ).toThrow();
   });
 
   // The key a route uses must be the payload field the topic table names
