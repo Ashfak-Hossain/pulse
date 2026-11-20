@@ -16,6 +16,9 @@ export {
   zone,
   meetingPoint,
   auditLog,
+  preference,
+  vehicle,
+  trustedContact,
 } from './schema.js';
 export { assertRestrictedRole } from './role-check.js';
 export {
