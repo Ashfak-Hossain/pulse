@@ -14,6 +14,11 @@ export const apiErrorSchema = z.strictObject({
   error: z.string(),
   message: z.string(),
   issues: z.array(apiIssueSchema).optional(),
+  // A stable name for an error a client handles on its own, e.g. TRUSTED_CONTACT_LIMIT
+  code: z
+    .string()
+    .regex(/^[A-Z][A-Z_]{2,63}$/)
+    .optional(),
 });
 
 export type ApiIssue = z.infer<typeof apiIssueSchema>;
