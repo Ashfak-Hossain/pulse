@@ -60,7 +60,9 @@
         "campus_slug_unique": {
           "name": "campus_slug_unique",
           "nullsNotDistinct": false,
-          "columns": ["slug"]
+          "columns": [
+            "slug"
+          ]
         }
       },
       "policies": {
@@ -68,21 +70,27 @@
           "name": "campus_read",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": ["pulse_app"],
+          "to": [
+            "pulse_app"
+          ],
           "using": "true"
         },
         "campus_insert": {
           "name": "campus_insert",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": ["pulse_app"],
+          "to": [
+            "pulse_app"
+          ],
           "withCheck": "id = nullif(current_setting('app.campus_id', true), '')::uuid"
         },
         "campus_update": {
           "name": "campus_update",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": ["pulse_app"],
+          "to": [
+            "pulse_app"
+          ],
           "using": "id = nullif(current_setting('app.campus_id', true), '')::uuid",
           "withCheck": "id = nullif(current_setting('app.campus_id', true), '')::uuid"
         }
@@ -133,8 +141,12 @@
           "name": "course_campus_id_campus_id_fk",
           "tableFrom": "course",
           "tableTo": "campus",
-          "columnsFrom": ["campus_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "campus_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -144,7 +156,10 @@
         "course_campus_code_unique": {
           "name": "course_campus_code_unique",
           "nullsNotDistinct": false,
-          "columns": ["campus_id", "code"]
+          "columns": [
+            "campus_id",
+            "code"
+          ]
         }
       },
       "policies": {
@@ -152,7 +167,9 @@
           "name": "course_read",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": ["pulse_app"],
+          "to": [
+            "pulse_app"
+          ],
           "using": "\"course\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid"
         }
       },
@@ -327,7 +344,10 @@
       "compositePrimaryKeys": {
         "processed_event_consumer_event_id_pk": {
           "name": "processed_event_consumer_event_id_pk",
-          "columns": ["consumer", "event_id"]
+          "columns": [
+            "consumer",
+            "event_id"
+          ]
         }
       },
       "uniqueConstraints": {},

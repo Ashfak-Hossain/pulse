@@ -83,9 +83,13 @@
         "app_user_campus_id_campus_id_fk": {
           "name": "app_user_campus_id_campus_id_fk",
           "tableFrom": "app_user",
-          "columnsFrom": ["campus_id"],
+          "columnsFrom": [
+            "campus_id"
+          ],
           "tableTo": "campus",
-          "columnsTo": ["id"],
+          "columnsTo": [
+            "id"
+          ],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -94,12 +98,17 @@
       "uniqueConstraints": {
         "app_user_email_unique": {
           "name": "app_user_email_unique",
-          "columns": ["email"],
+          "columns": [
+            "email"
+          ],
           "nullsNotDistinct": false
         },
         "app_user_id_campus_unique": {
           "name": "app_user_id_campus_unique",
-          "columns": ["id", "campus_id"],
+          "columns": [
+            "id",
+            "campus_id"
+          ],
           "nullsNotDistinct": false
         }
       },
@@ -108,7 +117,9 @@
           "name": "app_user_campus",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": ["pulse_app"],
+          "to": [
+            "pulse_app"
+          ],
           "using": "\"app_user\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid",
           "withCheck": "\"app_user\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid"
         }
@@ -243,18 +254,28 @@
         "audit_log_campus_id_campus_id_fk": {
           "name": "audit_log_campus_id_campus_id_fk",
           "tableFrom": "audit_log",
-          "columnsFrom": ["campus_id"],
+          "columnsFrom": [
+            "campus_id"
+          ],
           "tableTo": "campus",
-          "columnsTo": ["id"],
+          "columnsTo": [
+            "id"
+          ],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "audit_log_actor_campus_fk": {
           "name": "audit_log_actor_campus_fk",
           "tableFrom": "audit_log",
-          "columnsFrom": ["actor_id", "campus_id"],
+          "columnsFrom": [
+            "actor_id",
+            "campus_id"
+          ],
           "tableTo": "app_user",
-          "columnsTo": ["id", "campus_id"],
+          "columnsTo": [
+            "id",
+            "campus_id"
+          ],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -266,14 +287,18 @@
           "name": "audit_log_read",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": ["pulse_app"],
+          "to": [
+            "pulse_app"
+          ],
           "using": "\"audit_log\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid"
         },
         "audit_log_insert": {
           "name": "audit_log_insert",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": ["pulse_app"],
+          "to": [
+            "pulse_app"
+          ],
           "withCheck": "\"audit_log\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid"
         }
       },
@@ -422,18 +447,28 @@
         "auth_session_campus_id_campus_id_fk": {
           "name": "auth_session_campus_id_campus_id_fk",
           "tableFrom": "auth_session",
-          "columnsFrom": ["campus_id"],
+          "columnsFrom": [
+            "campus_id"
+          ],
           "tableTo": "campus",
-          "columnsTo": ["id"],
+          "columnsTo": [
+            "id"
+          ],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "auth_session_user_campus_fk": {
           "name": "auth_session_user_campus_fk",
           "tableFrom": "auth_session",
-          "columnsFrom": ["user_id", "campus_id"],
+          "columnsFrom": [
+            "user_id",
+            "campus_id"
+          ],
           "tableTo": "app_user",
-          "columnsTo": ["id", "campus_id"],
+          "columnsTo": [
+            "id",
+            "campus_id"
+          ],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -442,7 +477,9 @@
       "uniqueConstraints": {
         "auth_session_token_hash_unique": {
           "name": "auth_session_token_hash_unique",
-          "columns": ["token_hash"],
+          "columns": [
+            "token_hash"
+          ],
           "nullsNotDistinct": false
         }
       },
@@ -451,7 +488,9 @@
           "name": "auth_session_campus",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": ["pulse_app"],
+          "to": [
+            "pulse_app"
+          ],
           "using": "\"auth_session\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid",
           "withCheck": "\"auth_session\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid"
         }
@@ -539,7 +578,9 @@
       "uniqueConstraints": {
         "campus_slug_unique": {
           "name": "campus_slug_unique",
-          "columns": ["slug"],
+          "columns": [
+            "slug"
+          ],
           "nullsNotDistinct": false
         }
       },
@@ -548,21 +589,27 @@
           "name": "campus_read",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": ["pulse_app"],
+          "to": [
+            "pulse_app"
+          ],
           "using": "true"
         },
         "campus_insert": {
           "name": "campus_insert",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": ["pulse_app"],
+          "to": [
+            "pulse_app"
+          ],
           "withCheck": "id = nullif(current_setting('app.campus_id', true), '')::uuid"
         },
         "campus_update": {
           "name": "campus_update",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": ["pulse_app"],
+          "to": [
+            "pulse_app"
+          ],
           "using": "id = nullif(current_setting('app.campus_id', true), '')::uuid",
           "withCheck": "id = nullif(current_setting('app.campus_id', true), '')::uuid"
         },
@@ -570,7 +617,9 @@
           "name": "campus_mailer_read",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": ["pulse_mailer"],
+          "to": [
+            "pulse_mailer"
+          ],
           "using": "true"
         }
       },
@@ -656,9 +705,13 @@
         "campus_gate_campus_id_campus_id_fk": {
           "name": "campus_gate_campus_id_campus_id_fk",
           "tableFrom": "campus_gate",
-          "columnsFrom": ["campus_id"],
+          "columnsFrom": [
+            "campus_id"
+          ],
           "tableTo": "campus",
-          "columnsTo": ["id"],
+          "columnsTo": [
+            "id"
+          ],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -667,12 +720,18 @@
       "uniqueConstraints": {
         "campus_gate_id_campus_unique": {
           "name": "campus_gate_id_campus_unique",
-          "columns": ["id", "campus_id"],
+          "columns": [
+            "id",
+            "campus_id"
+          ],
           "nullsNotDistinct": false
         },
         "campus_gate_campus_name_unique": {
           "name": "campus_gate_campus_name_unique",
-          "columns": ["campus_id", "name"],
+          "columns": [
+            "campus_id",
+            "name"
+          ],
           "nullsNotDistinct": false
         }
       },
@@ -681,7 +740,9 @@
           "name": "campus_gate_campus",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": ["pulse_app"],
+          "to": [
+            "pulse_app"
+          ],
           "using": "\"campus_gate\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid",
           "withCheck": "\"campus_gate\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid"
         }
@@ -757,9 +818,13 @@
         "course_campus_id_campus_id_fk": {
           "name": "course_campus_id_campus_id_fk",
           "tableFrom": "course",
-          "columnsFrom": ["campus_id"],
+          "columnsFrom": [
+            "campus_id"
+          ],
           "tableTo": "campus",
-          "columnsTo": ["id"],
+          "columnsTo": [
+            "id"
+          ],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -768,12 +833,18 @@
       "uniqueConstraints": {
         "course_campus_code_unique": {
           "name": "course_campus_code_unique",
-          "columns": ["campus_id", "code"],
+          "columns": [
+            "campus_id",
+            "code"
+          ],
           "nullsNotDistinct": false
         },
         "course_id_campus_unique": {
           "name": "course_id_campus_unique",
-          "columns": ["id", "campus_id"],
+          "columns": [
+            "id",
+            "campus_id"
+          ],
           "nullsNotDistinct": false
         }
       },
@@ -782,7 +853,9 @@
           "name": "course_read",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": ["pulse_app"],
+          "to": [
+            "pulse_app"
+          ],
           "using": "\"course\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid"
         }
       },
@@ -987,9 +1060,13 @@
         "email_otp_campus_id_campus_id_fk": {
           "name": "email_otp_campus_id_campus_id_fk",
           "tableFrom": "email_otp",
-          "columnsFrom": ["campus_id"],
+          "columnsFrom": [
+            "campus_id"
+          ],
           "tableTo": "campus",
-          "columnsTo": ["id"],
+          "columnsTo": [
+            "id"
+          ],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -1001,7 +1078,9 @@
           "name": "email_otp_campus",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": ["pulse_app"],
+          "to": [
+            "pulse_app"
+          ],
           "using": "\"email_otp\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid",
           "withCheck": "\"email_otp\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid"
         }
@@ -1156,18 +1235,28 @@
         "meeting_point_campus_id_campus_id_fk": {
           "name": "meeting_point_campus_id_campus_id_fk",
           "tableFrom": "meeting_point",
-          "columnsFrom": ["campus_id"],
+          "columnsFrom": [
+            "campus_id"
+          ],
           "tableTo": "campus",
-          "columnsTo": ["id"],
+          "columnsTo": [
+            "id"
+          ],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "meeting_point_zone_campus_fk": {
           "name": "meeting_point_zone_campus_fk",
           "tableFrom": "meeting_point",
-          "columnsFrom": ["zone_id", "campus_id"],
+          "columnsFrom": [
+            "zone_id",
+            "campus_id"
+          ],
           "tableTo": "zone",
-          "columnsTo": ["id", "campus_id"],
+          "columnsTo": [
+            "id",
+            "campus_id"
+          ],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -1176,7 +1265,10 @@
       "uniqueConstraints": {
         "meeting_point_id_campus_unique": {
           "name": "meeting_point_id_campus_unique",
-          "columns": ["id", "campus_id"],
+          "columns": [
+            "id",
+            "campus_id"
+          ],
           "nullsNotDistinct": false
         }
       },
@@ -1185,7 +1277,9 @@
           "name": "meeting_point_campus",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": ["pulse_app"],
+          "to": [
+            "pulse_app"
+          ],
           "using": "\"meeting_point\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid",
           "withCheck": "\"meeting_point\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid"
         }
@@ -1374,7 +1468,10 @@
       "compositePrimaryKeys": {
         "processed_event_consumer_event_id_pk": {
           "name": "processed_event_consumer_event_id_pk",
-          "columns": ["consumer", "event_id"]
+          "columns": [
+            "consumer",
+            "event_id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -1547,27 +1644,43 @@
         "section_campus_id_campus_id_fk": {
           "name": "section_campus_id_campus_id_fk",
           "tableFrom": "section",
-          "columnsFrom": ["campus_id"],
+          "columnsFrom": [
+            "campus_id"
+          ],
           "tableTo": "campus",
-          "columnsTo": ["id"],
+          "columnsTo": [
+            "id"
+          ],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "section_term_campus_fk": {
           "name": "section_term_campus_fk",
           "tableFrom": "section",
-          "columnsFrom": ["term_id", "campus_id"],
+          "columnsFrom": [
+            "term_id",
+            "campus_id"
+          ],
           "tableTo": "term",
-          "columnsTo": ["id", "campus_id"],
+          "columnsTo": [
+            "id",
+            "campus_id"
+          ],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "section_course_campus_fk": {
           "name": "section_course_campus_fk",
           "tableFrom": "section",
-          "columnsFrom": ["course_id", "campus_id"],
+          "columnsFrom": [
+            "course_id",
+            "campus_id"
+          ],
           "tableTo": "course",
-          "columnsTo": ["id", "campus_id"],
+          "columnsTo": [
+            "id",
+            "campus_id"
+          ],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -1576,12 +1689,18 @@
       "uniqueConstraints": {
         "section_id_campus_unique": {
           "name": "section_id_campus_unique",
-          "columns": ["id", "campus_id"],
+          "columns": [
+            "id",
+            "campus_id"
+          ],
           "nullsNotDistinct": false
         },
         "section_term_external_class_unique": {
           "name": "section_term_external_class_unique",
-          "columns": ["term_id", "external_class_id"],
+          "columns": [
+            "term_id",
+            "external_class_id"
+          ],
           "nullsNotDistinct": false
         }
       },
@@ -1590,7 +1709,9 @@
           "name": "section_read",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": ["pulse_app"],
+          "to": [
+            "pulse_app"
+          ],
           "using": "\"section\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid"
         }
       },
@@ -1734,18 +1855,28 @@
         "section_meeting_campus_id_campus_id_fk": {
           "name": "section_meeting_campus_id_campus_id_fk",
           "tableFrom": "section_meeting",
-          "columnsFrom": ["campus_id"],
+          "columnsFrom": [
+            "campus_id"
+          ],
           "tableTo": "campus",
-          "columnsTo": ["id"],
+          "columnsTo": [
+            "id"
+          ],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "section_meeting_section_campus_fk": {
           "name": "section_meeting_section_campus_fk",
           "tableFrom": "section_meeting",
-          "columnsFrom": ["section_id", "campus_id"],
+          "columnsFrom": [
+            "section_id",
+            "campus_id"
+          ],
           "tableTo": "section",
-          "columnsTo": ["id", "campus_id"],
+          "columnsTo": [
+            "id",
+            "campus_id"
+          ],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -1754,7 +1885,12 @@
       "uniqueConstraints": {
         "section_meeting_slot_unique": {
           "name": "section_meeting_slot_unique",
-          "columns": ["section_id", "weekday", "start_time", "kind"],
+          "columns": [
+            "section_id",
+            "weekday",
+            "start_time",
+            "kind"
+          ],
           "nullsNotDistinct": false
         }
       },
@@ -1763,7 +1899,9 @@
           "name": "section_meeting_read",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": ["pulse_app"],
+          "to": [
+            "pulse_app"
+          ],
           "using": "\"section_meeting\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid"
         }
       },
@@ -1866,9 +2004,13 @@
         "term_campus_id_campus_id_fk": {
           "name": "term_campus_id_campus_id_fk",
           "tableFrom": "term",
-          "columnsFrom": ["campus_id"],
+          "columnsFrom": [
+            "campus_id"
+          ],
           "tableTo": "campus",
-          "columnsTo": ["id"],
+          "columnsTo": [
+            "id"
+          ],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -1877,12 +2019,18 @@
       "uniqueConstraints": {
         "term_id_campus_unique": {
           "name": "term_id_campus_unique",
-          "columns": ["id", "campus_id"],
+          "columns": [
+            "id",
+            "campus_id"
+          ],
           "nullsNotDistinct": false
         },
         "term_campus_name_unique": {
           "name": "term_campus_name_unique",
-          "columns": ["campus_id", "name"],
+          "columns": [
+            "campus_id",
+            "name"
+          ],
           "nullsNotDistinct": false
         }
       },
@@ -1891,7 +2039,9 @@
           "name": "term_read",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": ["pulse_app"],
+          "to": [
+            "pulse_app"
+          ],
           "using": "\"term\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid"
         }
       },
@@ -1976,9 +2126,13 @@
         "zone_campus_id_campus_id_fk": {
           "name": "zone_campus_id_campus_id_fk",
           "tableFrom": "zone",
-          "columnsFrom": ["campus_id"],
+          "columnsFrom": [
+            "campus_id"
+          ],
           "tableTo": "campus",
-          "columnsTo": ["id"],
+          "columnsTo": [
+            "id"
+          ],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -1987,12 +2141,18 @@
       "uniqueConstraints": {
         "zone_id_campus_unique": {
           "name": "zone_id_campus_unique",
-          "columns": ["id", "campus_id"],
+          "columns": [
+            "id",
+            "campus_id"
+          ],
           "nullsNotDistinct": false
         },
         "zone_campus_name_unique": {
           "name": "zone_campus_name_unique",
-          "columns": ["campus_id", "name"],
+          "columns": [
+            "campus_id",
+            "name"
+          ],
           "nullsNotDistinct": false
         }
       },
@@ -2001,7 +2161,9 @@
           "name": "zone_campus",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": ["pulse_app"],
+          "to": [
+            "pulse_app"
+          ],
           "using": "\"zone\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid",
           "withCheck": "\"zone\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid"
         }
