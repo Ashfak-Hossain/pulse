@@ -20,3 +20,7 @@ values:
     value: ''
   - key: meetingPointId
     value: ''
+  - key: termName
+    value: ''
+  - key: termId
+    value: ''

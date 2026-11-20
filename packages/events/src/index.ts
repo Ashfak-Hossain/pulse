@@ -7,6 +7,12 @@ export {
   type CampusCreatedPayload,
 } from './campus-created.js';
 export {
+  termActivatedEventSchema,
+  termActivatedPayloadSchema,
+  type TermActivatedEvent,
+  type TermActivatedPayload,
+} from './term-activated.js';
+export {
   createEvent,
   eventSchema,
   parseEvent,

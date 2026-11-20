@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { campusCreatedEventSchema } from './campus-created.js';
+import { termActivatedEventSchema } from './term-activated.js';
 import { eventEnvelopeSchema } from './envelope.js';
 import { topics, type TopicName } from './topics.js';
 
@@ -7,14 +8,20 @@ import { topics, type TopicName } from './topics.js';
 // currentVersions and one case in routeFor.
 // One schema per type: the union rejects a repeated type, so a breaking change is a new event
 // name (CampusCreatedV2), never a second version of the same name
-export const eventSchema = z.discriminatedUnion('type', [campusCreatedEventSchema]);
+export const eventSchema = z.discriminatedUnion('type', [
+  campusCreatedEventSchema,
+  termActivatedEventSchema,
+]);
 
 export type PulseEvent = z.infer<typeof eventSchema>;
 export type EventType = PulseEvent['type'];
 type EventOf<T extends EventType> = Extract<PulseEvent, { type: T }>;
 
 // The version createEvent writes today
-const currentVersions = { CampusCreated: 1 } as const satisfies Record<EventType, number>;
+const currentVersions = { CampusCreated: 1, TermActivated: 1 } as const satisfies Record<
+  EventType,
+  number
+>;
 
 export interface EventMeta {
   // The outbox row's id
@@ -73,6 +80,7 @@ export interface Route {
 export function routeFor(event: PulseEvent): Route {
   switch (event.type) {
     case 'CampusCreated':
+    case 'TermActivated':
       return {
         topic: topics.campuses.name,
         key: event.payload.campusId,

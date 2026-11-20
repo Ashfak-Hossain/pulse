@@ -1,0 +1,23 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/admin/terms/{{termId}}/activate"
+  method: POST
+  headers:
+    Accept: application/json
+    Origin: http://localhost:5173
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    content-type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "id": "0193f2a1-8d40-7f60-b172-8d9e0f1a2b34",
+        "name": "Postman term mi4x2k",
+        "startsOn": "2027-01-20",
+        "endsOn": "2027-05-30",
+        "status": "active"
+      }
+order: 1000

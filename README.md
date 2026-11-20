@@ -90,6 +90,8 @@ against a PostGIS container, so Docker must be running).
 | `POST · PATCH · DELETE /admin/gates`          | Campus admins only (403 otherwise). The server sets the H3 cell; a new primary clears the old one; deleting or unsetting the primary gate answers 409                   |
 | `POST · PATCH · DELETE /admin/zones`          | Campus admins only. A self-crossing area answers 422; deleting a zone that meeting points name answers 409                                                              |
 | `POST · PATCH · DELETE /admin/meeting-points` | Campus admins only. DELETE hides the point; another campus's zone answers 422. Every admin place write adds one `audit_log` row                                         |
+| `POST /admin/terms`                           | Campus admins only. Creates a draft term; 400 if it ends before it starts, 409 if the name exists                                                                       |
+| `POST /admin/terms/:id/activate`              | Campus admins only. Activates a draft, archives the previous active term and writes a `TermActivated` outbox row; 409 for a term that is not a draft                    |
 
 There is no sign-in yet. `/admin/*` routes need `Authorization: Bearer <ADMIN_TOKEN>` (from
 `.env`, a stand-in until sign-in); every other route is public. Campuses are public on purpose (the app needs
