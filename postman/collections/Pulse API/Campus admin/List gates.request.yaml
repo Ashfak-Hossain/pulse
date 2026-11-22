@@ -1,0 +1,18 @@
+$kind: http-request
+description: "Gates of your campus, the primary one first. Any signed-in user."
+url: "{{baseUrl}}/gates"
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200 (401: sign in with the Auth folder)', () => pm.response.to.have.status(200));
+      pm.test('lists the new gate, and at most one primary', () => {
+        const { items } = pm.response.json();
+        pm.expect(items.map((g) => g.id)).to.include(pm.environment.get('gateId'));
+        pm.expect(items.filter((g) => g.isPrimary).length).to.be.at.most(1);
+      });
+    language: text/javascript
+examples: .resources/List gates.resources/examples
+order: 2000

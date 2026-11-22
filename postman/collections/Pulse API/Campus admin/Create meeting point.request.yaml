@@ -1,0 +1,25 @@
+$kind: http-request
+description: "Adds a meeting point in the new zone. Leave zoneId out for a gate-side point. A zone of another campus answers 422."
+url: "{{baseUrl}}/admin/meeting-points"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+  Origin: "{{appOrigin}}"
+body:
+  type: json
+  content: |-
+    {"name": "Postman point {{zoneName}}", "kind": "junction", "location": {"lat": 23.8069, "lng": 90.3687}, "zoneId": "{{zoneId}}"}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 201', () => pm.response.to.have.status(201));
+      pm.test('belongs to the new zone', () => {
+        const point = pm.response.json();
+        pm.expect(Object.keys(point).sort()).to.eql(['id', 'kind', 'location', 'name', 'zoneId']);
+        pm.expect(point.zoneId).to.equal(pm.environment.get('zoneId'));
+        pm.environment.set('meetingPointId', point.id);
+      });
+    language: text/javascript
+examples: .resources/Create meeting point.resources/examples
+order: 6000

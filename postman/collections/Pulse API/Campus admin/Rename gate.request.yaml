@@ -1,0 +1,22 @@
+$kind: http-request
+description: "Changes any of name, location (the cell follows) and isPrimary. Unsetting the primary gate answers 409: make another gate primary instead. Another campus's id answers 404."
+url: "{{baseUrl}}/admin/gates/{{gateId}}"
+method: PATCH
+headers:
+  Accept: application/json
+  Content-Type: application/json
+  Origin: "{{appOrigin}}"
+body:
+  type: json
+  content: |-
+    {"name": "{{gateName}} renamed"}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200', () => pm.response.to.have.status(200));
+      pm.test('has the new name', () =>
+        pm.expect(pm.response.json().name).to.equal(`${pm.environment.get('gateName')} renamed`),
+      );
+    language: text/javascript
+examples: .resources/Rename gate.resources/examples
+order: 3000

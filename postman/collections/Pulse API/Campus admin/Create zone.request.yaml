@@ -1,0 +1,29 @@
+$kind: http-request
+description: "Adds a home area as a GeoJSON MultiPolygon (longitude first, every ring closed). 409 if the name exists."
+url: "{{baseUrl}}/admin/zones"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+  Origin: "{{appOrigin}}"
+body:
+  type: json
+  content: |-
+    {"name": "{{zoneName}}", "area": {"type": "MultiPolygon", "coordinates": [[[[90.36, 23.8], [90.375, 23.8], [90.375, 23.815], [90.36, 23.815], [90.36, 23.8]]]]}}
+scripts:
+  - type: beforeRequest
+    code: |-
+      pm.environment.set('zoneName', `Postman zone ${Date.now().toString(36)}`);
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('status is 201', () => pm.response.to.have.status(201));
+      pm.test('answers the area as GeoJSON', () => {
+        const zone = pm.response.json();
+        pm.expect(Object.keys(zone).sort()).to.eql(['area', 'id', 'name']);
+        pm.expect(zone.area.type).to.equal('MultiPolygon');
+        pm.environment.set('zoneId', zone.id);
+      });
+    language: text/javascript
+examples: .resources/Create zone.resources/examples
+order: 4000

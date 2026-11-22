@@ -1,0 +1,14 @@
+$kind: http-request
+description: "Deletes a plain gate. The primary gate answers 409."
+url: "{{baseUrl}}/admin/gates/{{gateId}}"
+method: DELETE
+headers:
+  Accept: application/json
+  Origin: "{{appOrigin}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 204', () => pm.response.to.have.status(204));
+    language: text/javascript
+examples: .resources/Delete gate.resources/examples
+order: 10000
