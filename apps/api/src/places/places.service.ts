@@ -161,6 +161,12 @@ export class PlacesService {
     await this.write(
       actor,
       async (tx) => {
+        // Hidden points keep their row for future trips but must not pin the zone forever; active
+        // points still block the delete through the foreign key (409)
+        await tx
+          .update(meetingPoint)
+          .set({ zoneId: null })
+          .where(and(eq(meetingPoint.zoneId, id), eq(meetingPoint.isActive, false)));
         const [row] = await tx.delete(zone).where(eq(zone.id, id)).returning({ name: zone.name });
         if (!row) throw new NotFoundException('Zone not found');
         await audit(tx, actor, 'zone.delete', 'zone', id, { name: row.name });

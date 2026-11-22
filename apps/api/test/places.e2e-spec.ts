@@ -279,6 +279,8 @@ describe('Gates, zones and meeting points over HTTP', () => {
       const all = meetingPointListSchema.parse((await get('/meeting-points', as.studentA)).body);
       expect(all.items.map((point) => point.id)).toEqual([gateSide.id]);
       await patch(`/admin/meeting-points/${inZone.id}`, as.adminA, { name: 'Back' }).expect(404);
+      // Its only point is hidden now, so the zone can go
+      await del(`/admin/zones/${zone.id}`, as.adminA).expect(204);
     });
   });
 
