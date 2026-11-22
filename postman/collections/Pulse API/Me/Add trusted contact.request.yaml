@@ -9,7 +9,7 @@ headers:
 body:
   type: json
   content: |-
-    {"name": "Ayesha", "phone": "+8801711000000", "relation": "mother"}
+    {"name": "Ayesha", "phone": "+8801000000002", "relation": "mother"}
 scripts:
   - type: afterResponse
     code: |-

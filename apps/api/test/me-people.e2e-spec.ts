@@ -25,7 +25,7 @@ const domain = `people-${run}.test`;
 const car = { type: 'car', seats: 3, plate: 'DHAKA METRO GA 11-2233', color: 'White' };
 const contact = (n: number) => ({
   name: `Contact ${n}`,
-  phone: '+8801711000000',
+  phone: '+8801000000002',
   relation: 'friend',
 });
 
@@ -188,7 +188,8 @@ describe('/me/vehicles and /me/trusted-contacts over HTTP', () => {
       .select({ slot: trustedContact.slot })
       .from(trustedContact)
       .where(eq(trustedContact.userId, userId));
-    expect(stored.length).toBeLessThanOrEqual(3);
-    expect(results.filter((res) => res.status === 201)).toHaveLength(stored.length);
+    // Exactly three win; every loser is a real "limit reached", never a lost slot race
+    expect(stored.map((row) => row.slot).sort()).toEqual([1, 2, 3]);
+    expect(results.filter((res) => res.status === 201)).toHaveLength(3);
   });
 });

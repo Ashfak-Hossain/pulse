@@ -7,6 +7,7 @@ import {
 import type { CreateTrustedContact, TrustedContact, TrustedContactList } from '@pulse/contracts';
 import {
   and,
+  appUser,
   asc,
   DrizzleQueryError,
   eq,
@@ -48,6 +49,13 @@ export class TrustedContactService {
   async create(caller: Caller, input: CreateTrustedContact): Promise<TrustedContact> {
     try {
       return await withCampus(this.db, caller.campusId, async (tx) => {
+        // One add at a time per user: a parallel add waits here, then sees the slot just taken,
+        // so "at most three" is only ever said when three really exist
+        await tx
+          .select({ id: appUser.id })
+          .from(appUser)
+          .where(eq(appUser.id, caller.id))
+          .for('update');
         const taken = await tx
           .select({ slot: trustedContact.slot })
           .from(trustedContact)

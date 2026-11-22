@@ -9,7 +9,7 @@ request:
   body:
     type: json
     content: |-
-      {"name": "Ayesha", "phone": "+8801711000000", "relation": "mother"}
+      {"name": "Ayesha", "phone": "+8801000000002", "relation": "mother"}
 response:
   statusCode: 201
   statusText: Created
@@ -21,7 +21,7 @@ response:
       {
         "id": "0193f2a1-b070-7293-a4a5-b1a2b3c4d5e6",
         "name": "Ayesha",
-        "phone": "+8801711000000",
+        "phone": "+8801000000002",
         "relation": "mother"
       }
 order: 1000
