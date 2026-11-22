@@ -12,3 +12,22 @@ FOR EACH ROW WHEN (OLD.* IS DISTINCT FROM NEW.*) EXECUTE FUNCTION set_updated_at
 --> statement-breakpoint
 CREATE TRIGGER meeting_point_set_updated_at BEFORE UPDATE ON meeting_point
 FOR EACH ROW WHEN (OLD.* IS DISTINCT FROM NEW.*) EXECUTE FUNCTION set_updated_at();
+--> statement-breakpoint
+-- The API only hides a meeting point (is_active = false): trips will point at it later, so no
+-- bug in the app may ever delete one
+REVOKE DELETE ON meeting_point FROM pulse_app;
+--> statement-breakpoint
+-- An append-only trail is only worth something if its times are true: the database stamps `at`
+-- itself, so no writer can backdate or postdate an audit row
+CREATE FUNCTION audit_log_stamp_at() RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = pg_catalog
+AS $$
+BEGIN
+  NEW.at := now();
+  RETURN NEW;
+END;
+$$;
+--> statement-breakpoint
+CREATE TRIGGER audit_log_stamp_at BEFORE INSERT ON audit_log
+FOR EACH ROW EXECUTE FUNCTION audit_log_stamp_at();

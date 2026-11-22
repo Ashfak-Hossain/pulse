@@ -168,6 +168,20 @@ describe('campus gates, zones, meeting points and the audit log', () => {
     expect(await inA((tx) => tx.delete(auditLog))).toBe('42501');
   });
 
+  it('stamps audit_log.at itself, whatever time the writer sends', async () => {
+    const [row] = await withCampus(app, a.id, (tx) =>
+      tx
+        .insert(auditLog)
+        .values({ ...audit(a.id, actorA.id), at: new Date('2020-01-01T00:00:00Z') })
+        .returning({ at: auditLog.at }),
+    );
+    expect(row && Date.now() - row.at.getTime()).toBeLessThan(60_000);
+  });
+
+  it('only hides meeting points: the app may never delete one', async () => {
+    expect(await inA((tx) => tx.delete(meetingPoint))).toBe('42501');
+  });
+
   it('refuses an audit row whose actor is in another campus, or with a bad shape', async () => {
     expect(await pgErrorCode(owner.insert(auditLog).values(audit(b.id, actorA.id)))).toBe('23503');
     const base = audit(a.id, actorA.id);
