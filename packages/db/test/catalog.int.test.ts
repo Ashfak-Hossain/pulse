@@ -238,9 +238,17 @@ describe('catalog timetable constraints and tenancy', () => {
     expect(
       await inA((tx) => tx.insert(term).values({ ...draft, id, name: `Spring ${id}` })),
     ).toBeUndefined();
+    // A new term is always a draft, and a draft cannot skip activation straight to archived
+    expect(
+      await inA((tx) =>
+        tx
+          .insert(term)
+          .values({ ...draft, id: randomUUID(), name: `Live ${id}`, status: 'active' }),
+      ),
+    ).toBe('42501');
     expect(
       await inA((tx) => tx.update(term).set({ status: 'archived' }).where(eq(term.id, id))),
-    ).toBeUndefined();
+    ).toBe('23514');
     // Another campus's term is out of reach, and so are a term's name, dates and deletion
     expect(
       await inA((tx) => tx.insert(term).values({ ...draft, campusId: b.id, name: 'Spring' })),
@@ -255,6 +263,22 @@ describe('catalog timetable constraints and tenancy', () => {
     );
     const [b1] = await owner.select().from(term).where(eq(term.id, termB.id));
     expect(b1?.status).toBe('active');
+  });
+
+  it('moves a term status only forward, for every writer', async () => {
+    const id = randomUUID();
+    await owner.insert(term).values({
+      id,
+      campusId: b.id,
+      name: `Old ${id}`,
+      startsOn: '2025-01-20',
+      endsOn: '2025-05-30',
+      status: 'archived',
+    });
+    for (const status of ['active', 'draft'] as const)
+      expect(await pgErrorCode(owner.update(term).set({ status }).where(eq(term.id, id)))).toBe(
+        '23514',
+      );
   });
 
   it('moves updated_at on a real change and keeps it on an unchanged rewrite', async () => {

@@ -2051,7 +2051,7 @@
           "to": [
             "pulse_app"
           ],
-          "withCheck": "\"term\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid"
+          "withCheck": "\"term\".\"campus_id\" = nullif(current_setting('app.campus_id', true), '')::uuid and \"term\".\"status\" = 'draft'"
         },
         "term_update": {
           "name": "term_update",
