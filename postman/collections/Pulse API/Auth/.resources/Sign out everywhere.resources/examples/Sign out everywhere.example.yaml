@@ -8,6 +8,9 @@ request:
 response:
   statusCode: 204
   statusText: No Content
+  body:
+    type: text
+    content: ''
   headers:
     set-cookie: pulse_at=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax
 order: 1000

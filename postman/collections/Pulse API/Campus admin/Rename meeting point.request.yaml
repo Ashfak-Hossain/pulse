@@ -1,0 +1,24 @@
+$kind: http-request
+description: "Changes any of name, kind, location (the cell follows) and zoneId. A zone of another campus answers 422."
+url: "{{baseUrl}}/admin/meeting-points/{{meetingPointId}}"
+method: PATCH
+headers:
+  Accept: application/json
+  Content-Type: application/json
+  Origin: "{{appOrigin}}"
+body:
+  type: json
+  content: |-
+    {"name": "Postman point {{zoneName}} renamed", "kind": "landmark"}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200', () => pm.response.to.have.status(200));
+      pm.test('has the new name and kind', () => {
+        const point = pm.response.json();
+        pm.expect(point.name).to.equal(`Postman point ${pm.environment.get('zoneName')} renamed`);
+        pm.expect(point.kind).to.equal('landmark');
+      });
+    language: text/javascript
+examples: .resources/Rename meeting point.resources/examples
+order: 7300

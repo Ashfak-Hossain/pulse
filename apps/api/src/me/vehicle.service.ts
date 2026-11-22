@@ -37,6 +37,14 @@ export class VehicleService {
     return { items };
   }
 
+  async get(caller: Caller, id: string): Promise<Vehicle> {
+    const [row] = await withCampus(this.db, caller.campusId, (tx) =>
+      tx.select(vehicleColumns).from(vehicle).where(owned(caller, id)),
+    );
+    if (!row) throw new NotFoundException('Vehicle not found');
+    return row;
+  }
+
   async create(caller: Caller, input: CreateVehicle): Promise<Vehicle> {
     const [row] = await withCampus(this.db, caller.campusId, (tx) =>
       tx

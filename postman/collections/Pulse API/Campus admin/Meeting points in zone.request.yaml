@@ -2,6 +2,9 @@ $kind: http-request
 description: "Active meeting points of your campus; zoneId narrows to one zone. Any signed-in user."
 url: "{{baseUrl}}/meeting-points?zoneId={{zoneId}}"
 method: GET
+queryParams:
+  - key: zoneId
+    value: '{{zoneId}}'
 headers:
   Accept: application/json
 scripts:

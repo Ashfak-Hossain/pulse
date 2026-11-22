@@ -8,6 +8,9 @@ request:
 response:
   statusCode: 204
   statusText: No Content
+  body:
+    type: text
+    content: ''
   headers:
     set-cookie: pulse_rt=9e1f2a3b-4c5d-4e6f-8a7b-0c1d2e3f4a5b.q3Jx0vT8nE2mYbL5sKcW7dHfR1uZpA9gV4iO6tN0eQw; Max-Age=2592000; Path=/auth; Expires=Fri, 18 Dec 2026 09:12:44 GMT; HttpOnly; SameSite=Strict
 order: 1000

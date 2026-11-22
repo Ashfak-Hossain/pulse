@@ -94,6 +94,7 @@ describe('/me/vehicles and /me/trusted-contacts over HTTP', () => {
     const operator = await signIn();
     await owner.update(appUser).set({ role: 'operator' }).where(eq(appUser.id, operator.userId));
     await get('/me/vehicles', operator.cookie).expect(403);
+    await get(`/me/vehicles/${randomUUID()}`, operator.cookie).expect(403);
     await post('/me/trusted-contacts', operator.cookie, contact(1)).expect(403);
   });
 
@@ -101,6 +102,9 @@ describe('/me/vehicles and /me/trusted-contacts over HTTP', () => {
     const { cookie } = await signIn();
     const created = vehicleSchema.parse((await post('/me/vehicles', cookie, car).expect(201)).body);
     expect(created).toMatchObject(car);
+    expect(
+      vehicleSchema.parse((await get(`/me/vehicles/${created.id}`, cookie).expect(200)).body),
+    ).toEqual(created);
 
     const patch = (body: object) =>
       http()
@@ -120,6 +124,7 @@ describe('/me/vehicles and /me/trusted-contacts over HTTP', () => {
       .expect(204);
     const list = vehicleListSchema.parse((await get('/me/vehicles', cookie).expect(200)).body);
     expect(list.items).toEqual([]);
+    await get(`/me/vehicles/${created.id}`, cookie).expect(404);
     await patch({ seats: 1 }).expect(404);
   });
 
@@ -131,6 +136,7 @@ describe('/me/vehicles and /me/trusted-contacts over HTTP', () => {
       (await post('/me/trusted-contacts', theirs.cookie, contact(1))).body,
     );
 
+    await get(`/me/vehicles/${vehicle.id}`, mine.cookie).expect(404);
     await http()
       .patch(`/me/vehicles/${vehicle.id}`)
       .set('Origin', origin)

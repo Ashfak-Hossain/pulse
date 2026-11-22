@@ -284,6 +284,59 @@ describe('Gates, zones and meeting points over HTTP', () => {
     });
   });
 
+  describe('reading one place by id', () => {
+    it('returns a gate, zone or active point of the caller’s campus, and 404 for anything else', async () => {
+      const gate = gateSchema.parse(
+        (
+          await post('/admin/gates', as.adminA, { name: 'Read gate', location: mainGate }).expect(
+            201,
+          )
+        ).body,
+      );
+      const zone = zoneSchema.parse(
+        (
+          await post('/admin/zones', as.adminA, {
+            name: 'Read zone',
+            area: square(90.45, 23.85),
+          }).expect(201)
+        ).body,
+      );
+      const point = meetingPointSchema.parse(
+        (
+          await post('/admin/meeting-points', as.adminA, {
+            name: 'Read point',
+            kind: 'landmark',
+            location: mainGate,
+          }).expect(201)
+        ).body,
+      );
+
+      expect(
+        gateSchema.parse((await get(`/gates/${gate.id}`, as.studentA).expect(200)).body),
+      ).toEqual(gate);
+      expect(
+        zoneSchema.parse((await get(`/zones/${zone.id}`, as.studentA).expect(200)).body),
+      ).toEqual(zone);
+      expect(
+        meetingPointSchema.parse(
+          (await get(`/meeting-points/${point.id}`, as.studentA).expect(200)).body,
+        ),
+      ).toEqual(point);
+
+      // Another campus's admin, an unknown id, a malformed id and no session
+      for (const path of [`/gates/${gate.id}`, `/zones/${zone.id}`, `/meeting-points/${point.id}`])
+        await get(path, as.adminB).expect(404);
+      for (const kind of ['gates', 'zones', 'meeting-points'])
+        await get(`/${kind}/${randomUUID()}`, as.studentA).expect(404);
+      await get('/zones/not-a-uuid', as.studentA).expect(400);
+      await http().get(`/meeting-points/${point.id}`).expect(401);
+
+      // A hidden point is gone for readers, the same as in the list
+      await del(`/admin/meeting-points/${point.id}`, as.adminA).expect(204);
+      await get(`/meeting-points/${point.id}`, as.studentA).expect(404);
+    });
+  });
+
   describe('campus walls and the audit log', () => {
     it('answers 404 for another campus’s ids and 422 for its zone', async () => {
       const gateB = gateSchema.parse(
