@@ -2,7 +2,9 @@ import { sql } from 'drizzle-orm';
 import {
   type AnyPgColumn,
   bigint,
+  boolean,
   check,
+  customType,
   date,
   foreignKey,
   geometry,
@@ -34,6 +36,17 @@ const currentCampusId = sql`nullif(current_setting('app.campus_id', true), '')::
 function cleanTextCheck(column: AnyPgColumn, max: number) {
   return sql`${column} = btrim(${column}) and length(${column}) between 1 and ${sql.raw(String(max))}`;
 }
+
+// A coarse place: an H3 cell at resolution 8 is exactly 15 lowercase hex characters
+function h3CellCheck(column: AnyPgColumn) {
+  return sql`${column} ~ '^[0-9a-f]{15}$'`;
+}
+
+// Drizzle's geometry() only parses points. An area stays PostGIS's own value (hex EWKB) in
+// TypeScript; queries read and write it as GeoJSON with ST_AsGeoJSON and ST_GeomFromGeoJSON
+const multiPolygon = customType<{ data: string; driverData: string }>({
+  dataType: () => 'geometry(MultiPolygon,4326)',
+});
 
 export const campus = pgTable(
   'campus',
@@ -484,6 +497,176 @@ export const authSession = pgTable(
       for: 'all',
       to: pulseApp,
       using: sql`${table.campusId} = ${currentCampusId}`,
+      withCheck: sql`${table.campusId} = ${currentCampusId}`,
+    }),
+  ],
+);
+
+// Where trips start or end on campus. The service sets cell from location; clients never send it
+export const campusGate = pgTable(
+  'campus_gate',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`uuidv7()`),
+    campusId: uuid('campus_id')
+      .notNull()
+      .references(() => campus.id),
+    name: text('name').notNull(),
+    // x = longitude, y = latitude (WGS 84)
+    location: geometry('location', { type: 'point', mode: 'xy', srid: 4326 }).notNull(),
+    cell: text('cell').notNull(),
+    isPrimary: boolean('is_primary').notNull().default(false),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    // Set by the set_updated_at trigger (migration 0020); never write it
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // Lets trips (a later slice) point at a gate of the same campus
+    unique('campus_gate_id_campus_unique').on(table.id, table.campusId),
+    // Also indexes the campus foreign key
+    unique('campus_gate_campus_name_unique').on(table.campusId, table.name),
+    uniqueIndex('campus_gate_one_primary_per_campus')
+      .on(table.campusId)
+      .where(sql`${table.isPrimary}`),
+    check('campus_gate_name_clean', cleanTextCheck(table.name, 100)),
+    check('campus_gate_cell_h3', h3CellCheck(table.cell)),
+    pgPolicy('campus_gate_campus', {
+      for: 'all',
+      to: pulseApp,
+      using: sql`${table.campusId} = ${currentCampusId}`,
+      withCheck: sql`${table.campusId} = ${currentCampusId}`,
+    }),
+  ],
+);
+
+// Named home areas drawn by the campus admin, e.g. Mirpur 10
+export const zone = pgTable(
+  'zone',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`uuidv7()`),
+    campusId: uuid('campus_id')
+      .notNull()
+      .references(() => campus.id),
+    name: text('name').notNull(),
+    area: multiPolygon('area').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    // Set by the set_updated_at trigger (migration 0020); never write it
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // Lets meeting points and preferences point at a zone of the same campus
+    unique('zone_id_campus_unique').on(table.id, table.campusId),
+    // Also indexes the campus foreign key
+    unique('zone_campus_name_unique').on(table.campusId, table.name),
+    index('zone_area_gist_idx').using('gist', table.area),
+    check('zone_name_clean', cleanTextCheck(table.name, 100)),
+    // A self-crossing polygon breaks ST_Contains, so the database refuses it
+    check('zone_area_valid', sql`ST_IsValid(${table.area})`),
+    pgPolicy('zone_campus', {
+      for: 'all',
+      to: pulseApp,
+      using: sql`${table.campusId} = ${currentCampusId}`,
+      withCheck: sql`${table.campusId} = ${currentCampusId}`,
+    }),
+  ],
+);
+
+// Where a crew gathers. Deleting one only sets is_active = false: trips will point at it later
+export const meetingPoint = pgTable(
+  'meeting_point',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`uuidv7()`),
+    campusId: uuid('campus_id')
+      .notNull()
+      .references(() => campus.id),
+    // Null for gate-side points, which belong to no home area
+    zoneId: uuid('zone_id'),
+    name: text('name').notNull(),
+    kind: text('kind', { enum: ['gate', 'landmark', 'bus_stop', 'junction'] }).notNull(),
+    // x = longitude, y = latitude (WGS 84)
+    location: geometry('location', { type: 'point', mode: 'xy', srid: 4326 }).notNull(),
+    cell: text('cell').notNull(),
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    // Set by the set_updated_at trigger (migration 0020); never write it
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    unique('meeting_point_id_campus_unique').on(table.id, table.campusId),
+    // A null zone_id skips the check, so gate-side points need no zone
+    foreignKey({
+      name: 'meeting_point_zone_campus_fk',
+      columns: [table.zoneId, table.campusId],
+      foreignColumns: [zone.id, zone.campusId],
+    }),
+    index('meeting_point_campus_idx').on(table.campusId),
+    index('meeting_point_zone_campus_idx').on(table.zoneId, table.campusId),
+    index('meeting_point_location_gist_idx').using('gist', table.location),
+    check('meeting_point_name_clean', cleanTextCheck(table.name, 100)),
+    check(
+      'meeting_point_kind_valid',
+      sql`${table.kind} in ('gate', 'landmark', 'bus_stop', 'junction')`,
+    ),
+    check('meeting_point_cell_h3', h3CellCheck(table.cell)),
+    pgPolicy('meeting_point_campus', {
+      for: 'all',
+      to: pulseApp,
+      using: sql`${table.campusId} = ${currentCampusId}`,
+      withCheck: sql`${table.campusId} = ${currentCampusId}`,
+    }),
+  ],
+);
+
+// Who changed what, one row per admin write, in the same transaction as the change. Append-only:
+// the policies allow select and insert, and grants (migration 0020) take away update and delete
+export const auditLog = pgTable(
+  'audit_log',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`uuidv7()`),
+    campusId: uuid('campus_id')
+      .notNull()
+      .references(() => campus.id),
+    actorId: uuid('actor_id').notNull(),
+    // e.g. gate.create, term.activate
+    action: text('action').notNull(),
+    entity: text('entity').notNull(),
+    entityId: uuid('entity_id').notNull(),
+    // Ids and non-personal before/after values only, never names, emails or phone numbers
+    metadata: jsonb('metadata').$type<Record<string, unknown>>().notNull().default({}),
+    // Same keyed hash as email_otp.ip_hash, never the IP itself
+    ipHash: text('ip_hash'),
+    at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // The actor must belong to the row's campus
+    foreignKey({
+      name: 'audit_log_actor_campus_fk',
+      columns: [table.actorId, table.campusId],
+      foreignColumns: [appUser.id, appUser.campusId],
+    }),
+    // The admin list, newest first; also covers the campus foreign key
+    index('audit_log_campus_at_idx').on(table.campusId, table.at.desc()),
+    index('audit_log_actor_campus_idx').on(table.actorId, table.campusId),
+    check('audit_log_action_shape', sql`${table.action} ~ '^[a-z_]+[.][a-z_]+$'`),
+    check('audit_log_action_short', sql`length(${table.action}) <= 64`),
+    check('audit_log_entity_clean', cleanTextCheck(table.entity, 64)),
+    check('audit_log_metadata_object', sql`jsonb_typeof(${table.metadata}) = 'object'`),
+    check('audit_log_ip_hash_hex', sql`${table.ipHash} ~ '^[0-9a-f]{64}$'`),
+    pgPolicy('audit_log_read', {
+      for: 'select',
+      to: pulseApp,
+      using: sql`${table.campusId} = ${currentCampusId}`,
+    }),
+    pgPolicy('audit_log_insert', {
+      for: 'insert',
+      to: pulseApp,
       withCheck: sql`${table.campusId} = ${currentCampusId}`,
     }),
   ],
