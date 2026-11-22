@@ -138,15 +138,15 @@ describe('/me and /me/preferences over HTTP', () => {
     const half = meSchema.parse((await patch({ firstName: 'Nusrat' }).expect(200)).body);
     expect(half.status).toBe('pending_profile');
     const done = meSchema.parse(
-      (await patch({ lastName: 'Jahan', gender: 'female', phone: '+8801711223344' }).expect(200))
+      (await patch({ lastName: 'Jahan', gender: 'female', phone: '+8801000000001' }).expect(200))
         .body,
     );
-    expect(done).toMatchObject({ status: 'active', lastName: 'Jahan', phone: '+8801711223344' });
+    expect(done).toMatchObject({ status: 'active', lastName: 'Jahan', phone: '+8801000000001' });
 
     const events = await profileEvents(userId);
     expect(events).toHaveLength(2);
     // The snapshot never carries a name or a phone number
-    expect(JSON.stringify(events)).not.toMatch(/Nusrat|Jahan|8801711223344/);
+    expect(JSON.stringify(events)).not.toMatch(/Nusrat|Jahan|8801000000001/);
     expect(events.at(-1)?.payload).toMatchObject({
       campusId,
       userId,
@@ -155,7 +155,7 @@ describe('/me and /me/preferences over HTTP', () => {
       homeCell: null,
     });
     await patch({ role: 'campus_admin' }).expect(400);
-    await patch({ phone: '01711223344' }).expect(400);
+    await patch({ phone: '01000000001' }).expect(400);
   });
 
   it('stores the H3 cell and zone of the home pin, never the pin itself', async () => {
@@ -202,6 +202,41 @@ describe('/me and /me/preferences over HTTP', () => {
       .expect(200);
     expect(preferencesSchema.parse(far.body)).toMatchObject({ homeZone: null, quietHours: null });
     expect(await profileEvents(userId)).toHaveLength(2);
+  });
+
+  it('saving preferences waits for the user row lock, so ProfileChanged rows follow commit order', async () => {
+    const { userId, cookie } = await signIn();
+    let release = (): void => undefined;
+    const held = new Promise<void>((resolve) => (release = resolve));
+    let signalLocked = (): void => undefined;
+    const locked = new Promise<void>((resolve) => (signalLocked = resolve));
+    // Hold the lock a running PATCH /me holds (its UPDATE takes NO KEY UPDATE). The preference
+    // insert's foreign key check alone does not wait for it; only the explicit row lock does
+    const other = owner.transaction(async (tx) => {
+      await tx
+        .select({ id: appUser.id })
+        .from(appUser)
+        .where(eq(appUser.id, userId))
+        .for('no key update');
+      signalLocked();
+      await held;
+    });
+    await locked;
+
+    let saved = false;
+    const put = http()
+      .put('/me/preferences')
+      .set('Origin', origin)
+      .set('Cookie', cookie)
+      .send(preferences)
+      .expect(200)
+      .then(() => (saved = true));
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(saved).toBe(false);
+
+    release();
+    await Promise.all([other, put]);
+    expect(await profileEvents(userId)).toHaveLength(1);
   });
 
   it('refuses a bad preference body and leaves the stored set alone', async () => {

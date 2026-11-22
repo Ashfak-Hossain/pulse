@@ -277,15 +277,15 @@ importers:
       '@pulse/events':
         specifier: workspace:*
         version: link:../../packages/events
+      '@pulse/geo':
+        specifier: workspace:*
+        version: link:../../packages/geo
       '@pulse/money':
         specifier: workspace:*
         version: link:../../packages/money
       cookie-parser:
         specifier: ^1.4.7
         version: 1.4.7
-      h3-js:
-        specifier: ^4.5.0
-        version: 4.5.0
       helmet:
         specifier: ^8.3.0
         version: 8.3.0
@@ -323,6 +323,9 @@ importers:
       '@types/supertest':
         specifier: ^7.2.1
         version: 7.2.1
+      h3-js:
+        specifier: ^4.5.0
+        version: 4.5.0
       supertest:
         specifier: ^7.3.2
         version: 7.3.2(supports-color@7.2.0)

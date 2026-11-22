@@ -36,9 +36,9 @@ import {
   withCampus,
   zone,
 } from '@pulse/db';
+import { toCell } from '@pulse/geo';
 import { type AuditActor, writeAudit } from '../common/audit.js';
 import { DATABASE } from '../db/db.module.js';
-import { h3Cell } from '../common/h3-cell.js';
 
 // Campuses have a handful of each; the cap only stops a list from ever returning a whole table
 const PLACE_LIST_LIMIT = 500;
@@ -76,7 +76,7 @@ export class PlacesService {
           campusId: actor.campusId,
           name: input.name,
           location: toXy(input.location),
-          cell: h3Cell(input.location),
+          cell: toCell(input.location),
           isPrimary: input.isPrimary,
         })
         .returning(gateColumns);
@@ -101,7 +101,7 @@ export class PlacesService {
         .set({
           name: input.name,
           isPrimary: input.isPrimary,
-          ...(input.location && { location: toXy(input.location), cell: h3Cell(input.location) }),
+          ...(input.location && { location: toXy(input.location), cell: toCell(input.location) }),
         })
         .where(eq(campusGate.id, id))
         .returning(gateColumns);
@@ -205,7 +205,7 @@ export class PlacesService {
           name: input.name,
           kind: input.kind,
           location: toXy(input.location),
-          cell: h3Cell(input.location),
+          cell: toCell(input.location),
         })
         .returning(pointColumns);
       const point = toMeetingPoint(required(row));
@@ -230,7 +230,7 @@ export class PlacesService {
           name: input.name,
           kind: input.kind,
           zoneId: input.zoneId,
-          ...(input.location && { location: toXy(input.location), cell: h3Cell(input.location) }),
+          ...(input.location && { location: toXy(input.location), cell: toCell(input.location) }),
         })
         .where(and(eq(meetingPoint.id, id), eq(meetingPoint.isActive, true)))
         .returning(pointColumns);

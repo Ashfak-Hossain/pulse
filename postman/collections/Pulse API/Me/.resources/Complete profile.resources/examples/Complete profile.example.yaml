@@ -9,7 +9,7 @@ request:
   body:
     type: json
     content: |-
-      {"firstName": "Nusrat", "lastName": "Jahan", "gender": "female", "department": "CSE", "phone": "+8801711223344"}
+      {"firstName": "Nusrat", "lastName": "Jahan", "gender": "female", "department": "CSE", "phone": "+8801000000001"}
 response:
   statusCode: 200
   statusText: OK
@@ -32,6 +32,6 @@ response:
         "lastName": "Jahan",
         "gender": "female",
         "department": "CSE",
-        "phone": "+8801711223344"
+        "phone": "+8801000000001"
       }
 order: 1000

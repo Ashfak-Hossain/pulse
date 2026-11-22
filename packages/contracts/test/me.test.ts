@@ -27,7 +27,7 @@ describe('updateMeSchema', () => {
 
   it.each([
     ['an empty change', {}],
-    ['a phone without the country code', { phone: '01711223344' }],
+    ['a phone without the country code', { phone: '01000000001' }],
     ['a phone with spaces', { phone: '+880 1711 223344' }],
     ['a country code starting with 0', { phone: '+0123456789' }],
     ['an unknown gender', { gender: 'other' }],
@@ -83,7 +83,7 @@ describe('vehicles and trusted contacts', () => {
   });
 
   it('accepts a contact in E.164 and refuses a long relation or an unknown key', () => {
-    const contact = { name: 'Ayesha', phone: '+8801711000000', relation: 'mother' };
+    const contact = { name: 'Ayesha', phone: '+8801000000002', relation: 'mother' };
     expect(createTrustedContactSchema.parse(contact)).toEqual(contact);
     expect(
       createTrustedContactSchema.safeParse({ ...contact, relation: 'x'.repeat(41) }).success,

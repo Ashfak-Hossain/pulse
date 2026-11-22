@@ -16,7 +16,10 @@ const visibleText = (max: number) =>
 // E.164: a plus, a country code that does not start with 0, then 8 to 15 digits in all
 const phoneSchema = z
   .string()
-  .regex(/^\+[1-9]\d{7,14}$/, 'Use international format, e.g. +8801711223344');
+  .regex(
+    /^\+[1-9]\d{7,14}$/,
+    'Use international format: a plus, the country code, then the number',
+  );
 
 export const genderSchema = z.enum(['female', 'male', 'unspecified']);
 export const travelModeSchema = z.enum([

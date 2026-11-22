@@ -9,7 +9,7 @@ request:
   body:
     type: json
     content: |-
-      {"phone": "01711223344"}
+      {"phone": "01000000001"}
 response:
   statusCode: 400
   statusText: Bad Request
@@ -26,7 +26,7 @@ response:
           {
             "path": "phone",
             "code": "invalid_format",
-            "message": "Use international format, e.g. +8801711223344"
+            "message": "Use international format: a plus, the country code, then the number"
           }
         ]
       }

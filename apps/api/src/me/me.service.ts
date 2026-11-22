@@ -15,9 +15,9 @@ import {
   zone,
 } from '@pulse/db';
 import { createEvent, routeFor } from '@pulse/events';
+import { cellCenter, toCell } from '@pulse/geo';
 import { randomUUID } from 'node:crypto';
 import type { SignedInUser } from '../auth/session.service.js';
-import { h3Cell, h3CellCentre } from '../common/h3-cell.js';
 import { DATABASE } from '../db/db.module.js';
 
 type Caller = Pick<SignedInUser, 'id' | 'campusId'>;
@@ -78,9 +78,16 @@ export class MeService {
    * and the zone containing its centre are stored. Writes ProfileChanged in the same transaction
    */
   async putPreferences(caller: Caller, input: PutPreferences): Promise<Preferences> {
-    const homeCell = h3Cell(input.home);
-    const centre = h3CellCentre(homeCell);
+    const homeCell = toCell(input.home);
+    const centre = cellCenter(homeCell);
     return withCampus(this.db, caller.campusId, async (tx) => {
+      // Lock the user first, as update() does with its UPDATE: two writes of one user then run
+      // one after the other, so the last ProfileChanged on the compacted topic is the newest state
+      await tx
+        .select({ id: appUser.id })
+        .from(appUser)
+        .where(eq(appUser.id, caller.id))
+        .for('update');
       // Zones should not overlap; if they do, the first by name wins, the same every time
       const [home] = await tx
         .select({ id: zone.id })
