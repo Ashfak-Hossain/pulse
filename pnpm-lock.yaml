@@ -541,6 +541,24 @@ importers:
         specifier: 'catalog:'
         version: 5.1.0(@types/node@26.6.6)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
 
+  packages/request-parser:
+    devDependencies:
+      '@pulse/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      fast-check:
+        specifier: 'catalog:'
+        version: 4.10.2
+      h3-js:
+        specifier: ^4.5.0
+        version: 4.5.0
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vitest:
+        specifier: 'catalog:'
+        version: 5.1.0(@types/node@26.6.6)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+
 packages:
 
   '@angular-devkit/core@22.2.6':

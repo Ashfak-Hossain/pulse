@@ -1,0 +1,350 @@
+[
+  {
+    "name": "Kuril",
+    "aliases": [
+      "kuril",
+      "kuril bishwa road",
+      "kuril biswa road",
+      "kuril flyover",
+      "kuril chourasta"
+    ],
+    "lat": 23.8203,
+    "lng": 90.4205,
+    "cell": "883cf13b01fffff"
+  },
+  {
+    "name": "Kuratoli",
+    "aliases": ["kuratoli", "kuratuli"],
+    "lat": 23.8228,
+    "lng": 90.4268,
+    "cell": "883cf13b03fffff"
+  },
+  {
+    "name": "Jamuna Future Park",
+    "aliases": ["jamuna future park", "jamuna", "jfp"],
+    "lat": 23.8135,
+    "lng": 90.4242,
+    "cell": "883cf13b07fffff"
+  },
+  {
+    "name": "Bashundhara R/A",
+    "aliases": ["bashundhara", "basundhara", "boshundhora", "bashundhara ra", "bashundhara r a"],
+    "lat": 23.8193,
+    "lng": 90.4526,
+    "cell": "883cf13869fffff"
+  },
+  {
+    "name": "Nadda",
+    "aliases": ["nadda", "nodda"],
+    "lat": 23.8105,
+    "lng": 90.4215,
+    "cell": "883cf13b07fffff"
+  },
+  {
+    "name": "Notun Bazar",
+    "aliases": ["notun bazar", "natun bazar", "nutun bazar", "notunbazar", "natunbazar"],
+    "lat": 23.7979,
+    "lng": 90.4235,
+    "cell": "883cf13b23fffff"
+  },
+  {
+    "name": "Shahjadpur",
+    "aliases": ["shahjadpur", "shahzadpur", "sahjadpur"],
+    "lat": 23.7928,
+    "lng": 90.4247,
+    "cell": "883cf13949fffff"
+  },
+  {
+    "name": "Uttar Badda",
+    "aliases": ["uttar badda", "north badda"],
+    "lat": 23.7866,
+    "lng": 90.4262,
+    "cell": "883cf13949fffff"
+  },
+  {
+    "name": "Badda",
+    "aliases": ["badda", "middle badda", "moddho badda"],
+    "lat": 23.7806,
+    "lng": 90.4265,
+    "cell": "883cf13941fffff"
+  },
+  {
+    "name": "Rampura",
+    "aliases": ["rampura", "rampura bridge"],
+    "lat": 23.7614,
+    "lng": 90.4194,
+    "cell": "883cf13961fffff"
+  },
+  {
+    "name": "Aftabnagar",
+    "aliases": ["aftabnagar", "aftab nagar"],
+    "lat": 23.7685,
+    "lng": 90.444,
+    "cell": "883cf13901fffff"
+  },
+  {
+    "name": "Baridhara",
+    "aliases": ["baridhara"],
+    "lat": 23.7999,
+    "lng": 90.4211,
+    "cell": "883cf13b23fffff"
+  },
+  {
+    "name": "Baridhara DOHS",
+    "aliases": ["baridhara dohs"],
+    "lat": 23.8128,
+    "lng": 90.4153,
+    "cell": "883cf13b05fffff"
+  },
+  {
+    "name": "Gulshan 1",
+    "aliases": ["gulshan 1", "gulshan circle 1"],
+    "lat": 23.7806,
+    "lng": 90.4167,
+    "cell": "883cf1394dfffff"
+  },
+  {
+    "name": "Gulshan 2",
+    "aliases": ["gulshan 2", "gulshan circle 2", "gulshan"],
+    "lat": 23.7925,
+    "lng": 90.4149,
+    "cell": "883cf13b27fffff"
+  },
+  {
+    "name": "Banani",
+    "aliases": ["banani", "banani 11", "kakoli", "kakli"],
+    "lat": 23.7937,
+    "lng": 90.4066,
+    "cell": "883cf13b25fffff"
+  },
+  {
+    "name": "Mohakhali",
+    "aliases": ["mohakhali", "mohakhali bus stand"],
+    "lat": 23.7779,
+    "lng": 90.4053,
+    "cell": "883cf10c91fffff"
+  },
+  {
+    "name": "Mohakhali DOHS",
+    "aliases": ["mohakhali dohs"],
+    "lat": 23.784,
+    "lng": 90.396,
+    "cell": "883cf10c99fffff"
+  },
+  {
+    "name": "Farmgate",
+    "aliases": ["farmgate", "farm gate"],
+    "lat": 23.7577,
+    "lng": 90.3897,
+    "cell": "883cf10cb9fffff"
+  },
+  {
+    "name": "Khilkhet",
+    "aliases": ["khilkhet", "khilkhet bazar", "khilket"],
+    "lat": 23.8293,
+    "lng": 90.4199,
+    "cell": "883cf13b0bfffff"
+  },
+  {
+    "name": "Nikunja",
+    "aliases": ["nikunja", "nikunja 1", "nikunja 2", "nikunjo"],
+    "lat": 23.8336,
+    "lng": 90.418,
+    "cell": "883cf13b55fffff"
+  },
+  {
+    "name": "Airport",
+    "aliases": ["airport", "biman bondor", "biman bandar", "bimanbondor", "shahjalal airport"],
+    "lat": 23.8513,
+    "lng": 90.4086,
+    "cell": "883cf105b7fffff"
+  },
+  {
+    "name": "Kawla",
+    "aliases": ["kawla", "kaola"],
+    "lat": 23.8455,
+    "lng": 90.411,
+    "cell": "883cf105b7fffff"
+  },
+  {
+    "name": "Abdullahpur",
+    "aliases": ["abdullahpur"],
+    "lat": 23.879,
+    "lng": 90.401,
+    "cell": "883cf1059dfffff"
+  },
+  {
+    "name": "Uttara",
+    "aliases": ["uttara"],
+    "lat": 23.8728,
+    "lng": 90.3984,
+    "cell": "883cf10583fffff"
+  },
+  {
+    "name": "Uttara Sector 3",
+    "aliases": ["uttara sector 3", "uttara 3", "sector 3"],
+    "lat": 23.8642,
+    "lng": 90.3998,
+    "cell": "883cf105b9fffff"
+  },
+  {
+    "name": "Uttara Sector 4",
+    "aliases": ["uttara sector 4", "uttara 4", "sector 4"],
+    "lat": 23.8618,
+    "lng": 90.4047,
+    "cell": "883cf105b9fffff"
+  },
+  {
+    "name": "Uttara Sector 6",
+    "aliases": ["uttara sector 6", "uttara 6", "sector 6"],
+    "lat": 23.8737,
+    "lng": 90.4,
+    "cell": "883cf10583fffff"
+  },
+  {
+    "name": "Uttara Sector 7",
+    "aliases": ["uttara sector 7", "uttara 7", "sector 7"],
+    "lat": 23.8701,
+    "lng": 90.3935,
+    "cell": "883cf10583fffff"
+  },
+  {
+    "name": "Uttara Sector 10",
+    "aliases": ["uttara sector 10", "uttara 10", "sector 10"],
+    "lat": 23.8806,
+    "lng": 90.3858,
+    "cell": "883cf10589fffff"
+  },
+  {
+    "name": "Uttara Sector 11",
+    "aliases": ["uttara sector 11", "uttara 11", "sector 11"],
+    "lat": 23.8746,
+    "lng": 90.3916,
+    "cell": "883cf1058bfffff"
+  },
+  {
+    "name": "Uttara Sector 13",
+    "aliases": ["uttara sector 13", "uttara 13", "sector 13"],
+    "lat": 23.8716,
+    "lng": 90.3829,
+    "cell": "883cf10581fffff"
+  },
+  {
+    "name": "Mirpur",
+    "aliases": ["mirpur"],
+    "lat": 23.806,
+    "lng": 90.364,
+    "cell": "883cf10eb1fffff"
+  },
+  {
+    "name": "Mirpur 1",
+    "aliases": ["mirpur 1", "mirpur section 1", "mirpur 1 no"],
+    "lat": 23.7957,
+    "lng": 90.3537,
+    "cell": "883cf10ea3fffff"
+  },
+  {
+    "name": "Mirpur 2",
+    "aliases": ["mirpur 2", "mirpur section 2", "mirpur 2 no", "mirpur stadium"],
+    "lat": 23.805,
+    "lng": 90.3634,
+    "cell": "883cf10eb1fffff"
+  },
+  {
+    "name": "Mirpur 6",
+    "aliases": ["mirpur 6", "mirpur section 6", "mirpur 6 no"],
+    "lat": 23.814,
+    "lng": 90.357,
+    "cell": "883cf10e87fffff"
+  },
+  {
+    "name": "Mirpur 7",
+    "aliases": ["mirpur 7", "mirpur section 7", "mirpur 7 no"],
+    "lat": 23.818,
+    "lng": 90.351,
+    "cell": "883cf10e81fffff"
+  },
+  {
+    "name": "Mirpur 10",
+    "aliases": [
+      "mirpur 10",
+      "mirpur section 10",
+      "mirpur 10 no",
+      "mirpur 10 golchottor",
+      "mirpur 10 golchattar"
+    ],
+    "lat": 23.8069,
+    "lng": 90.3687,
+    "cell": "883cf10eb1fffff"
+  },
+  {
+    "name": "Mirpur 11",
+    "aliases": ["mirpur 11", "mirpur section 11", "mirpur 11 no"],
+    "lat": 23.816,
+    "lng": 90.3664,
+    "cell": "883cf10eb9fffff"
+  },
+  {
+    "name": "Mirpur 12",
+    "aliases": ["mirpur 12", "mirpur section 12", "mirpur 12 no"],
+    "lat": 23.827,
+    "lng": 90.364,
+    "cell": "883cf10e9dfffff"
+  },
+  {
+    "name": "Mirpur 13",
+    "aliases": ["mirpur 13", "mirpur section 13", "mirpur 13 no"],
+    "lat": 23.804,
+    "lng": 90.378,
+    "cell": "883cf10eb3fffff"
+  },
+  {
+    "name": "Mirpur 14",
+    "aliases": ["mirpur 14", "mirpur section 14", "mirpur 14 no"],
+    "lat": 23.799,
+    "lng": 90.387,
+    "cell": "883cf10cdbfffff"
+  },
+  {
+    "name": "Kalshi",
+    "aliases": ["kalshi", "kalsi"],
+    "lat": 23.8226,
+    "lng": 90.3832,
+    "cell": "883cf10e97fffff"
+  },
+  {
+    "name": "ECB Chattar",
+    "aliases": ["ecb chattar", "ecb chottor", "ecb", "cantonment", "dhaka cantonment"],
+    "lat": 23.8222,
+    "lng": 90.3935,
+    "cell": "883cf13b6bfffff"
+  },
+  {
+    "name": "Dhanmondi",
+    "aliases": ["dhanmondi", "dhanmondi 27", "dhanmondi 32"],
+    "lat": 23.7461,
+    "lng": 90.3742,
+    "cell": "883cf10ca1fffff"
+  },
+  {
+    "name": "Tejgaon",
+    "aliases": ["tejgaon"],
+    "lat": 23.7629,
+    "lng": 90.392,
+    "cell": "883cf10cb9fffff"
+  },
+  {
+    "name": "Khilgaon",
+    "aliases": ["khilgaon", "khilgao"],
+    "lat": 23.7516,
+    "lng": 90.4252,
+    "cell": "883cf13967fffff"
+  },
+  {
+    "name": "Motijheel",
+    "aliases": ["motijheel", "motijhil"],
+    "lat": 23.733,
+    "lng": 90.4172,
+    "cell": "883cf17657fffff"
+  }
+]

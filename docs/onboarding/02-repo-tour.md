@@ -51,11 +51,12 @@ each with a module, a controller and a service.
 
 ## `packages/`: shared code
 
-| Package            | What it holds                                                                | Used by               |
-| ------------------ | ---------------------------------------------------------------------------- | --------------------- |
-| `@pulse/contracts` | Zod schemas: the shape of every request and response, and of every error     | api, tests, later web |
-| `@pulse/db`        | Table definitions (Drizzle), migrations, the connection pool, `withCampus()` | api, later worker     |
-| `@pulse/money`     | Splitting a fare fairly in integer paisa (`largestRemainderSplit`)           | api (your fare task)  |
+| Package                 | What it holds                                                                | Used by               |
+| ----------------------- | ---------------------------------------------------------------------------- | --------------------- |
+| `@pulse/contracts`      | Zod schemas: the shape of every request and response, and of every error     | api, tests, later web |
+| `@pulse/db`             | Table definitions (Drizzle), migrations, the connection pool, `withCampus()` | api, later worker     |
+| `@pulse/money`          | Splitting a fare fairly in integer paisa (`largestRemainderSplit`)           | api (your fare task)  |
+| `@pulse/request-parser` | Reading a ride request written in English or Banglish (`parseRequest`)       | later api             |
 
 Why packages and not folders inside the API? **More than one app needs them**, and a copy would
 drift. Why two packages? `contracts` is the public promise to clients (the browser may import
