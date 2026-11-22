@@ -48,7 +48,7 @@ that depends on it. Each ❓ becomes an ADR with `/new-adr` when agreed.
 | 8 GB laptops can't run the full stack plus the IDE       | High       | Medium    | Compose profiles; native Kafka image; run web against a shared staging API when needed                         |
 | Grade-report layout differs between students             | Medium     | High      | ≥ 20 volunteer tests in week 3; search fallback; clear "unmatched" reasons                                     |
 | Not enough pilot users                                   | Medium     | High      | Survey doubles as recruitment; class announcements; route waitlists; start with friend groups on shared routes |
-| Lab access delays model training                         | Medium     | Medium    | Rule parser ships first; the dataset can be generated on a laptop; lab only for fine-tuning                    |
+| Lab access delays model training                         | Medium     | Medium    | The structured form ships first (ADR 0012); the dataset can be generated on a laptop                           |
 | Gemini free-tier limits or policy change                 | Medium     | Low       | Feature flag; hand-written adapter fallback; prefetch 1; rate limiter                                          |
 | Kafka or RabbitMQ consumes too much memory in production | Medium     | Medium    | Memory limits; 4 GB minimum host; `apache/kafka` heap set to 512 MB                                            |
 | A teammate becomes unavailable                           | Medium     | High      | Small slices; docs and walkthroughs; Ashfak reviews every PR, so knowledge is shared                           |

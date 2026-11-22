@@ -38,7 +38,7 @@ Hosting for the pilot is chosen before week 10.
 ## Testing layers
 
 Unit (Vitest, pytest) · property-based (fast-check) · brute-force oracles for algorithms ·
-golden files for AIUB parsing · request-model accuracy vs rule-based parser ·
+golden files for AIUB parsing · request-model accuracy on the golden set ·
 integration (Testcontainers: PostgreSQL, Redis, Kafka, RabbitMQ) · contract (buf, Zod) ·
 end-to-end (Playwright) · fault injection (Toxiproxy, killed consumers, nightly) ·
 simulator replay (nightly) · model evaluation · accessibility (axe).

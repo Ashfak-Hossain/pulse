@@ -52,7 +52,7 @@ flowchart TB
 5. **74 tables** across 10 domains, all campus-scoped tables protected by row-level security.
 6. **About 185 endpoints** with Zod contracts shared by the API and the web app.
 7. **Pure algorithm packages** (`matching`, `money`, `geo`) with property tests and brute-force oracles.
-8. **AI with fallbacks**: rule-based parser → lab-trained ONNX model; habit blend → LightGBM;
+8. **AI with fallbacks**: structured form → local request model; habit blend → LightGBM;
    Gemini only for public timetable files. Every AI feature sits behind a flag.
 9. **Deploy-ready for any host**: one Docker image per app, Compose for production, health checks,
    migrations as a one-shot step. The host is chosen by week 3 (see [11](11-quality-and-ops.md)).
