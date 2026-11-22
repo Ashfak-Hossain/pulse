@@ -1,13 +1,14 @@
 # 09 · AI and machine learning
 
-Three AI features. Each has a **non-AI version that ships first** and stays as the fallback and
-the baseline the AI must beat (CLAUDE.md rule 10, objective O3).
+Three AI features. Each has a **non-AI version that ships first** and stays as the fallback
+(CLAUDE.md rule 10). For forecasting and onboarding it is also the baseline the AI must beat
+(objective O3); request understanding has a fixed accuracy target instead (ADR 0012).
 
-| Feature                 | Fallback / baseline (ships first)           | AI version                                           | Trains where                      | Runs where                       | Flag                  |
-| ----------------------- | ------------------------------------------- | ---------------------------------------------------- | --------------------------------- | -------------------------------- | --------------------- |
-| Request understanding   | Rule-based parser (`@pulse/request-parser`) | Fine-tuned small multilingual model → ONNX           | AIUB AI lab (DGX Spark)           | API, `onnxruntime-node`, CPU     | `ai.request_model`    |
-| Departure forecast      | Habit blend (`habitOffset`)                 | LightGBM quantile models (p10, p50, p90) → ONNX      | Laptop / CI (`services/forecast`) | API + worker, `onnxruntime-node` | `ai.forecast_model`   |
-| Campus onboarding agent | A hand-written adapter per campus           | Gemini proposes a declarative spec; validator checks | Not trained                       | Worker job `ai.onboarding`       | `ai.onboarding_agent` |
+| Feature                 | Fallback / baseline (ships first)      | AI version                                           | Trains where                      | Runs where                       | Flag                  |
+| ----------------------- | -------------------------------------- | ---------------------------------------------------- | --------------------------------- | -------------------------------- | --------------------- |
+| Request understanding   | Structured request form (no free text) | Local model, chosen at its slice (ADR 0012)          | Decided with the model            | API, locally, CPU                | `ai.request_model`    |
+| Departure forecast      | Habit blend (`habitOffset`)            | LightGBM quantile models (p10, p50, p90) → ONNX      | Laptop / CI (`services/forecast`) | API + worker, `onnxruntime-node` | `ai.forecast_model`   |
+| Campus onboarding agent | A hand-written adapter per campus      | Gemini proposes a declarative spec; validator checks | Not trained                       | Worker job `ai.onboarding`       | `ai.onboarding_agent` |
 
 ## 1. The AI gateway (`@pulse/ai-gateway`)
 
@@ -38,7 +39,11 @@ interface AiProvider {
 **Goal**: turn "ML class er por Mirpur 10 jabo, shudhu meye rider" into
 `{direction: from_campus, place: Mirpur 10 → cell, windowStart: end of ML class, genderPref: same_gender}`.
 
-### 2.1 Output schema (shared by both parsers)
+No typed-language rules (ADR 0012). With the flag off, a failed model or low confidence, the
+rider fills the structured request form; the model only pre-fills it, and the rider always edits
+and confirms the chips (plan 10 §6).
+
+### 2.1 Output schema (`parsedRequestSchema` in `@pulse/contracts`)
 
 ```ts
 { direction?: 'to_campus' | 'from_campus';
@@ -50,28 +55,29 @@ interface AiProvider {
   confidence: number }                          // 0–1
 ```
 
-### 2.2 Rule-based parser (wave 1, M3)
+### 2.2 What ships now (wave 1, M3): `@pulse/request-parser`
 
-- Tokenise (lowercase, Banglish spelling variants: `jabo/jaabo/jabe`, `por/pore`, `theke/theika`).
-- Gazetteer of Dhaka places near AIUB (Kuril, Bashundhara, Mirpur 1–14, Uttara sectors, Banani,
-  Gulshan, Badda, Notun Bazar…), with aliases, each mapped to an H3 cell. Stored as a JSON file in
-  the package, campus-specific lists later.
-- Patterns: direction (`jabo/going/home` vs `ashbo/coming/campus`), time (`5 tay`, `5:30`, `after
-class`, `class er por`, `ekhon/now`), gender (`shudhu meye/only female/ladies`), wait (`10 min
-wait`), modes (`cng`, `rickshaw`, `uber`).
-- Course references (`ML class`) resolve against the user's routine for today (the parser gets the
-  user's section titles as context).
+A pure package with no tokeniser and no word rules:
 
-### 2.3 The trained model (wave 3, A)
+- The gazetteer: public places near AIUB (Kuril, Bashundhara, Mirpur 1–14, Uttara sectors,
+  Banani, Gulshan, Badda, Notun Bazar…) with aliases, each with its H3 resolution 8 cell. A JSON
+  file in the package; campus-specific lists later.
+- `resolvePlace(name)`: exact lookup of a place name or alias (lower case, trimmed) → `{name, cell}`.
+  A model names the place; code turns the name into a cell.
+- The golden set: hand-labelled English and Banglish sentences with their expected output, the
+  start of the model's test set.
 
-| Step       | Detail                                                                                                                                                                                                                                                                                                              |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Data       | ~8,000 synthetic sentences: templates × gazetteer × time phrases × Banglish spelling noise, plus sentences written and labelled with help from a large open model **hosted in the lab**, plus consented real samples. People check a 10% sample. Test set: 600 sentences written by humans, never used in training. |
-| Model      | A small multilingual encoder (e.g. a distilled multilingual BERT-class model or mT5-small) fine-tuned for token classification (BIO tags: PLACE, TIME, COURSE, GENDER, WAIT, MODE) + a direction classifier head.                                                                                                   |
-| Export     | Hugging Face Optimum → ONNX, int8 dynamic quantisation, < 150 MB, < 50 ms per sentence on a laptop CPU.                                                                                                                                                                                                             |
-| Serving    | API loads the active `ml_model` artifact (checks SHA-256), tokenizer JSON alongside. Spans → the same post-processing (gazetteer, routine lookup) as the rule parser.                                                                                                                                               |
-| Fallback   | Flag off, load failure, confidence < 0.5, or timeout (200 ms) → rule parser.                                                                                                                                                                                                                                        |
-| Evaluation | Field-level exact-match accuracy per field and overall on the 600-sentence test set; must beat the rule parser (O3). Report in `services/request-model/reports/`.                                                                                                                                                   |
+`POST /requests/parse` (plan 04 §8) ships with the model.
+
+### 2.3 The model (wave 3)
+
+| Step       | Detail                                                                                                                                                                                                                                    |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Choice     | Decided at the start of this slice (ADR 0012): a small multilingual encoder fine-tuned for token tagging and exported to ONNX, or a small local LLM with constrained JSON output. Either runs locally; request text never goes to Gemini. |
+| Data       | Synthetic sentences (templates × gazetteer × time phrases × Banglish spelling noise), consented real samples, and the golden set. People check a 10% sample. The test set is written by humans and never used in training.                |
+| Serving    | API loads the active `ml_model` artifact (checks SHA-256). Its output goes through the same post-processing: `resolvePlace` for the cell, the routine lookup for "after ML class", then `parsedRequestSchema`.                            |
+| Fallback   | Flag off, load failure, confidence < 0.5 or timeout (200 ms) → the structured form, with nothing pre-filled.                                                                                                                              |
+| Evaluation | Field-level exact-match accuracy per field and overall on the human-written test set; must meet a fixed target set with the model (O3). Report in `services/request-model/reports/`.                                                      |
 
 ## 3. Departure forecast
 
@@ -140,6 +146,6 @@ flowchart TB
 
 - [ ] Fallback works with the flag off (e2e test).
 - [ ] No personal data in any remote call (gateway test + code review).
-- [ ] Metrics report committed, and the model beats the baseline.
+- [ ] Metrics report committed, and the model beats the baseline (or meets its fixed target).
 - [ ] Failure modes listed in the feature's note (wrong place, wrong time) and the UI always
       shows the parsed result for confirmation before creating a request.

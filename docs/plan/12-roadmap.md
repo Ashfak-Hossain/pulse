@@ -11,7 +11,7 @@ later waves only add. If time runs out, we stop after a wave, not in the middle 
 
 | Wave                       | Contents                                                                                                                                                               | Must be done by   |
 | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| 1 · Core journey           | Backbone, auth, campus, catalog, routine, requests, rule parser, matching, crews, trips, chat, web for all of it                                                       | **28 Nov (gate)** |
+| 1 · Core journey           | Backbone, auth, campus, catalog, routine, requests, request contract, matching, crews, trips, chat, web for all of it                                                  | **28 Nov (gate)** |
 | 2 · Trust and money        | Notifications + push, safety (SOS, safe arrival), reliability, fairness, standby, habits, Autopilot, ledger, settlement, disputes, admin panel, PWA                    | 5 Dec             |
 | 3 · Intelligence and scale | Request model, LightGBM, onboarding agent, shuttles + operator, simulator + shadow matching, HMM map matching, waitlists, savings, ICS, export/delete, fault injection | 12 Dec            |
 
@@ -102,7 +102,7 @@ import the AIUB catalog → search sections → resolve and save a routine → w
 | S40 | Web shell: Next.js app, Tailwind, shadcn in `packages/ui`, API client, sign-in, onboarding (profile, home pin map) | M2    | 1    | S29, S35 |
 | S41 | Calendar: admin events, class change reports + confirmations, `Class*` events                                      | M2    | 1    | S30      |
 | S42 | Requests: `POST /requests` (go now, planned), recurring plans, cancel, go-solo, `TripRequested`                    | M3    | 1    | S35      |
-| S43 | `@pulse/request-parser`: rule-based English + Banglish parser, gazetteer, `/requests/parse`                        | M3    | 1    |          |
+| S43 | `@pulse/request-parser`: request contract, gazetteer + `resolvePlace`, golden set (no rules, ADR 0012)             | M3    | 1    |          |
 
 Decide hosting by 21 Nov ([11](11-quality-and-ops.md) §4.4).
 
@@ -131,7 +131,7 @@ fails, week 5 starts by fixing it and wave 3 shrinks (§4).
 | S51 | Notifications: notifier consumer, budget, quiet hours, Web Push (VAPID), in-app, email fallback                       | A     | 2    | S15, S45      |
 | S52 | Safety: SOS, safety checks, safe-arrival deadlines, escalation, `sim_sms`, admin SOS console API                      | A     | 2    | S45, S51      |
 | S53 | Projectors: habits, reliability, fairness; standby backfill; no-shows; Autopilot generation job + baseline wait-or-go | A     | 2    | S45           |
-| S56 | Request model: dataset build + fine-tune in the lab; ONNX export; eval report vs rules                                | A     | 3    | S43           |
+| S56 | Request model: pick the model (ADR 0012), dataset, training, `/requests/parse`, eval report vs fixed target           | A     | 3    | S43           |
 | S57 | Ledger 2: weekly `ledger.settle` (`minTransfers`), simulated bKash pay, disputes + admin resolve                      | M2    | 2    | S47           |
 | S58 | Web: fare entry/confirm/dispute, wallet, crew ledger, settle                                                          | M2    | 2    | S47, S57      |
 | S59 | Web admin 1: catalog review, calendar, zones/gates/meeting-points map editor, reports, SOS, SMS inbox                 | M2    | 2    | S36, S37, S52 |
@@ -181,7 +181,7 @@ Move items to "Future" in this order. Items lower in the list hurt the proposal'
 4. S68–S69 shuttles and operator console.
 5. S71 waitlists, savings card, ICS feed; S73 export/delete (keep delete only).
 6. S63 LightGBM → keep the habit-blend baseline (**objective O3 half-met**).
-7. S56 request model → keep the rule parser (**O3 not met**). Last to cut, because O3 needs it.
+7. S56 request model → the form only, no free text (**O3 not met**). Last to cut, because O3 needs it.
 
 Never cut: tests, the outbox/idempotency rules, RLS, the money invariants, the privacy rules.
 

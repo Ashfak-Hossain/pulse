@@ -42,11 +42,11 @@ Retries: waiting queues with a fixed TTL each (10 s, 1 min, 10 min) and a dead-l
 
 ## AI and models
 
-| Feature                                     | Where it trains                                      | Where it runs                                                |
-| ------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------ |
-| Departure forecast (LightGBM quantiles)     | Laptop, `services/forecast`                          | NestJS via `onnxruntime-node`                                |
-| Request understanding, English and Banglish | AIUB AI Supercomputing Lab, `services/request-model` | NestJS via `onnxruntime-node`; rule-based parser as fallback |
-| Campus onboarding agent                     | Not trained                                          | Gemini free tier, public timetable files only                |
+| Feature                                     | Where it trains                                          | Where it runs                                      |
+| ------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------- |
+| Departure forecast (LightGBM quantiles)     | Laptop, `services/forecast`                              | NestJS via `onnxruntime-node`                      |
+| Request understanding, English and Banglish | Chosen at its slice (ADR 0012), `services/request-model` | Locally in NestJS; the structured form as fallback |
+| Campus onboarding agent                     | Not trained                                              | Gemini free tier, public timetable files only      |
 
 The running app never calls the lab, and personal data never goes to the Gemini free tier.
 

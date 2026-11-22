@@ -71,7 +71,7 @@ flowchart TB
 | `apps/worker`            | Node, Kafka client, amqplib                                | Outbox relay, Kafka consumers, RabbitMQ job handlers, scheduler. Roles chosen by env       |
 | `apps/simulator`         | Node CLI                                                   | Synthetic campus and users from the real catalog; drives load through the real API         |
 | `services/forecast`      | Python (uv), LightGBM, onnxmltools                         | Trains forecast models; consumes `forecast.retrain` jobs; writes ONNX + `ml_model` row     |
-| `services/request-model` | Python (uv), transformers, optimum                         | Trains the request model in the lab; exports ONNX. Not deployed                            |
+| `services/request-model` | Python (uv), transformers, optimum                         | Builds and evaluates the request model (choice: ADR 0012). Not deployed                    |
 | `services/roadgraph`     | C++17                                                      | Reads an OSM extract; Dijkstra from every H3 cell; writes `cell_distance` CSV + road graph |
 | PostgreSQL + PostGIS     | `postgis/postgis:18-3.6`                                   | Source of truth; RLS per campus                                                            |
 | Redis                    | `redis:8.8`                                                | Rate limits, OTP throttles, Socket.IO adapter, live locations (TTL), flag cache, caches    |
@@ -96,7 +96,7 @@ packages/
   money/          pure: largest remainder, Shapley, postings, balances, minimum transfers
   geo/            pure: H3 helpers, distances, meeting points, Kalman, HMM map matching, deviation
   catalog-adapters/ AIUB adapter, declarative-spec adapter, validator
-  request-parser/ rule-based parser + parser port
+  request-parser/ request contract helpers, gazetteer, resolvePlace
   ai-gateway/     AI provider port, Gemini adapter, sensitivity labels, rate limits
   ui/             shared React components (shadcn-based)
 services/
@@ -240,7 +240,7 @@ flowchart TB
   task["AI task +<br/>sensitivity label"] --> gw{"ai-gateway"}
   gw -->|public + flag on| gem["Gemini adapter"]
   gw -->|personal| local["Local ONNX model<br/>onnxruntime-node"]
-  gw -->|off, error, limit| fb["Non-AI fallback<br/>rule parser · habit blend<br/>manual adapter"]
+  gw -->|off, error, limit| fb["Non-AI fallback<br/>request form · habit blend<br/>manual adapter"]
 ```
 
 Every AI call names its sensitivity (`public` or `personal`). `personal` can never reach a remote

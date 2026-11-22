@@ -84,8 +84,8 @@ AI, shuttles and the simulator. **Owner**: A = Ashfak, M2, M3.
 | --- | --------------------------------------------------------------------------------------------- | ---- | ----- | ------------- |
 | F18 | Go now: request any moment; going alone always offered                                        | 1    | M3    | requests      |
 | F19 | Plan for later: date, time, place, flexibility; repeat weekly                                 | 1    | M3    | requests      |
-| F20 | Typed requests in English and Banglish: rule-based parser                                     | 1    | M3    | requests      |
-| F21 | Typed requests: lab-trained small model (ONNX) with the rule parser as fallback               | 3    | A     | requests / ai |
+| F20 | Structured request form (the non-AI path); request contract and place list (ADR 0012)         | 1    | M3    | requests      |
+| F21 | Typed requests in English and Banglish: local model pre-fills the form (ADR 0012)             | 3    | A     | requests / ai |
 | F22 | Habit learning (statistical blend of own and campus average delay)                            | 2    | A     | forecast      |
 | F23 | Autopilot: daily suggested trips, one-tap confirm, skip a day                                 | 2    | M3    | requests      |
 | F24 | Match-chance forecast and wait-or-go advice (baseline)                                        | 2    | A     | forecast      |
@@ -171,7 +171,7 @@ These are the proposal's five objectives turned into checks we can run.
 | --- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
 | O1  | Read real timetable data          | Golden-file tests on the real AIUB report; ≥ 20 volunteer grade reports: every active class resolved, dropped classes excluded, no grade bytes sent                                         | `catalog-adapters`, web e2e |
 | O2  | Optimal, valid groups             | 3,000-user simulated day, each batch < 5 s; property tests (capacity, windows, detour ≤ 30%, gender, blocks); blossom = brute force on small inputs; savings vs solo and vs greedy reported | `matching`, simulator       |
-| O3  | AI better than the simple version | LightGBM beats the habit blend on pinball loss, 80% intervals cover ~80%; request model beats rules on field accuracy on unseen sentences                                                   | `services/*` eval reports   |
+| O3  | AI better than the simple version | LightGBM beats the habit blend on pinball loss, 80% intervals cover ~80%; request model meets its fixed field-accuracy target on unseen sentences (ADR 0012)                                | `services/*` eval reports   |
 | O4  | Never lose or repeat an event     | Fault injection (Toxiproxy cuts, killed consumers): 0 lost, 0 double-applied; re-plan after class change < 10 s; replaying a day gives identical crews                                      | worker integration, nightly |
 | O5  | Exact money, real people          | Every entry sums to zero; shares sum to the fare; settlement transfers = proven minimum; survey ≥ 50 students; pilot ≥ 30 users for 2 weeks                                                 | `money`, pilot report       |
 
