@@ -1,0 +1,3 @@
+$kind: collection
+description: 'Your own profile and travel preferences. Needs a session: run the Auth folder first. Names, phone numbers and the home pin are personal data; the API never logs them, and the pin never leaves the request (only its H3 cell and zone are stored). Writes carry Origin: {{appOrigin}}.'
+order: 8000

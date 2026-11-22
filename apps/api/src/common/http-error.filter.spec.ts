@@ -5,6 +5,7 @@ import {
   Logger,
   NotFoundException,
   ServiceUnavailableException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import type { HttpAdapterHost } from '@nestjs/core';
 import type { MockInstance } from 'vitest';
@@ -154,6 +155,20 @@ describe('HttpErrorFilter', () => {
       new BadRequestException({ message: 'Validation failed', issues: [{ sql: 'select 1' }] }),
     );
     expect(body).toEqual({ statusCode: 400, error: 'Bad Request', message: 'Validation failed' });
+  });
+
+  it('keeps a stable error code, and drops one that is not in the contract shape', () => {
+    const limit = send(
+      new UnprocessableEntityException({ message: 'At most three', code: 'TRUSTED_CONTACT_LIMIT' }),
+    );
+    expect(limit.body).toEqual({
+      statusCode: 422,
+      error: 'Unprocessable Entity',
+      message: 'At most three',
+      code: 'TRUSTED_CONTACT_LIMIT',
+    });
+    const odd = send(new UnprocessableEntityException({ message: 'No', code: 'select 1' }));
+    expect(odd.body).toEqual({ statusCode: 422, error: 'Unprocessable Entity', message: 'No' });
   });
 
   it('copes with an exception whose response is null', () => {

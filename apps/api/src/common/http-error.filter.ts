@@ -6,7 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
-import { type ApiError, apiIssueSchema } from '@pulse/contracts';
+import { type ApiError, apiErrorSchema, apiIssueSchema } from '@pulse/contracts';
 import { DrizzleQueryError } from '@pulse/db';
 import type { Request } from 'express';
 import { STATUS_CODES } from 'node:http';
@@ -68,7 +68,10 @@ function toBody(exception: unknown): ApiError {
   // Kept only when they match the contract, so nothing else rides along to the client
   const issues =
     'issues' in details ? apiIssueSchema.array().safeParse(details.issues).data : undefined;
-  return { statusCode, error, message, ...(issues && { issues }) };
+  // A stable name a client can branch on (TRUSTED_CONTACT_LIMIT), only in the contract's shape
+  const code =
+    'code' in details ? apiErrorSchema.shape.code.safeParse(details.code).data : undefined;
+  return { statusCode, error, message, ...(issues && { issues }), ...(code && { code }) };
 }
 
 // What a 5xx writes to the log. A failed query's message lists its values ("params: …"), which

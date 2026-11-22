@@ -1,0 +1,20 @@
+$kind: http-request
+description: "Sets name, gender, department and phone (E.164). A pending_profile user becomes active once first name, last name and gender are set. Writes a ProfileChanged outbox row (no names or phone in it)."
+url: "{{baseUrl}}/me"
+method: PATCH
+headers:
+  Accept: application/json
+  Content-Type: application/json
+  Origin: "{{appOrigin}}"
+body:
+  type: json
+  content: |-
+    {"firstName": "Nusrat", "lastName": "Jahan", "gender": "female", "department": "CSE", "phone": "+8801000000001"}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200', () => pm.response.to.have.status(200));
+      pm.test('is active now', () => pm.expect(pm.response.json().status).to.equal('active'));
+    language: text/javascript
+examples: .resources/Complete profile.resources/examples
+order: 2000

@@ -1,0 +1,31 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/me"
+  method: GET
+  headers:
+    Accept: application/json
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    content-type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "id": "0193f2a1-9e50-7071-8283-9e0f1a2b3c45",
+        "email": "postman-mi4x2k@student.aiub.edu",
+        "role": "student",
+        "status": "active",
+        "campus": {
+          "id": "6f1c2a9e-3b4d-4e5f-8a7b-9c0d1e2f3a4b",
+          "slug": "aiub",
+          "name": "American International University-Bangladesh"
+        },
+        "firstName": "Nusrat",
+        "lastName": "Jahan",
+        "gender": "female",
+        "department": "CSE",
+        "phone": "+8801000000001"
+      }
+order: 1000

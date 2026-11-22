@@ -13,6 +13,7 @@ import { FareModule } from './fare/fare.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { PlacesModule } from './places/places.module.js';
 import { TermModule } from './term/term.module.js';
+import { MeModule } from './me/me.module.js';
 import { OriginGuard } from './common/origin.guard.js';
 
 // The repo-root .env
@@ -36,6 +37,7 @@ const rootEnvFile = fileURLToPath(new URL('../../../.env', import.meta.url));
     AuthModule,
     PlacesModule,
     TermModule,
+    MeModule,
   ],
   providers: [
     // Registered here, not in main.ts, so every app built from AppModule (tests too) gets it
