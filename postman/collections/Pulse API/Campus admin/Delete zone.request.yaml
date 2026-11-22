@@ -1,0 +1,14 @@
+$kind: http-request
+description: "Once its only meeting point is hidden, the zone can be deleted: 204. A second delete answers 404."
+url: "{{baseUrl}}/admin/zones/{{zoneId}}"
+method: DELETE
+headers:
+  Accept: application/json
+  Origin: "{{appOrigin}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 204', () => pm.response.to.have.status(204));
+    language: text/javascript
+examples: .resources/Delete zone.resources/examples
+order: 9000

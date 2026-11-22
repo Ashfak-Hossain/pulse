@@ -1,0 +1,18 @@
+$kind: http-request
+description: "One gate of your campus by id. Any signed-in user; another campus's id or an unknown one answers 404."
+url: "{{baseUrl}}/gates/{{gateId}}"
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200 (401: sign in with the Auth folder)', () => pm.response.to.have.status(200));
+      pm.test('is the gate just created', () => {
+        const gate = pm.response.json();
+        pm.expect(gate.id).to.equal(pm.environment.get('gateId'));
+        pm.expect(Object.keys(gate).sort()).to.eql(['id', 'isPrimary', 'location', 'name']);
+      });
+    language: text/javascript
+examples: .resources/Get gate.resources/examples
+order: 2500

@@ -1,0 +1,14 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/admin/zones/{{zoneId}}"
+  method: DELETE
+  headers:
+    Accept: application/json
+    Origin: http://localhost:5173
+response:
+  statusCode: 204
+  statusText: No Content
+  body:
+    type: text
+    content: ''
+order: 1000

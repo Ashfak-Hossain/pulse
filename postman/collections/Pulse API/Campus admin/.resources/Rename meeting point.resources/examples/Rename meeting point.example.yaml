@@ -1,0 +1,31 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/admin/meeting-points/{{meetingPointId}}"
+  method: PATCH
+  headers:
+    Accept: application/json
+    Content-Type: application/json
+    Origin: http://localhost:5173
+  body:
+    type: json
+    content: |-
+      {"name": "Postman point {{zoneName}} renamed", "kind": "landmark"}
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    content-type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "id": "0193f2a1-7c30-7e5f-a061-7c8d9e0f1a23",
+        "zoneId": "0193f2a1-7b20-7d4e-9f50-6b7c8d9e0f12",
+        "name": "Postman point Postman zone mi4x2k renamed",
+        "kind": "landmark",
+        "location": {
+          "lat": 23.8069,
+          "lng": 90.3687
+        }
+      }
+order: 1000

@@ -66,6 +66,14 @@ export class PlacesService {
     return { items: rows.map(toGate) };
   }
 
+  async gate(campusId: string, id: string): Promise<Gate> {
+    const [row] = await withCampus(this.db, campusId, (tx) =>
+      tx.select(gateColumns).from(campusGate).where(eq(campusGate.id, id)),
+    );
+    if (!row) throw new NotFoundException('Gate not found');
+    return toGate(row);
+  }
+
   async createGate(actor: Actor, input: CreateGate): Promise<Gate> {
     return this.write(actor, async (tx) => {
       // One primary per campus: the new one takes over in the same transaction
@@ -133,6 +141,14 @@ export class PlacesService {
     return { items };
   }
 
+  async zone(campusId: string, id: string): Promise<Zone> {
+    const [row] = await withCampus(this.db, campusId, (tx) =>
+      tx.select(zoneColumns).from(zone).where(eq(zone.id, id)),
+    );
+    if (!row) throw new NotFoundException('Zone not found');
+    return row;
+  }
+
   async createZone(actor: Actor, input: CreateZone): Promise<Zone> {
     return this.write(actor, async (tx) => {
       const [row] = await tx
@@ -193,6 +209,18 @@ export class PlacesService {
         .limit(PLACE_LIST_LIMIT),
     );
     return { items: rows.map(toMeetingPoint) };
+  }
+
+  // A hidden point is not found, the same as in the list
+  async meetingPoint(campusId: string, id: string): Promise<MeetingPoint> {
+    const [row] = await withCampus(this.db, campusId, (tx) =>
+      tx
+        .select(pointColumns)
+        .from(meetingPoint)
+        .where(and(eq(meetingPoint.id, id), eq(meetingPoint.isActive, true))),
+    );
+    if (!row) throw new NotFoundException('Meeting point not found');
+    return toMeetingPoint(row);
   }
 
   async createMeetingPoint(actor: Actor, input: CreateMeetingPoint): Promise<MeetingPoint> {

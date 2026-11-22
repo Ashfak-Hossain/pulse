@@ -82,6 +82,16 @@ export class MeController {
     return this.vehicles.create(user, body);
   }
 
+  // Only the caller's own active vehicle; anyone else's id is not found
+  @Roles(...RIDERS)
+  @Get('vehicles/:id')
+  getVehicle(
+    @CurrentUser() user: SignedInUser,
+    @Param(itemParams) { id }: MeItemParams,
+  ): Promise<Vehicle> {
+    return this.vehicles.get(user, id);
+  }
+
   @Roles(...RIDERS)
   @Patch('vehicles/:id')
   updateVehicle(

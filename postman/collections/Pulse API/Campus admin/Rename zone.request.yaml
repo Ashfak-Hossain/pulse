@@ -1,0 +1,22 @@
+$kind: http-request
+description: "Changes the name and/or the area of a zone. A name another zone has answers 409; a self-crossing area 422."
+url: "{{baseUrl}}/admin/zones/{{zoneId}}"
+method: PATCH
+headers:
+  Accept: application/json
+  Content-Type: application/json
+  Origin: "{{appOrigin}}"
+body:
+  type: json
+  content: |-
+    {"name": "{{zoneName}} renamed"}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200', () => pm.response.to.have.status(200));
+      pm.test('has the new name', () =>
+        pm.expect(pm.response.json().name).to.equal(`${pm.environment.get('zoneName')} renamed`),
+      );
+    language: text/javascript
+examples: .resources/Rename zone.resources/examples
+order: 4700
