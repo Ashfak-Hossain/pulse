@@ -148,6 +148,20 @@
       "when": 1795115241689,
       "tag": "0020_campus-places-privileges",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1795168716500,
+      "tag": "0021_term-write-policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1795168717297,
+      "tag": "0022_term-write-privileges",
+      "breakpoints": true
     }
   ]
 }

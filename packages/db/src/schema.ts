@@ -220,6 +220,19 @@ export const term = pgTable(
       to: pulseApp,
       using: sql`${table.campusId} = ${currentCampusId}`,
     }),
+    // Campus admins create and activate terms. Grants (migration 0022) limit updates to status.
+    // A new term starts as a draft: only activation (with its outbox event) makes one active
+    pgPolicy('term_insert', {
+      for: 'insert',
+      to: pulseApp,
+      withCheck: sql`${table.campusId} = ${currentCampusId} and ${table.status} = 'draft'`,
+    }),
+    pgPolicy('term_update', {
+      for: 'update',
+      to: pulseApp,
+      using: sql`${table.campusId} = ${currentCampusId}`,
+      withCheck: sql`${table.campusId} = ${currentCampusId}`,
+    }),
   ],
 );
 

@@ -1,0 +1,2 @@
+CREATE POLICY "term_insert" ON "term" AS PERMISSIVE FOR INSERT TO "pulse_app" WITH CHECK ("term"."campus_id" = nullif(current_setting('app.campus_id', true), '')::uuid and "term"."status" = 'draft');--> statement-breakpoint
+CREATE POLICY "term_update" ON "term" AS PERMISSIVE FOR UPDATE TO "pulse_app" USING ("term"."campus_id" = nullif(current_setting('app.campus_id', true), '')::uuid) WITH CHECK ("term"."campus_id" = nullif(current_setting('app.campus_id', true), '')::uuid);
