@@ -53,7 +53,7 @@ describe('user profile, preferences, vehicles and trusted contacts', () => {
     campusId,
     slot,
     name: 'Contact',
-    phoneE164: '+8801711000000',
+    phoneE164: '+8801000000002',
     relation: 'roommate',
   });
   const inA = (work: (tx: Transaction) => Promise<unknown>) =>
@@ -94,7 +94,7 @@ describe('user profile, preferences, vehicles and trusted contacts', () => {
             lastName: 'Jahan',
             gender: 'female',
             department: 'CSE',
-            phoneE164: '+8801711223344',
+            phoneE164: '+8801000000001',
             status: 'active',
           })
           .where(eq(appUser.id, user.id)),
@@ -110,6 +110,28 @@ describe('user profile, preferences, vehicles and trusted contacts', () => {
       );
   });
 
+  it('lets pulse_app only finish onboarding, never change a status any other way', async () => {
+    const user = {
+      ...newUser(a.id),
+      firstName: 'Test',
+      lastName: 'Rider',
+      gender: 'female' as const,
+    };
+    await owner.insert(appUser).values({ ...user, status: 'suspended' });
+    const setStatus = (status: 'active' | 'pending_profile' | 'suspended') =>
+      inA((tx) => tx.update(appUser).set({ status }).where(eq(appUser.id, user.id)));
+
+    expect(await setStatus('active')).toBe('23514');
+    await owner.update(appUser).set({ status: 'active' }).where(eq(appUser.id, user.id));
+    expect(await setStatus('pending_profile')).toBe('23514');
+    expect(await setStatus('suspended')).toBe('23514');
+  });
+
+  it('never lets pulse_app delete a vehicle or edit a trusted contact', async () => {
+    expect(await inA((tx) => tx.delete(vehicle))).toBe('42501');
+    expect(await inA((tx) => tx.update(trustedContact).set({ name: 'Renamed' }))).toBe('42501');
+  });
+
   it('refuses an active user without a name or a gender, and a phone that is not E.164', async () => {
     const user = newUser(a.id);
     await owner.insert(appUser).values(user);
@@ -119,7 +141,7 @@ describe('user profile, preferences, vehicles and trusted contacts', () => {
     expect(await set({ status: 'active' })).toBe('23514');
     expect(await set({ status: 'active', firstName: 'Nusrat', lastName: 'Jahan' })).toBe('23514');
     expect(await set({ status: 'active', firstName: 'Nusrat', gender: 'female' })).toBe('23514');
-    for (const phoneE164 of ['01711223344', '+0123456789', '+880 1711 223344', '+8801'])
+    for (const phoneE164 of ['01000000001', '+0123456789', '+880 1000 000001', '+8801'])
       expect(await set({ phoneE164 })).toBe('23514');
     expect(await set({ firstName: ' Nusrat' })).toBe('23514');
     expect(
