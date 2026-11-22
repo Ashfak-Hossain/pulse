@@ -1,0 +1,11 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/me/vehicles/{{vehicleId}}"
+  method: DELETE
+  headers:
+    Accept: application/json
+    Origin: http://localhost:5173
+response:
+  statusCode: 204
+  statusText: No Content
+order: 1000

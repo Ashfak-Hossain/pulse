@@ -1,0 +1,20 @@
+$kind: http-request
+description: "Changes any field. Seats that do not fit the type answer 422; someone else's vehicle id answers 404."
+url: "{{baseUrl}}/me/vehicles/{{vehicleId}}"
+method: PATCH
+headers:
+  Accept: application/json
+  Content-Type: application/json
+  Origin: "{{appOrigin}}"
+body:
+  type: json
+  content: |-
+    {"seats": 2}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200', () => pm.response.to.have.status(200));
+      pm.test('has the new seat count', () => pm.expect(pm.response.json().seats).to.equal(2));
+    language: text/javascript
+examples: .resources/Change seats.resources/examples
+order: 8000
